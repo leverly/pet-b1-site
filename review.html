@@ -19,7 +19,7 @@
     <a class="logo" href="index.html">PET <em>B1 备考站</em></a>
     <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     <nav class="hdr-nav">
-      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="bank.html">题库</a><a href="quiz.html">背单词</a><a href="review.html" class="on">语法练习</a><a href="traps.html">易错点</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
+      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html">背单词</a><a href="review.html" class="on">语法练习</a><a href="traps.html">易错点</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
     </nav>
     <div class="hdr-tools">
       <button class="theme-btn" aria-label="切换主题">☀</button>
@@ -109,7 +109,6 @@
     <div class="col">
       <h4>语法</h4>
       <a href="grammar.html">语法体系</a>
-      <a href="bank.html">易错题库</a>
       <a href="review.html">语法练习</a>
     </div>
     <div class="col">
@@ -134,7 +133,7 @@ const GT = new Map();
 const TNAME = new Map();
 GRAMMAR.forEach(g => g.topics.forEach(t => { GT.set(t.id, g.id); TNAME.set(t.id, t.name); }));
 
-let scope = 'all', grp = 'all', type = 'all', len = 20;
+let scope = 'all', grp = 'all', type = 'all', len = 20, topic = null;
 
 function pick(sel, attr, cb) {
   document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
@@ -187,9 +186,26 @@ function refreshStats() {
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
 
+// 从语法页「练这个考点」跳过来：?topic=xxx
+const tp = new URLSearchParams(location.search).get('topic');
+if (tp && TNAME.has(tp)) {
+  topic = tp;
+  const scopeChips = document.querySelector('#scopeChips');
+  if (scopeChips) scopeChips.style.display = 'none';
+  const banner = document.createElement('div');
+  banner.className = 'note';
+  banner.style.cssText = 'margin-top:18px;border-left-color:var(--accent)';
+  banner.innerHTML = '正在练单个考点：<b>' + TNAME.get(tp) + '</b> · 共 ' +
+    (BY_TOPIC.get(tp) || []).length + ' 题 · <a href="review.html">改为自由练习 →</a>';
+  const setup = document.querySelector('#setup');
+  if (setup) setup.parentNode.insertBefore(banner, setup);
+}
+
 document.querySelector('#startBtn').addEventListener('click', () => {
   let pool = ALL.slice();
-  if (scope === 'wrong') {
+  if (topic) {
+    pool = pool.filter(q => q.topic === topic);
+  } else if (scope === 'wrong') {
     const ids = new Set(P.wrongIds());
     pool = pool.filter(q => ids.has(q.id));
     if (!pool.length) { alert('错题本是空的 —— 先随便练一组，答错的题会自动收进来。'); return; }
@@ -205,7 +221,8 @@ document.querySelector('#startBtn').addEventListener('click', () => {
 
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true, reviewHref: 'bank.html',
+  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
+    reviewHref: 'grammar.html', reviewLabel: '看对应考点',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
   window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -111,7 +111,6 @@ const NAV = [
   { href: 'index.html', label: '首页', key: 'home' },
   { href: 'words.html', label: '词汇', key: 'words' },
   { href: 'grammar.html', label: '语法', key: 'grammar' },
-  { href: 'bank.html', label: '题库', key: 'bank' },
   { href: 'quiz.html', label: '背单词', key: 'words-study' },
   { href: 'review.html', label: '语法练习', key: 'grammar-drill' },
   { href: 'traps.html', label: '易错点', key: 'traps' },
@@ -150,7 +149,6 @@ const FOOTER = (base) => `<footer class="foot">
     <div class="col">
       <h4>语法</h4>
       <a href="${base}grammar.html">语法体系</a>
-      <a href="${base}bank.html">易错题库</a>
       <a href="${base}review.html">语法练习</a>
     </div>
     <div class="col">
@@ -248,10 +246,10 @@ function buildHome() {
       <p class="desc">从时态、被动、非谓语到从句与语篇，每个考点给出规则、变化表、例句，以及最容易踩的错法（✕ 错句 vs ✓ 对句）。按 B1 考查权重排序，不是语法书目录。</p>
       <div class="meta" style="margin-top:12px">${GRAMMAR_STATS.traps} 条易错对比 · ${GRAMMAR_STATS.examples} 个例句</div>
     </a>
-    <a class="card" href="bank.html">
+    <a class="card" href="review.html">
       <div class="card-ico">?</div>
-      <h3>易错题库 · ${Q_STATS.total} 题</h3>
-      <p class="desc">三种题型混编：单项选择（对齐 PET Part 5）、挑出正确句（写作自查）、开放式填空（对齐 PET Part 6）。每题都有解析说明"为什么错"，不是只给答案。</p>
+      <h3>语法练习 · ${Q_STATS.total} 题</h3>
+      <p class="desc">三种题型混编：单项选择（对齐 PET Part 5）、挑出正确句（写作自查）、开放式填空（对齐 PET Part 6）。答完记录各考点正确率，错的题自动进错题本。</p>
       <div class="meta" style="margin-top:12px">选择 ${Q_STATS.choice} · 改错 ${Q_STATS.correct} · 填空 ${Q_STATS.fill}</div>
     </a>
   </div>
@@ -453,7 +451,7 @@ function buildGrammar() {
       <div class="why">${rich(x.why)}</div>
     </div>`).join('')}
   </div>
-  ${qn ? `<div style="margin-top:16px"><a class="btn sm" href="bank.html?topic=${t.id}">练这个考点（${qn} 题）→</a></div>` : ''}
+  ${qn ? `<div style="margin-top:16px"><a class="btn sm" href="review.html?topic=${t.id}">练这个考点（${qn} 题）→</a></div>` : ''}
 </div>`;
     }).join('');
 
@@ -487,124 +485,6 @@ ${sections}
 <div class="note">语法族的排序按考试中出现的密度排列，不代表难度。带 <span class="lv A2">A2</span> 的考点是复习性考点（KET 已覆盖），带 <span class="lv B1">B1</span> 的是 PET 主力考点，带 <span class="lv B1+">B1+</span> 的是进阶考点（出现在阅读长难句里，写作不强制）。</div>
 `,
   }));
-}
-
-/* ==========================================================
-   5. 题库（可筛选 + 全量浏览）
-   ========================================================== */
-function buildBank() {
-  // by topic groups for browsing
-  const groups = GRAMMAR.map((g) => {
-    const items = g.topics.flatMap((t) => (Q_BY_TOPIC.get(t.id) || []).map((q) => ({ q, tn: t.name })));
-    if (!items.length) return '';
-    return `<section class="section" id="g-${g.id}">
-      <div class="section-head"><h2>${g.icon} ${esc(g.name)}</h2><span class="sub">${items.length} 题</span></div>
-      ${items.map(({ q, tn }) => qCard(q, tn)).join('')}
-    </section>`;
-  }).join('');
-
-  write('bank.html', page({
-    title: `PET 语法易错题库 · ${Q_STATS.total} 题`,
-    desc: `${Q_STATS.choice} 道单项选择、${Q_STATS.correct} 道改错、${Q_STATS.fill} 道开放式填空，每题带错因解析。`,
-    active: 'bank',
-    body: `
-<div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 题库</div>
-  <h1>易错题库 · ${Q_STATS.total} 题</h1>
-  <p class="lede">按考点分组，点「显示答案」看解析。三种题型：<b>单项选择</b>对齐 PET Part 5 的完形填空；<b>改错</b>训练你发现错句的眼睛；<b>开放式填空</b>对齐 PET Part 6，要求写出括号词的正确形式。</p>
-</div>
-<section class="section" style="margin-top:26px">
-  <div class="kv">
-    <div class="k"><b>${Q_STATS.choice}</b><span>单项选择</span></div>
-    <div class="k"><b>${Q_STATS.correct}</b><span>挑出正确句</span></div>
-    <div class="k"><b>${Q_STATS.fill}</b><span>开放式填空</span></div>
-    <div class="k"><b>${GT_IDS.size}</b><span>覆盖考点</span></div>
-  </div>
-  <div class="toolbar" style="margin-top:22px">
-    <input class="field" id="qq" type="search" placeholder="搜索题干或解析…" autocomplete="off">
-  </div>
-  <div class="chips" style="margin-bottom:8px">
-    <button class="chip on" data-qf="all">全部</button>
-    <button class="chip" data-qf="choice">单项选择</button>
-    <button class="chip" data-qf="correct">改错</button>
-    <button class="chip" data-qf="fill">填空</button>
-  </div>
-</section>
-<div id="qbank">${groups}</div>
-<div class="empty" id="qempty" style="display:none"><b>没有匹配的题</b>换个关键词试试</div>
-`,
-    rawScript: `<script>
-(function(){
-  var q = document.querySelector('#qq'), f = 'all';
-  function apply(){
-    var term = (q.value||'').trim().toLowerCase();
-    document.querySelectorAll('#qbank .qitem').forEach(function(el){
-      var okF = f === 'all' || el.getAttribute('data-type') === f;
-      var okQ = !term || (el.getAttribute('data-txt')||'').indexOf(term) >= 0;
-      el.style.display = (okF && okQ) ? '' : 'none';
-    });
-    document.querySelectorAll('#qbank section').forEach(function(s){
-      var any = Array.prototype.some.call(s.querySelectorAll('.qitem'), function(x){ return x.style.display !== 'none'; });
-      s.style.display = any ? '' : 'none';
-    });
-    var anyVisible = Array.prototype.some.call(document.querySelectorAll('#qbank .qitem'), function(x){ return x.style.display !== 'none'; });
-    var em = document.querySelector('#qempty');
-    if (em) em.style.display = anyVisible ? 'none' : '';
-  }
-  if (q) q.addEventListener('input', apply);
-  document.querySelectorAll('[data-qf]').forEach(function(c){
-    c.addEventListener('click', function(){
-      document.querySelectorAll('[data-qf]').forEach(function(x){ x.classList.remove('on'); });
-      c.classList.add('on'); f = c.getAttribute('data-qf'); apply();
-    });
-  });
-  document.querySelectorAll('[data-reveal]').forEach(function(b){
-    b.addEventListener('click', function(){
-      var item = b.closest('.qitem');
-      var ans = item.querySelector('.qans');
-      var on = ans.style.display !== 'none' && ans.style.display !== '';
-      ans.style.display = on ? 'none' : '';
-      b.textContent = on ? '显示答案' : '收起答案';
-    });
-  });
-  // ?topic= 深链：滚动到该考点
-  var tp = new URLSearchParams(location.search).get('topic');
-  if (tp) {
-    var target = document.querySelector('[data-topic="' + tp + '"]');
-    if (target) { target.scrollIntoView({block:'center'}); target.style.outline = '2px solid var(--accent)'; }
-  }
-})();
-</script>`,
-  }));
-}
-
-function qCard(q, topicName) {
-  const type = TYPE_OF_Q(q);
-  const typeName = type === 'correct' ? '改错' : type === 'fill' ? '填空' : '选择';
-  let stem = esc(q.stem).replace(/___/g, '<span class="blank">　</span>');
-  let ansHtml = '';
-  if (type === 'fill') {
-    ansHtml = `<div style="font-family:var(--serif);font-size:1.02rem;margin-bottom:8px">答案：<b style="color:var(--ok)">${esc(q.answer)}</b></div>`;
-    if (q.accept && q.accept.length > 1) {
-      ansHtml += `<div style="font-size:.84rem;color:var(--text-3)">也接受：${q.accept.filter((a) => a !== q.answer).map(esc).join(' / ')}</div>`;
-    }
-  } else {
-    ansHtml = `<ol style="margin:0 0 10px;padding-left:22px;font-family:var(--serif)">${q.options.map((o, i) => `<li style="margin-bottom:3px${i === q.answer ? ';color:var(--ok);font-weight:600' : ''}">${esc(o)}${i === q.answer ? ' ✓' : ''}</li>`).join('')}</ol>`;
-  }
-  return `<div class="qitem card" style="margin-bottom:12px" data-type="${type}" data-topic="${esc(q.topic)}"
-    data-txt="${esc((q.stem + ' ' + (q.options || []).join(' ') + ' ' + q.why + ' ' + (q.answer || '')).toLowerCase())}">
-  <div class="qmeta"><span class="qtype">${typeName}</span>
-    <span class="flag">${esc(topicName)}</span>
-    ${q.level ? `<span class="lv ${esc(q.level)}">${esc(q.level)}</span>` : ''}
-    <span style="font-family:var(--mono);font-size:.68rem;color:var(--text-3);margin-left:auto">${esc(q.id)}</span>
-  </div>
-  <div class="qstem" style="font-size:1.02rem;margin-bottom:14px">${stem}</div>
-  <div class="qans" style="display:none">
-    ${ansHtml}
-    <div class="feedback" style="margin-top:8px"><b>为什么</b>${esc(q.why)}</div>
-  </div>
-  <button class="btn sm" data-reveal style="margin-top:10px">显示答案</button>
-</div>`;
 }
 
 /* ==========================================================
@@ -819,7 +699,7 @@ const GT = new Map();
 const TNAME = new Map();
 GRAMMAR.forEach(g => g.topics.forEach(t => { GT.set(t.id, g.id); TNAME.set(t.id, t.name); }));
 
-let scope = 'all', grp = 'all', type = 'all', len = 20;
+let scope = 'all', grp = 'all', type = 'all', len = 20, topic = null;
 
 function pick(sel, attr, cb) {
   document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
@@ -872,9 +752,26 @@ function refreshStats() {
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
 
+// 从语法页「练这个考点」跳过来：?topic=xxx
+const tp = new URLSearchParams(location.search).get('topic');
+if (tp && TNAME.has(tp)) {
+  topic = tp;
+  const scopeChips = document.querySelector('#scopeChips');
+  if (scopeChips) scopeChips.style.display = 'none';
+  const banner = document.createElement('div');
+  banner.className = 'note';
+  banner.style.cssText = 'margin-top:18px;border-left-color:var(--accent)';
+  banner.innerHTML = '正在练单个考点：<b>' + TNAME.get(tp) + '</b> · 共 ' +
+    (BY_TOPIC.get(tp) || []).length + ' 题 · <a href="review.html">改为自由练习 →</a>';
+  const setup = document.querySelector('#setup');
+  if (setup) setup.parentNode.insertBefore(banner, setup);
+}
+
 document.querySelector('#startBtn').addEventListener('click', () => {
   let pool = ALL.slice();
-  if (scope === 'wrong') {
+  if (topic) {
+    pool = pool.filter(q => q.topic === topic);
+  } else if (scope === 'wrong') {
     const ids = new Set(P.wrongIds());
     pool = pool.filter(q => ids.has(q.id));
     if (!pool.length) { alert('错题本是空的 —— 先随便练一组，答错的题会自动收进来。'); return; }
@@ -890,7 +787,8 @@ document.querySelector('#startBtn').addEventListener('click', () => {
 
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true, reviewHref: 'bank.html',
+  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
+    reviewHref: 'grammar.html', reviewLabel: '看对应考点',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1022,7 +920,7 @@ function buildStats() {
     <b>词表</b>：源自 Cambridge University Press 发布的 <i>B1 Preliminary and B1 Preliminary for Schools Vocabulary List</i>（August 2025），正文按字母序的词条 + 附录 2 的 23 个话题表。附录 1 的 word sets（数字、星期、月份、季节、国家/国籍、大洲）为封闭清单，未逐条计入词条总数。<br><br>
     <b>中文释义</b>：主数据来自 ECDICT 开源英汉词典，按官方词性优先选取义项，并对最高频的功能词与多义动词（go / take / get / make 等约 300 条）做了人工覆盖校正，避免词典里"打赌/保释金"这类非常用义项干扰。<br><br>
     <b>频档</b>：核心 = 中考或高考大纲词，或在 Oxford 3000 / Collins 3 星以上；常考 = 语料词频在前 25000；其余为拓展。这是启发式分档，不是官方 CEFR 标注。<br><br>
-    <b>语法与题库</b>：按 B1 Preliminary 的公开考试说明（Reading Part 5 多项选择完形、Part 6 开放式完形、Writing 的邮件与文章任务）整理，为本站原创内容，非官方出版材料。
+    <b>语法与题目</b>：按 B1 Preliminary 的公开考试说明（Reading Part 5 多项选择完形、Part 6 开放式完形、Writing 的邮件与文章任务）整理，为本站原创内容，非官方出版材料。
   </div>
 </section>
 `,
@@ -1164,7 +1062,6 @@ function main() {
   buildWords();
   buildTopics();
   buildGrammar();
-  buildBank();
   buildStudy();
   buildDrill();
   buildTraps();

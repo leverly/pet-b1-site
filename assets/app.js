@@ -505,7 +505,7 @@
         '<div style="color:var(--text-2)">答对 ' + correct + ' / ' + total + ' 题 · 最高连击 ' + best + '</div>' +
         '<div style="margin-top:26px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
           '<button class="btn primary" id="qagain">再来一轮</button>' +
-          '<a class="btn ghost" href="' + (opts.reviewHref || 'quiz.html') + '">看全部题库</a>' +
+          (opts.reviewHref ? '<a class="btn ghost" href="' + opts.reviewHref + '">' + (opts.reviewLabel || '返回') + '</a>' : '') +
         '</div></div>';
       var b = host.querySelector('#qagain');
       if (b) b.addEventListener('click', function () {
