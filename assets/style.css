@@ -234,8 +234,9 @@ a.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-3); border-
   grid-column: 1 / -1; font-size: .82rem; color: var(--text-3);
   font-style: italic; padding-top: 2px; margin-top: -4px;
 }
-.tag-core { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-.tag-pet { color: var(--accent-2); border-color: var(--accent-2); background: var(--accent-2-soft); }
+.tag-b1 { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.tag-b2 { color: var(--accent-2); border-color: var(--accent-2); background: var(--accent-2-soft); }
+.tag-b3 { color: var(--text-3); }
 
 /* ---------------- 分页 ---------------- */
 .pager { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 26px; align-items: center; }
@@ -441,7 +442,7 @@ table.gtable td:first-child { font-family: var(--serif); font-weight: 550; }
 .rate.easy:hover { border-color: var(--ok); color: var(--ok); }
 
 /* ---------------- 进度条/统计 ---------------- */
-.bar { height: 6px; background: var(--bg-3); border-radius: 99px; overflow: hidden; }
+.bar { height: 6px; background: var(--border-2); border-radius: 99px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .5s var(--ease-out); }
 .bar.warn i { background: var(--warn); }
 .bar.rose i { background: var(--rose); }
@@ -621,3 +622,51 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   border: 1px solid var(--border); padding: 1px 7px; border-radius: 99px;
 }
 #jump { margin-bottom: 4px; }
+
+/* ==========================================================
+   首页「今天做什么」卡
+   ========================================================== */
+.today-card { padding: 22px 24px; }
+.today-top {
+  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
+  padding-bottom: 18px; border-bottom: 1px solid var(--border);
+}
+.today-streak { display: flex; align-items: baseline; gap: 6px; flex: none; }
+.today-streak b {
+  font-family: var(--serif); font-size: 2.1rem; font-weight: 600;
+  color: var(--accent); line-height: 1;
+}
+.today-streak span { font-size: .78rem; color: var(--text-3); }
+.today-goal { flex: 1; min-width: 220px; }
+.today-goal-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: .85rem; color: var(--text-2); margin-bottom: 8px;
+}
+.today-goal-row b { font-family: var(--mono); font-size: .95rem; color: var(--text); }
+.today-pct { font-family: var(--mono); font-size: .8rem; color: var(--accent); }
+
+.today-tasks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.today-task {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text); transition: all .16s var(--ease);
+}
+.today-task:hover {
+  border-color: var(--accent); background: var(--accent-soft);
+  transform: translateY(-1px); box-shadow: var(--shadow-2); color: var(--text);
+}
+.tt-ico {
+  width: 30px; height: 30px; border-radius: 8px; flex: none;
+  display: grid; place-items: center; background: var(--accent-soft);
+  color: var(--accent); font-family: var(--serif); font-weight: 600; font-size: .8rem;
+}
+.tt-main { display: block; min-width: 0; }
+.tt-main b { display: block; font-size: .94rem; }
+.tt-main small { display: block; font-size: .76rem; color: var(--text-3); margin-top: 2px; }
+.tt-go { margin-left: auto; color: var(--text-3); flex: none; }
+
+@media (max-width: 720px) {
+  .today-tasks { grid-template-columns: 1fr; }
+  .today-card { padding: 18px; }
+}

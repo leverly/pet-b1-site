@@ -52,12 +52,12 @@ for w in words:
     records.append({
         'w': w['w'], 'pos': w['pos'], 'posZh': w['posZh'], 't': w['type'],
         'zh': w['zh'], 'tag': w['tag'], 'ph': w['ph'],
-        'ex': w['ex'], 'tp': w['topics'], 'al': w['alias'],
+        'ex': w['ex'], 'tp': w['topics'], 'al': w['alias'], 'frq': w.get('frq', 0),
     })
 
-core = [r for r in records if r['tag'] == 'core']
-petw = [r for r in records if r['tag'] == 'pet']
-ext = [r for r in records if r['tag'] == 'ext']
+b1 = [r for r in records if r['tag'] == 'b1']
+b2 = [r for r in records if r['tag'] == 'b2']
+b3 = [r for r in records if r['tag'] == 'b3']
 phrases = [r for r in records if r['t'] == 'phrase']
 
 
@@ -78,9 +78,9 @@ lines.append('export const STATS = ' + js({
     'words': len([r for r in records if r['t'] == 'word']),
     'phrases': len(phrases),
     'total': len(records),
-    'core': len(core),
-    'pet': len(petw),
-    'ext': len(ext),
+    'b1': len(b1),
+    'b2': len(b2),
+    'b3': len(b3),
     'topics': len(out_topics),
     'withExample': len([r for r in records if r['ex']]),
 }) + ';')

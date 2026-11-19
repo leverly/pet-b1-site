@@ -766,6 +766,13 @@ BAD_SENSE = {
     '胡德', '引擎盖', '腓肠', '袍', '雉', '山鹑', '獾',
 }
 
+def _int_safe(v):
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 POS_EQ = {'n': {'n'}, 'v': {'v', 'vt', 'vi', 'aux'}, 'adj': {'a', 'adj'},
           'adv': {'adv', 'ad'}, 'prep': {'prep'}, 'conj': {'conj'},
           'pron': {'pron'}, 'det': {'art', 'det'}, 'exclam': {'int'}}
@@ -798,24 +805,44 @@ def pick_gloss(tr, official_pos, limit=3):
 
 
 def cefr_tag(row):
+    """按真实语料词频分三档 —— 备考价值 = 你多大概率在考卷上遇到它。
+
+    旧逻辑把「中考/高考大纲词 或 Oxford3000 或 Collins>=3」都算 core，
+    结果 83% 的词都是 core，等于没有分档，无法回答「先背哪些」。
+
+    新逻辑以 ECDICT 的 frq（COCA 语料词频，数字越小越常见）为主轴：
+      b1  = frq <= 1000        卷面高频，必须脱口而出（约 800 词）
+      b2  = 1000 < frq <= 5000 中频，阅读与写作的主力（约 1370 词）
+      b3  = 其余                低频，认识即可（约 940 词）
+    没进语料表的词一律归 b3（生僻词居多）。
+    「大纲词」只作为同档内的小幅加权，不再单独决定档位。
+    """
+    def _int(v):
+        try:
+            return int(v or 0)
+        except ValueError:
+            return 0
+
+    frq = _int(row.get('frq'))
+    bnc = _int(row.get('bnc'))
+    # 两个语料库取更可信的那个（数值更小的通常更常用）
+    score = min([x for x in (frq, bnc) if x] or [0])
+
     tags = (row.get('tag') or '').strip().split()
-    if 'zk' in tags or 'gk' in tags:
-        return 'core'
-    if row.get('oxford') in ('1', '1.0'):
-        return 'core'
-    try:
-        if int(row.get('collins') or 0) >= 3:
-            return 'core'
-    except ValueError:
-        pass
-    try:
-        frq = int(row.get('frq') or 0)
-        bnc = int(row.get('bnc') or 0)
-    except ValueError:
-        frq = bnc = 0
-    if (frq and frq <= 25000) or (bnc and bnc <= 25000):
-        return 'pet'
-    return 'ext'
+    is_syllabus = bool({'zk', 'gk', 'cet4', 'cet6'} & set(tags)) or \
+        row.get('oxford') in ('1', '1.0')
+
+    if not score:
+        # 无词频数据：大纲词降一档看待，其余归最低档
+        return 'b2' if is_syllabus else 'b3'
+    if score <= 1000:
+        return 'b1'
+    if score <= 5000:
+        return 'b2'
+    # 5000 以上：大纲内的高频长尾词仍算中频，避免把常用词误判为低频
+    if is_syllabus and score <= 20000:
+        return 'b2'
+    return 'b3'
 
 
 out = []
@@ -874,7 +901,10 @@ for e in entries:
         'w': w, 'pos': e['pos'], 'posZh': e['posZh'], 'type': e['type'],
         'zh': zh, 'tag': tag, 'ph': phonetic, 'alias': e['alias'],
         'ex': e['ex'][:2], 'topics': [],
+        'frq': (dict_rows.get(key) and _int_safe(dict_rows[key].get('frq'))) or 0,
     })
+    if out[-1]['tag'] not in ('b1', 'b2', 'b3'):
+        out[-1]['tag'] = 'b3'
 
 byname = {o['w'].lower(): o for o in out}
 for t in topics:
@@ -891,6 +921,8 @@ json.dump(out, open(os.path.join(HERE, 'pet_words.json'), 'w', encoding='utf-8')
 json.dump(topics, open(os.path.join(HERE, 'pet_topics.json'), 'w', encoding='utf-8'),
           ensure_ascii=False, indent=1)
 
-core = sum(1 for o in out if o['tag'] == 'core')
-pet = sum(1 for o in out if o['tag'] == 'pet')
-print(f"核心 {core} | PET {pet} | 拓展 {len(out)-core-pet} | 总计 {len(out)}")
+b1 = sum(1 for o in out if o['tag'] == 'b1')
+b2 = sum(1 for o in out if o['tag'] == 'b2')
+b3 = sum(1 for o in out if o['tag'] == 'b3')
+other = len(out) - b1 - b2 - b3
+print(f"高频 b1 {b1} | 中频 b2 {b2} | 低频 b3 {b3}" + (f" | 未分档 {other}" if other else "") + f" | 总计 {len(out)}")

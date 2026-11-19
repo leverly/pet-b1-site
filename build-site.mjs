@@ -236,6 +236,44 @@ function buildHome() {
   </div>
 </section>
 
+<section class="section" id="today">
+  <div class="section-head">
+    <h2>今天做什么</h2>
+    <span class="sub">不用想，照着这张卡做完就算达标</span>
+  </div>
+  <div class="card today-card">
+    <div class="today-top">
+      <div class="today-streak">
+        <b id="tStreak">0</b><span id="tStreakLabel">天连续</span>
+      </div>
+      <div class="today-goal">
+        <div class="today-goal-row">
+          <span>今日单词 <b id="tWords">0</b> / <b id="tGoal">20</b></span>
+          <span class="today-pct" id="tPct">0%</span>
+        </div>
+        <div class="bar"><i id="tBar" style="width:0%"></i></div>
+      </div>
+    </div>
+    <div class="today-tasks">
+      <a class="today-task" href="quiz.html" id="taskWords">
+        <span class="tt-ico">Aa</span>
+        <span class="tt-main"><b>背单词</b><small id="ttWords">先把今天到期的词过完</small></span>
+        <span class="tt-go">→</span>
+      </a>
+      <a class="today-task" href="review.html" id="taskGrammar">
+        <span class="tt-ico">§</span>
+        <span class="tt-main"><b>语法练习</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
+        <span class="tt-go">→</span>
+      </a>
+      <a class="today-task" href="traps.html" id="taskTraps">
+        <span class="tt-ico">✕</span>
+        <span class="tt-main"><b>扫易错点</b><small>睡前 3 分钟，看一组 ✕/✓</small></span>
+        <span class="tt-go">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
 <section class="section">
   <div class="section-head">
     <h2>三条主线</h2>
@@ -245,8 +283,8 @@ function buildHome() {
     <a class="card" href="words.html">
       <div class="card-ico">Aa</div>
       <h3>全量词表 · ${STATS.total} 条</h3>
-      <p class="desc">严格取自 Cambridge B1 Preliminary 2025 官方词汇表：${STATS.words} 个单词 + ${STATS.phrases} 个短语。每条带中文释义、音标、词性、官方例句，按核心/常考/拓展三档标注，可按话题与掌握状态筛选。</p>
-      <div class="meta" style="margin-top:12px">${STATS.core} 核心 · ${STATS.pet} 常考 · ${STATS.ext} 拓展</div>
+      <p class="desc">严格取自 Cambridge B1 Preliminary 2025 官方词汇表：${STATS.words} 个单词 + ${STATS.phrases} 个短语。每条带中文释义、音标、词性、官方例句；按真实语料词频分高频/中频/低频三档，默认高频优先排序，可按话题与掌握状态筛选。</p>
+      <div class="meta" style="margin-top:12px">${STATS.b1} 高频 · ${STATS.b2} 中频 · ${STATS.b3} 低频</div>
     </a>
     <a class="card" href="grammar.html">
       <div class="card-ico">§</div>
@@ -285,6 +323,29 @@ function buildHome() {
     desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析，按遗忘曲线背单词。`,
     active: 'home',
     body,
+    dataKeys: ['STATS'],
+    script: `
+const P = window.PET;
+function refresh() {
+  const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
+  const st = P.streak();
+  set('#tStreak', st);
+  set('#tStreakLabel', st === 0 ? '从今天开始' : '天连续');
+  set('#tWords', P.todayWords());
+  set('#tGoal', P.goal());
+  const pct = P.todayPct();
+  set('#tPct', pct + '%');
+  const bar = document.querySelector('#tBar');
+  if (bar) bar.style.width = pct + '%';
+  const q = P.todayQuestions();
+  set('#ttGrammar', q ? '今天已练 ' + q + ' 题，继续专攻弱项' : '练 10 题，专攻正确率低的');
+  const due = P.srsStats().due;
+  set('#ttWords', due ? '今天有 ' + due + ' 个词到期' : '按遗忘曲线学新词');
+}
+refresh();
+document.addEventListener('pet:daily', refresh);
+document.addEventListener('pet:srs', refresh);
+`,
   }));
 }
 
@@ -302,9 +363,9 @@ function buildWords() {
 
 <section class="section" style="margin-top:28px">
   <div class="kv">
-    <div class="k"><b>${STATS.core}</b><span>核心（中考/高考高频）</span><div class="bar"><i style="width:${Math.round(STATS.core / STATS.total * 100)}%"></i></div></div>
-    <div class="k"><b>${STATS.pet}</b><span>常考（B1 典型）</span><div class="bar warn"><i style="width:${Math.round(STATS.pet / STATS.total * 100)}%"></i></div></div>
-    <div class="k"><b>${STATS.ext}</b><span>拓展（低频大纲词）</span><div class="bar rose"><i style="width:${Math.round(STATS.ext / STATS.total * 100)}%"></i></div></div>
+    <div class="k"><b>${STATS.b1}</b><span>高频（卷面最常见，先背这些）</span><div class="bar"><i style="width:${Math.round(STATS.b1 / STATS.total * 100)}%"></i></div></div>
+    <div class="k"><b>${STATS.b2}</b><span>中频（阅读与写作主力）</span><div class="bar warn"><i style="width:${Math.round(STATS.b2 / STATS.total * 100)}%"></i></div></div>
+    <div class="k"><b>${STATS.b3}</b><span>低频（认识即可）</span><div class="bar rose"><i style="width:${Math.round(STATS.b3 / STATS.total * 100)}%"></i></div></div>
     <div class="k" id="kKnown"><b>—</b><span>你已掌握</span><div class="bar"><i style="width:0%"></i></div></div>
   </div>
 </section>
@@ -315,9 +376,9 @@ function buildWords() {
   </div>
   <div class="chips" style="margin-bottom:20px">
     <button class="chip on" data-filter="all">全部</button>
-    <button class="chip" data-filter="core">核心</button>
-    <button class="chip" data-filter="pet">常考</button>
-    <button class="chip" data-filter="ext">拓展</button>
+    <button class="chip" data-filter="b1">高频</button>
+    <button class="chip" data-filter="b2">中频</button>
+    <button class="chip" data-filter="b3">低频</button>
     <button class="chip" data-filter="phrase">仅短语</button>
     <button class="chip" data-filter="new">未掌握</button>
     <button class="chip" data-filter="known">已掌握</button>
@@ -396,9 +457,9 @@ function buildTopics() {
   </div>
   <div class="chips" style="margin-bottom:20px">
     <button class="chip on" data-filter="all">全部</button>
-    <button class="chip" data-filter="core">核心</button>
-    <button class="chip" data-filter="pet">常考</button>
-    <button class="chip" data-filter="ext">拓展</button>
+    <button class="chip" data-filter="b1">高频</button>
+    <button class="chip" data-filter="b2">中频</button>
+    <button class="chip" data-filter="b3">低频</button>
     <button class="chip" data-filter="new">未掌握</button>
   </div>
   <div id="wlist"></div>
@@ -573,7 +634,21 @@ function buildStudy() {
 </div>
 
 <section class="section" style="margin-top:26px">
-  <div class="kv" id="srsKv">
+  <div class="card" style="padding:20px 22px">
+    <div class="today-goal-row">
+      <span>今日已背 <b id="kToday">0</b> / <b id="kGoal">20</b> 个词 · 连续 <b id="kStreak">0</b> 天</span>
+      <span class="today-pct" id="kPct">0%</span>
+    </div>
+    <div class="bar"><i id="kBar" style="width:0%"></i></div>
+    <div class="chips" style="margin-top:14px" id="goalChips">
+      <span class="quiz-count" style="margin-right:6px">每日目标</span>
+      <button class="chip" data-goal="10">10</button>
+      <button class="chip on" data-goal="20">20</button>
+      <button class="chip" data-goal="30">30</button>
+      <button class="chip" data-goal="50">50</button>
+    </div>
+  </div>
+  <div class="kv" id="srsKv" style="margin-top:14px">
     <div class="k"><b id="kDue">—</b><span>今天待复习</span></div>
     <div class="k"><b id="kTotal">—</b><span>记忆库总词数</span></div>
     <div class="k"><b id="kLeft">—</b><span>本范围内还没背过</span></div>
@@ -600,7 +675,7 @@ function buildStudy() {
 
     <div class="kicker" style="margin-top:18px">词源范围</div>
     <div class="chips" id="srcChips">
-      <button class="chip on" data-s="core">核心词（${STATS.core}）</button>
+      <button class="chip on" data-s="b1">高频词（${STATS.b1}）</button>
       <button class="chip" data-s="all">全部（${STATS.total}）</button>
       <button class="chip" data-s="phrase">只背短语（${STATS.phrases}）</button>
     </div>
@@ -632,7 +707,7 @@ let card = 'recall', mode = 'mix', src = 'core', len = 20;
 
 function refreshKv() {
   const s = P.srsStats();
-  const pool = src === 'core' ? WORDS.filter(w => w.tag === 'core')
+  const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
              : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
              : WORDS;
   // 「没碰过」只统计当前范围里还没进记忆库的词，避免和其他两栏口径混淆
@@ -647,6 +722,25 @@ function refreshKv() {
 refreshKv();
 document.addEventListener('pet:srs', refreshKv);
 
+function refreshDaily() {
+  const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
+  set('#kToday', P.todayWords());
+  set('#kGoal', P.goal());
+  set('#kStreak', P.streak());
+  const pct = P.todayPct();
+  set('#kPct', pct + '%');
+  const bar = document.querySelector('#kBar');
+  if (bar) bar.style.width = pct + '%';
+  document.querySelectorAll('#goalChips .chip').forEach(c => {
+    c.classList.toggle('on', parseInt(c.getAttribute('data-goal'), 10) === P.goal());
+  });
+}
+refreshDaily();
+document.addEventListener('pet:daily', refreshDaily);
+document.querySelectorAll('#goalChips .chip').forEach(c => {
+  c.addEventListener('click', () => { P.setGoal(c.getAttribute('data-goal')); refreshDaily(); });
+});
+
 function pick(sel, attr, cb) {
   document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
     document.querySelectorAll(sel + ' .chip').forEach(x => x.classList.remove('on'));
@@ -659,7 +753,7 @@ pick('#srcChips', 'data-s', v => { src = v; refreshKv(); });
 pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
 
 document.querySelector('#startBtn').addEventListener('click', () => {
-  const pool = src === 'core' ? WORDS.filter(w => w.tag === 'core')
+  const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
              : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
              : WORDS;
   document.querySelector('#setup').style.display = 'none';
@@ -1068,9 +1162,9 @@ function buildTraps() {
    ========================================================== */
 function buildStats() {
   const tagRows = [
-    ['核心（高频必背）', STATS.core],
-    ['常考（B1 典型）', STATS.pet],
-    ['拓展（低频大纲词）', STATS.ext],
+    ['高频 b1（卷面最常见）', STATS.b1],
+    ['中频 b2（阅读写作主力）', STATS.b2],
+    ['低频 b3（认识即可）', STATS.b3],
   ];
   const topicRows = TOPIC_SORTED.map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.official)}</td><td style="text-align:right">${t.n}</td></tr>`).join('');
   const gramRows = GRAMMAR.map((g) => {
@@ -1132,7 +1226,7 @@ function buildStats() {
   <div class="note" style="font-style:normal">
     <b>词表</b>：源自 Cambridge University Press 发布的 <i>B1 Preliminary and B1 Preliminary for Schools Vocabulary List</i>（August 2025），正文按字母序的词条 + 附录 2 的 23 个话题表。附录 1 的 word sets（数字、星期、月份、季节、国家/国籍、大洲）为封闭清单，未逐条计入词条总数。<br><br>
     <b>中文释义</b>：主数据来自 ECDICT 开源英汉词典，按官方词性优先选取义项，并对最高频的功能词与多义动词（go / take / get / make 等约 300 条）做了人工覆盖校正，避免词典里"打赌/保释金"这类非常用义项干扰。<br><br>
-    <b>频档</b>：核心 = 中考或高考大纲词，或在 Oxford 3000 / Collins 3 星以上；常考 = 语料词频在前 25000；其余为拓展。这是启发式分档，不是官方 CEFR 标注。<br><br>
+    <b>频档</b>：按真实语料词频（ECDICT 收录的 COCA / BNC 词频）分三档 —— 高频 b1（词频 ≤ 1000，约 900 词）、中频 b2（≤ 5000，约 1800 词）、低频 b3（其余，约 400 词）。词表默认按词频升序，也就是<b>最该先背的词排在最前面</b>。这是启发式分档，不是官方 CEFR 标注。<br><br>
     <b>语法与题目</b>：按 B1 Preliminary 的公开考试说明（Reading Part 5 多项选择完形、Part 6 开放式完形、Writing 的邮件与文章任务）整理，为本站原创内容，非官方出版材料。
   </div>
 </section>
@@ -1147,42 +1241,42 @@ function buildPlan() {
   const weeks = [
     {
       w: 1, title: '时态地基',
-      vocab: '核心词 1–650（按话题：日常、家庭、时间）',
+      vocab: '高频词 1–250（词频最靠前的那批）',
       grammar: ['tense', 'passive'],
       focus: '把「一般现在 / 进行 / 过去」三种时的信号词认熟，先把被动的基本公式记牢（be + 过去分词）。',
       drill: '做「动词时态」全部 45 题，记录错题考点。',
     },
     {
       w: 2, title: '时态进阶 + 非谓语',
-      vocab: '核心词 651–1300（教育、娱乐、食物）',
+      vocab: '高频词 251–500',
       grammar: ['tense', 'nonfinite'],
       focus: '现在完成 vs 一般过去是这一周的核心。非谓语只记「哪些动词后接 to do、哪些接 doing」两列清单。',
       drill: '做「非谓语动词」全部题 + 时态错题重做一遍。',
     },
     {
       w: 3, title: '情态动词 + 条件句',
-      vocab: '核心词 1301–1950（健康、购物、交通）',
+      vocab: '高频词 501–750',
       grammar: ['modal', 'conditional'],
       focus: "mustn't / don't have to 与 can't be 的区分。条件句只抓两点：主将从现、If I were you。",
       drill: '情态与条件两个族全部题。',
     },
     {
       w: 4, title: '名词冠词 + 代词',
-      vocab: '核心词 1951–2578（工作、自然、情感）',
+      vocab: '高频词 751–907 + 中频词入场',
       grammar: ['noun', 'pronoun'],
       focus: '不可数名词清单（information / advice / furniture / news / equipment / luggage）要能默写。a/an 按音素判断。',
       drill: '名词冠词 18 题 + 代词 15 题，错题写进自己的清单。',
     },
     {
       w: 5, title: '形容词副词 + 介词',
-      vocab: '常考词 251（B1 典型高频）',
+      vocab: '中频词 b2（约 1800 词，按话题挑重点）',
       grammar: ['adjadv', 'prep'],
       focus: '比较级不规则表；hard/hardly、late/lately 这类形副同形要背死。介词固定搭配整理成一张表。',
       drill: '两个族全部题；把错的介词搭配单独抄一遍。',
     },
     {
       w: 6, title: '从句',
-      vocab: '拓展词 280 + 短语 266',
+      vocab: '低频词 b3（约 400 词）+ 短语 266',
       grammar: ['clause'],
       focus: '宾语从句「陈述语序 + 时态呼应」；状语从句不要 although+but / because+so 连用；定语从句 which vs where。',
       drill: '从句全部题；重点做改错题型（挑出正确句）。',
@@ -1226,15 +1320,15 @@ function buildPlan() {
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 计划</div>
   <h1>8 周备考计划</h1>
-  <p class="lede">按「词汇 + 语法 + 练习」三条线并行推进。每周的词汇量按核心词 ${STATS.core} 条 ÷ 4 周铺开，
+  <p class="lede">按「词汇 + 语法 + 练习」三条线并行推进。每周的词汇量按高频词 ${STATS.b1} 条 ÷ 4 周铺开，
   语法按依赖关系排序（先时态再非谓语，先条件句再从句）。不用严格照搬，但顺序建议保持。</p>
 </div>
 
 <section class="section" style="margin-top:24px">
   <div class="kv">
     <div class="k"><b>8</b><span>周</span></div>
-    <div class="k"><b>${STATS.core}</b><span>核心词（前 4 周）</span></div>
-    <div class="k"><b>${STATS.pet + STATS.ext}</b><span>常考 + 拓展（第 5–6 周）</span></div>
+    <div class="k"><b>${STATS.b1}</b><span>高频词（前 4 周）</span></div>
+    <div class="k"><b>${STATS.b2 + STATS.b3}</b><span>中低频（第 5–6 周）</span></div>
     <div class="k"><b>${Q_STATS.total}</b><span>练习题</span></div>
   </div>
   <div class="note" style="margin-top:20px">每天建议 30–40 分钟：背单词 10 分钟（做完今天到期的词）+ 读一个语法考点 10 分钟 + 语法练习 15 分钟。
@@ -1284,7 +1378,7 @@ function main() {
   const msg = [
     '构建完成',
     `  词条 ${STATS.total}（单词 ${STATS.words} / 短语 ${STATS.phrases}）`,
-    `  频档 核心 ${STATS.core} / 常考 ${STATS.pet} / 拓展 ${STATS.ext}`,
+    `  频档 高频 ${STATS.b1} / 中频 ${STATS.b2} / 低频 ${STATS.b3}`,
     `  话题 ${TOPIC_SORTED.length}（共 ${STATS.topics}，有词的 ${TOPIC_SORTED.length}）`,
     `  语法 ${GRAMMAR_STATS.sections} 族 / ${GRAMMAR_STATS.topics} 考点 / ${GRAMMAR_STATS.traps} 条易错`,
     `  题目 ${Q_STATS.total}（选择 ${Q_STATS.choice} / 改错 ${Q_STATS.correct} / 填空 ${Q_STATS.fill}）`,

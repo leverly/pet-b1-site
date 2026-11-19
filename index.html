@@ -50,6 +50,44 @@
   </div>
 </section>
 
+<section class="section" id="today">
+  <div class="section-head">
+    <h2>今天做什么</h2>
+    <span class="sub">不用想，照着这张卡做完就算达标</span>
+  </div>
+  <div class="card today-card">
+    <div class="today-top">
+      <div class="today-streak">
+        <b id="tStreak">0</b><span id="tStreakLabel">天连续</span>
+      </div>
+      <div class="today-goal">
+        <div class="today-goal-row">
+          <span>今日单词 <b id="tWords">0</b> / <b id="tGoal">20</b></span>
+          <span class="today-pct" id="tPct">0%</span>
+        </div>
+        <div class="bar"><i id="tBar" style="width:0%"></i></div>
+      </div>
+    </div>
+    <div class="today-tasks">
+      <a class="today-task" href="quiz.html" id="taskWords">
+        <span class="tt-ico">Aa</span>
+        <span class="tt-main"><b>背单词</b><small id="ttWords">先把今天到期的词过完</small></span>
+        <span class="tt-go">→</span>
+      </a>
+      <a class="today-task" href="review.html" id="taskGrammar">
+        <span class="tt-ico">§</span>
+        <span class="tt-main"><b>语法练习</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
+        <span class="tt-go">→</span>
+      </a>
+      <a class="today-task" href="traps.html" id="taskTraps">
+        <span class="tt-ico">✕</span>
+        <span class="tt-main"><b>扫易错点</b><small>睡前 3 分钟，看一组 ✕/✓</small></span>
+        <span class="tt-go">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
 <section class="section">
   <div class="section-head">
     <h2>三条主线</h2>
@@ -59,8 +97,8 @@
     <a class="card" href="words.html">
       <div class="card-ico">Aa</div>
       <h3>全量词表 · 3109 条</h3>
-      <p class="desc">严格取自 Cambridge B1 Preliminary 2025 官方词汇表：2843 个单词 + 266 个短语。每条带中文释义、音标、词性、官方例句，按核心/常考/拓展三档标注，可按话题与掌握状态筛选。</p>
-      <div class="meta" style="margin-top:12px">2578 核心 · 251 常考 · 280 拓展</div>
+      <p class="desc">严格取自 Cambridge B1 Preliminary 2025 官方词汇表：2843 个单词 + 266 个短语。每条带中文释义、音标、词性、官方例句；按真实语料词频分高频/中频/低频三档，默认高频优先排序，可按话题与掌握状态筛选。</p>
+      <div class="meta" style="margin-top:12px">907 高频 · 1782 中频 · 420 低频</div>
     </a>
     <a class="card" href="grammar.html">
       <div class="card-ico">§</div>
@@ -194,7 +232,29 @@
   </div>
 </footer>
 <script src="assets/app.js"></script>
-
+<script>window.PET_DATA=window.PET_DATA||{};
+window.PET_DATA.STATS={"words":2843,"phrases":266,"total":3109,"b1":907,"b2":1782,"b3":420,"topics":23,"withExample":466};</script><script>
+const P = window.PET;
+function refresh() {
+  const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
+  const st = P.streak();
+  set('#tStreak', st);
+  set('#tStreakLabel', st === 0 ? '从今天开始' : '天连续');
+  set('#tWords', P.todayWords());
+  set('#tGoal', P.goal());
+  const pct = P.todayPct();
+  set('#tPct', pct + '%');
+  const bar = document.querySelector('#tBar');
+  if (bar) bar.style.width = pct + '%';
+  const q = P.todayQuestions();
+  set('#ttGrammar', q ? '今天已练 ' + q + ' 题，继续专攻弱项' : '练 10 题，专攻正确率低的');
+  const due = P.srsStats().due;
+  set('#ttWords', due ? '今天有 ' + due + ' 个词到期' : '按遗忘曲线学新词');
+}
+refresh();
+document.addEventListener('pet:daily', refresh);
+document.addEventListener('pet:srs', refresh);
+</script>
 
 </body>
 </html>

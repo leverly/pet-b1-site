@@ -82,6 +82,55 @@
     });
     return { total: keys.length, due: due, learning: learning, mature: mature, reviews: sum };
   };
+  /* ---------------- 每日学习量 + 连续天数 ----------------
+     备考产品必须有「今天做了多少 / 连续坚持几天」，
+     否则用户不知道今天算不算完成、也看不到势头。
+     -------------------------------------------------------- */
+  var DAYLOG_KEY = 'pet-daylog-v1';
+  var daylog = load(DAYLOG_KEY, {}) || {};
+  var GOAL_KEY = 'pet-goal-v1';
+  var goal = load(GOAL_KEY, 20) || 20;   // 每日单词目标
+
+  function dayKey(d) {
+    var x = d || new Date();
+    return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+  }
+  P.todayKey = function () { return dayKey(); };
+  P.todayWords = function () { return (daylog[dayKey()] || {}).words || 0; };
+  P.todayQuestions = function () { return (daylog[dayKey()] || {}).questions || 0; };
+  P.goal = function () { return goal; };
+  P.setGoal = function (n) {
+    goal = Math.max(5, Math.min(200, parseInt(n, 10) || 20));
+    store(GOAL_KEY, goal);
+    document.dispatchEvent(new CustomEvent('pet:daily', { detail: {} }));
+    return goal;
+  };
+  P.todayPct = function () {
+    return goal ? Math.min(100, Math.round(P.todayWords() / goal * 100)) : 0;
+  };
+  P.bumpDay = function (kind, n) {
+    var k = dayKey();
+    var d = daylog[k] || (daylog[k] = {});
+    d[kind] = (d[kind] || 0) + (n || 1);
+    store(DAYLOG_KEY, daylog);
+    document.dispatchEvent(new CustomEvent('pet:daily', { detail: { kind: kind } }));
+  };
+  /** 连续学习天数：从今天往前数，只要某天有记录就继续 */
+  P.streak = function () {
+    var n = 0, d = new Date();
+    for (var i = 0; i < 3660; i++) {
+      var rec = daylog[dayKey(d)];
+      var active = rec && ((rec.words || 0) + (rec.questions || 0) > 0);
+      // 今天还没学习不算断签（避免早上打开就看到清零）
+      if (!active && i === 0) { d.setDate(d.getDate() - 1); continue; }
+      if (!active) break;
+      n++;
+      d.setDate(d.getDate() - 1);
+    }
+    return n;
+  };
+  P.resetDaily = function () { daylog = {}; store(DAYLOG_KEY, daylog); };
+
   P.srsRate = function (w, grade) {
     var k = String(w).toLowerCase();
     var r = srs[k] || { ease: 2.5, ivl: 0, due: 0, reps: 0, lapses: 0 };
@@ -102,6 +151,7 @@
     r.last = Date.now();
     srs[k] = r;
     store(SRS_KEY, srs);
+    P.bumpDay('words', 1);
     document.dispatchEvent(new CustomEvent('pet:srs', { detail: { word: w } }));
     return r;
   };
@@ -132,6 +182,7 @@
       else qlog.wrongIds[id] = { t: topic, at: Date.now() };
     }
     store(QLOG_KEY, qlog);
+    P.bumpDay('questions', 1);
     document.dispatchEvent(new CustomEvent('pet:qlog', { detail: { topic: topic, ok: ok } }));
   };
   P.qTopicStats = function () {
@@ -253,16 +304,21 @@
   P.renderWordList = function (opts) {
     var host = document.querySelector(opts.mount);
     if (!host) return;
-    var all = opts.words || [];
+    // 默认按词频升序 = 最常出现的词排前面，这才是备考该有的顺序
+    var all = (opts.words || []).slice().sort(function (a, b) {
+      var fa = a.frq || 999999, fb = b.frq || 999999;
+      if (fa !== fb) return fa - fb;
+      return a.w.toLowerCase() < b.w.toLowerCase() ? -1 : 1;
+    });
     var pageSize = opts.pageSize || 40;
     var page = 0;
     var query = '';
     var filter = 'all';
 
     function match(w) {
-      if (filter === 'core' && w.tag !== 'core') return false;
-      if (filter === 'pet' && w.tag !== 'pet') return false;
-      if (filter === 'ext' && w.tag !== 'ext') return false;
+      if (filter === 'b1' && w.tag !== 'b1') return false;
+      if (filter === 'b2' && w.tag !== 'b2') return false;
+      if (filter === 'b3' && w.tag !== 'b3') return false;
       if (filter === 'phrase' && w.t !== 'phrase') return false;
       if (filter === 'known' && !P.isKnown(w.w)) return false;
       if (filter === 'new' && P.isKnown(w.w)) return false;
@@ -274,8 +330,8 @@
     }
 
     function rowHtml(w) {
-      var tagCls = w.tag === 'core' ? 'tag-core' : w.tag === 'pet' ? 'tag-pet' : '';
-      var tagTxt = w.tag === 'core' ? '核心' : w.tag === 'pet' ? '常考' : '拓展';
+      var tagCls = w.tag === 'b1' ? 'tag-b1' : w.tag === 'b2' ? 'tag-b2' : 'tag-b3';
+      var tagTxt = w.tag === 'b1' ? '高频' : w.tag === 'b2' ? '中频' : '低频';
       var known = P.isKnown(w.w) ? ' known' : '';
       var h = '<div class="wrow' + known + '" data-w="' + esc(w.w) + '">';
       var al = (w.al && w.al.length) ? '<span class="ph" style="margin-left:2px">= ' + esc(w.al[0]) + '</span>' : '';
