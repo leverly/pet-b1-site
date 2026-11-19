@@ -107,25 +107,47 @@
   };
   P.srsReset = function () { srs = {}; store(SRS_KEY, srs); document.dispatchEvent(new CustomEvent('pet:srs', { detail: { reset: true } })); };
 
-  /* ---------------- 答题记录 ---------------- */
-  var QLOG_KEY = 'pet-qlog-v1';
-  var qlog = load(QLOG_KEY, {}) || {};
+  /* ---------------- 答题记录 ----------------
+     topicStats: 按考点累计正确率（驱动「最弱考点」推荐）
+     wrongIds:   错题本，记录具体题号，答对一次即移出
+     ---------------------------------------- */
+  var QLOG_KEY = 'pet-qlog-v2';
+  var qlog = load(QLOG_KEY, null);
+  if (!qlog || typeof qlog !== 'object' || !qlog.topicStats) {
+    // 兼容旧结构 {topic:{n,ok}} -> 新结构
+    var legacy = qlog && qlog.topicStats === undefined ? qlog : {};
+    qlog = { topicStats: {}, wrongIds: {} };
+    Object.keys(legacy).forEach(function (t) {
+      var r = legacy[t];
+      if (r && typeof r.n === 'number') qlog.topicStats[t] = { n: r.n, ok: r.ok || 0 };
+    });
+  }
   P.qLog = function () { return qlog; };
-  P.qRecord = function (topic, ok) {
-    qlog[topic] = qlog[topic] || { n: 0, ok: 0 };
-    qlog[topic].n++;
-    if (ok) qlog[topic].ok++;
+  P.qRecord = function (topic, ok, id) {
+    var r = qlog.topicStats[topic] = qlog.topicStats[topic] || { n: 0, ok: 0 };
+    r.n++;
+    if (ok) r.ok++;
+    if (id) {
+      if (ok) delete qlog.wrongIds[id];
+      else qlog.wrongIds[id] = { t: topic, at: Date.now() };
+    }
     store(QLOG_KEY, qlog);
+    document.dispatchEvent(new CustomEvent('pet:qlog', { detail: { topic: topic, ok: ok } }));
   };
   P.qTopicStats = function () {
     var out = [];
-    Object.keys(qlog).forEach(function (t) {
-      var r = qlog[t];
+    Object.keys(qlog.topicStats).forEach(function (t) {
+      var r = qlog.topicStats[t];
       out.push({ topic: t, n: r.n, ok: r.ok, rate: r.n ? r.ok / r.n : 0 });
     });
     return out;
   };
-  P.qReset = function () { qlog = {}; store(QLOG_KEY, qlog); };
+  P.wrongIds = function () { return Object.keys(qlog.wrongIds || {}); };
+  P.qClearWrong = function (id) {
+    if (id) delete qlog.wrongIds[id]; else qlog.wrongIds = {};
+    store(QLOG_KEY, qlog);
+  };
+  P.qReset = function () { qlog = { topicStats: {}, wrongIds: {} }; store(QLOG_KEY, qlog); };
 
   /* ---------------- DOM 就绪 ---------------- */
   function ready(fn) {
@@ -470,7 +492,7 @@
       nx.disabled = false;
       nx.style.opacity = '';
       nx.focus();
-      if (P.qRecord) P.qRecord(q.topic, ok);
+      if (P.qRecord) P.qRecord(q.topic, ok, q.id);
       if (opts.onAnswer) opts.onAnswer(q, ok);
     }
 
@@ -500,142 +522,45 @@
   };
 
 
-  /* ==========================================================
-     词汇自测：从词表自动生成四选一（认词义 / 看义选词）
-     干扰项优先取同一词性、同一话题的词，避免一眼排除
-     ========================================================== */
-  P.vocabQuiz = function (opts) {
-    var host = document.querySelector(opts.mount);
-    if (!host) return;
-    var pool = (opts.words || []).filter(function (w) { return w.zh && w.zh.length; });
-    if (pool.length < 8) { host.innerHTML = '<div class="empty"><b>词量不足</b></div>'; return; }
-    var direction = opts.direction || 'zh';   // zh = 看词选义；en = 看义选词
-    var limit = opts.limit || 20;
-    var order = shuffle(pool.slice());
-    var queue = [];
-    var i = 0, correct = 0, streak = 0, best = 0, answered = false;
-
-    // 释义过于接近（共享同一义项片段）会让选择题失去区分度
-    function tooSimilar(a, b) {
-      if (!a || !b) return false;
-      var seg = function (t) {
-        return t.split(/[；;,，、]/).map(function (x) { return x.trim(); }).filter(Boolean);
-      };
-      var sa = seg(a), sb = seg(b);
-      for (var i = 0; i < sa.length; i++) {
-        for (var j = 0; j < sb.length; j++) {
-          if (sa[i].length >= 2 && sa[i] === sb[j]) return true;
-        }
+  /* ----------------------------------------------------------
+     干扰项挑选：优先同话题 + 同词性，并排除释义高度重叠的词
+     ---------------------------------------------------------- */
+  function glossSegments(t) {
+    return String(t || '').split(/[；;,，、]/).map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  function tooSimilar(a, b) {
+    if (!a || !b) return false;
+    var sa = glossSegments(a), sb = glossSegments(b);
+    for (var i = 0; i < sa.length; i++) {
+      for (var j = 0; j < sb.length; j++) {
+        if (sa[i].length >= 2 && sa[i] === sb[j]) return true;
       }
-      return false;
     }
-
-    function pickDistractors(target, n) {
-      var sameTopic = [], samePos = [], others = [];
-      var taken = [target.zh];
-      pool.forEach(function (w) {
-        if (w.w === target.w) return;
-        if (w.zh === target.zh) return;
-        if (taken.some(function (t) { return tooSimilar(t, w.zh); })) return;
-        var shareTopic = (w.tp || []).some(function (t) { return (target.tp || []).indexOf(t) >= 0; });
-        if (shareTopic && w.pos === target.pos) sameTopic.push(w);
-        else if (w.pos === target.pos) samePos.push(w);
-        else others.push(w);
-      });
-      var out = [];
-      [sameTopic, samePos, others].forEach(function (arr) {
-        var a = shuffle(arr.slice());
-        for (var k = 0; k < a.length && out.length < n; k++) {
-          if (taken.some(function (t) { return tooSimilar(t, a[k].zh); })) continue;
-          taken.push(a[k].zh);
-          out.push(a[k]);
-        }
-      });
-      return out;
-    }
-
-    function build() {
-      queue = order.slice(0, limit).map(function (w) {
-        var ds = pickDistractors(w, 3);
-        var optsArr = [w].concat(ds);
-        shuffle(optsArr);
-        return { w: w, opts: optsArr, ans: optsArr.indexOf(w) };
-      });
-      i = 0; correct = 0; streak = 0; best = 0;
-      draw();
-    }
-
-    function draw() {
-      if (i >= queue.length) return done();
-      answered = false;
-      var q = queue[i];
-      var prompt = direction === 'zh'
-        ? '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(q.w.w) + '</div>' +
-          (q.w.ph ? '<div class="fph">/' + esc(q.w.ph) + '/</div>' : '') +
-          '<div class="fpos">' + esc(q.w.posZh) + '</div>' +
-          '<div style="font-size:.84rem;color:var(--text-3);margin-top:14px">选出正确的中文释义</div>'
-        : '<div style="font-size:1.15rem;line-height:1.6;margin-bottom:6px">' + esc(q.w.zh) + '</div>' +
-          '<div style="font-size:.84rem;color:var(--text-3)">选出对应的单词</div>';
-
-      var h = '<div class="flash-shell">';
-      h += '<div class="quiz-top"><div class="quiz-progress"><i style="width:' + (i / queue.length * 100) + '%"></i></div>' +
-           '<span class="quiz-count">' + (i + 1) + ' / ' + queue.length + '</span>' +
-           '<span class="quiz-count">连击 ' + streak + '</span></div>';
-      h += '<div class="fcard" style="justify-content:flex-start;padding-top:36px;text-align:center;min-height:0">' + prompt + '</div>';
-      h += '<div class="qopts" style="margin-top:16px">';
-      q.opts.forEach(function (o, k) {
-        var label = direction === 'zh' ? (o.zh || '') : o.w;
-        h += '<button class="qopt" data-k="' + k + '"><span class="key">' + 'ABCD'[k] + '</span><span>' + esc(label) + '</span></button>';
-      });
-      h += '</div><div id="vfb"></div></div>';
-      host.innerHTML = h;
-
-      host.querySelectorAll('.qopt').forEach(function (b) {
-        b.addEventListener('click', function () { judge(parseInt(b.getAttribute('data-k'), 10)); });
-      });
-    }
-
-    function judge(k) {
-      if (answered) return;
-      answered = true;
-      var q = queue[i];
-      var ok = k === q.ans;
-      host.querySelectorAll('.qopt').forEach(function (b) {
-        var bi = parseInt(b.getAttribute('data-k'), 10);
-        b.classList.add('locked');
-        if (bi === q.ans) b.classList.add('right');
-        else if (bi === k) b.classList.add('wrong');
-      });
-      if (ok) { correct++; streak++; if (streak > best) best = streak; }
-      else streak = 0;
-      // 自测结果也喂给记忆库：答对算"会了"，答错算"忘了"
-      if (opts.feedSrs) P.srsRate(q.w.w, ok ? 2 : 0);
-      var fb = host.querySelector('#vfb');
-      fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
-        (ok ? '✓ 对了' + (streak >= 3 ? ' · 连击 ' + streak : '') : '✗ 正确答案：' + esc(direction === 'zh' ? q.w.zh : q.w.w)) +
-        '</b>' + esc(q.w.w) + ' · ' + esc(q.w.posZh) + ' · ' + esc(q.w.zh) +
-        (q.w.ex && q.w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.84rem">' + esc(q.w.ex[0]) + '</div>' : '') +
-        '</div>' +
-        '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="vnext">下一题 →</button></div>';
-      fb.querySelector('#vnext').addEventListener('click', function () { i++; draw(); });
-      fb.querySelector('#vnext').focus();
-    }
-
-    function done() {
-      var rate = queue.length ? Math.round(correct / queue.length * 100) : 0;
-      host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
-        '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮结果</div>' +
-        '<div style="font-family:var(--serif);font-size:3rem;font-weight:600;margin:10px 0">' + rate + '<span style="font-size:1.3rem">%</span></div>' +
-        '<div style="color:var(--text-2)">答对 ' + correct + ' / ' + queue.length + ' · 最高连击 ' + best + '</div>' +
-        '<div style="margin-top:26px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-          '<button class="btn primary" id="vagain">再来一轮</button>' +
-          '<a class="btn ghost" href="review.html">回到复习</a>' +
-        '</div></div>';
-      host.querySelector('#vagain').addEventListener('click', function () { order = shuffle(order); build(); });
-    }
-
-    build();
-  };
+    return false;
+  }
+  function pickDistractors(pool, target, n) {
+    var sameTopic = [], samePos = [], others = [];
+    var taken = [target.zh];
+    pool.forEach(function (w) {
+      if (w.w === target.w || !w.zh) return;
+      if (tooSimilar(w.zh, target.zh)) return;
+      var share = (w.tp || []).some(function (t) { return (target.tp || []).indexOf(t) >= 0; });
+      if (share && w.pos === target.pos) sameTopic.push(w);
+      else if (w.pos === target.pos) samePos.push(w);
+      else others.push(w);
+    });
+    var out = [];
+    [sameTopic, samePos, others].forEach(function (arr) {
+      var a = shuffle(arr.slice());
+      for (var k = 0; k < a.length && out.length < n; k++) {
+        if (taken.some(function (t) { return tooSimilar(t, a[k].zh); })) continue;
+        taken.push(a[k].zh);
+        out.push(a[k]);
+      }
+    });
+    return out;
+  }
+  P.pickDistractors = pickDistractors;
 
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
@@ -647,138 +572,230 @@
   P.shuffle = shuffle;
 
   /* ==========================================================
-     闪卡（SRS）
+     背单词（SRS 驱动）
+     两种模式：
+       recall — 看词回想，翻卡后自评「忘了/困难/会了/很熟」
+       choice — 四选一，系统自动判分，答错自动记为「忘了」
+     评级统一写入记忆库，决定下次出现的间隔
      ========================================================== */
-  P.flashcards = function (opts) {
+  P.wordStudy = function (opts) {
     var host = document.querySelector(opts.mount);
     if (!host) return;
-    var pool = (opts.words || []).slice();
+    var pool = (opts.words || []).filter(function (w) { return w.w; });
+    if (!pool.length) { host.innerHTML = '<div class="empty"><b>没有可学的词</b></div>'; return; }
+    var mode = opts.mode || 'due';          // due | new | mix
+    var card = opts.card || 'recall';       // recall | choice
     var queue = [], idx = 0, revealed = false;
-    var sessionN = 0, sessionOk = 0;
-    var mode = opts.mode || 'mix';
+    var sessionN = 0, sessionOk = 0, streak = 0, best = 0;
+    var answered = false, finished = false;
 
     function build() {
       var now = Date.now();
       var scored = pool.map(function (w) {
         var r = P.srsGet(w.w);
-        return { w: w, due: r ? r.due : 0, reps: r ? (r.reps || 0) : 0, has: !!r };
+        return { w: w, due: r ? r.due : 0, has: !!r, ivl: r ? (r.ivl || 0) : 0 };
       });
-      if (mode === 'due') {
-        scored = scored.filter(function (s) { return !s.has || (s.due || 0) <= now; });
-      } else if (mode === 'new') {
-        scored = scored.filter(function (s) { return !s.has; });
-      }
+      if (mode === 'due') scored = scored.filter(function (s) { return !s.has || (s.due || 0) <= now; });
+      else if (mode === 'new') scored = scored.filter(function (s) { return !s.has; });
       scored.sort(function (a, b) {
         if (mode === 'mix') {
-          // 到期的优先，其次新词，再其次熟练度低的
           var ad = (a.due || 0) <= now ? 0 : 1, bd = (b.due || 0) <= now ? 0 : 1;
           if (ad !== bd) return ad - bd;
           if (a.has !== b.has) return a.has ? 1 : -1;
         }
         return (a.due || 0) - (b.due || 0);
       });
-      queue = scored.slice(0, opts.limit || 25).map(function (s) { return s.w; });
+      queue = scored.slice(0, opts.limit || 20).map(function (s) { return s.w; });
       shuffle(queue);
-      idx = 0;
+      idx = 0; sessionN = 0; sessionOk = 0; streak = 0; best = 0; finished = false;
       draw();
     }
 
+    function header() {
+      return '<div class="quiz-top">' +
+        '<div class="quiz-progress"><i style="width:' + (queue.length ? idx / queue.length * 100 : 0) + '%"></i></div>' +
+        '<span class="quiz-count">' + Math.min(idx + 1, queue.length) + ' / ' + queue.length + '</span>' +
+        '<span class="quiz-count" id="qs">连击 ' + streak + '</span></div>';
+    }
+
     function draw() {
-      if (!queue.length) {
-        host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
-          '<div style="font-family:var(--serif);font-size:1.35rem;font-weight:600;margin-bottom:10px">今天没有到期的卡</div>' +
-          '<div style="color:var(--text-2);font-size:.92rem;line-height:1.7">' +
-            '按遗忘曲线的排期，暂时没有需要复习的词。<br>想多练的话，切到「只学新词」或「混合」模式。' +
-          '</div>' +
-          '<div style="margin-top:24px"><button class="btn primary" id="fswitch">切到混合模式</button></div></div>';
-        var b = host.querySelector('#fswitch');
-        if (b) b.addEventListener('click', function () { mode = 'mix'; build(); });
-        return;
-      }
+      if (!queue.length) return emptyState();
       if (idx >= queue.length) return done();
+      revealed = false; answered = false;
       var w = queue[idx];
-      revealed = false;
-      var h = '<div class="flash-shell">';
-      h += '<div class="quiz-top"><div class="quiz-progress"><i style="width:' + (idx / queue.length * 100) + '%"></i></div>' +
-           '<span class="quiz-count">' + (idx + 1) + ' / ' + queue.length + '</span>' +
-           '<span class="quiz-count">本轮 ' + sessionOk + ' 会</span></div>';
+      host.innerHTML = card === 'choice' ? choiceView(w) : recallView(w);
+      bindKeys();
+    }
+
+    function emptyState() {
+      host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
+        '<div style="font-family:var(--serif);font-size:1.35rem;font-weight:600;margin-bottom:10px">今天没有到期的词</div>' +
+        '<div style="color:var(--text-2);font-size:.92rem;line-height:1.7">按遗忘曲线的排期，暂时没有需要复习的词。<br>想多学的话，切到「只学新词」或「混合」模式。</div>' +
+        '<div style="margin-top:24px"><button class="btn primary" id="wsMix">切到混合模式</button></div></div>';
+      var b = host.querySelector('#wsMix');
+      if (b) b.addEventListener('click', function () { mode = 'mix'; build(); });
+    }
+
+    /* ---- 回想模式 ---- */
+    function recallView(w) {
+      var h = '<div class="flash-shell">' + header();
       h += '<div class="fcard">';
       h += '<div class="fword">' + esc(w.w) + '</div>';
       if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
-      h += '<div class="fpos">' + esc(w.posZh) + (w.tp && w.tp.length ? ' · ' + esc(w.tp.length) + ' 个话题' : '') + '</div>';
+      h += '<div class="fpos">' + esc(w.posZh) + (w.t === 'phrase' ? ' · 短语' : '') + '</div>';
       h += '<div id="frev"></div>';
-      h += '<div class="fhint">想一想意思，然后点「看答案」或按空格</div>';
+      h += '<div class="fhint">先想意思，再点「看答案」或按空格</div>';
       h += '</div>';
       h += '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="fshow">看答案 (空格)</button></div>';
       h += '</div>';
-      host.innerHTML = h;
-
-      host.querySelector('#fshow').addEventListener('click', reveal);
-      if (!host.__keybound) {
-        host.__keybound = 1;
-        document.addEventListener('keydown', function (e) {
-          if (!document.body.contains(host)) return;
-          var tag = (e.target.tagName || '').toLowerCase();
-          if (tag === 'input' || tag === 'textarea') return;
-          if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            if (!revealed) reveal();
-            else rate(2);
-          } else if (revealed && /^[1-4]$/.test(e.key)) {
-            rate(parseInt(e.key, 10) - 1);
-          }
-        });
-      }
+      setTimeout(function () {
+        var b = host.querySelector('#fshow');
+        if (b) b.addEventListener('click', revealRecall);
+      }, 0);
+      return h;
     }
 
-    function reveal() {
+    function revealRecall() {
       if (revealed) return;
       revealed = true;
       var w = queue[idx];
       var h = '<div class="fzh">' + esc(w.zh || '（无释义）') + '</div>';
       if (w.ex && w.ex.length) h += '<div class="fex">' + esc(w.ex[0]) + '</div>';
       host.querySelector('#frev').innerHTML = h;
-      host.querySelector('.fhint').style.display = 'none';
+      var hint = host.querySelector('.fhint');
+      if (hint) hint.style.display = 'none';
       var act = host.querySelector('.quiz-actions');
       act.innerHTML = '<div class="rate-row" style="width:100%">' +
         '<button class="rate again" data-g="0"><b>忘了</b><small>10 分钟</small></button>' +
         '<button class="rate hard" data-g="1"><b>困难</b><small>约 1 天</small></button>' +
         '<button class="rate good" data-g="2"><b>会了</b><small>按计划</small></button>' +
-        '<button class="rate easy" data-g="3"><b>很熟</b><small>更久</small></button>' +
-        '</div>';
+        '<button class="rate easy" data-g="3"><b>很熟</b><small>更久</small></button></div>';
       act.querySelectorAll('[data-g]').forEach(function (b) {
         b.addEventListener('click', function () { rate(parseInt(b.getAttribute('data-g'), 10)); });
       });
     }
 
-    function rate(g) {
-      var w = queue[idx];
+    /* ---- 四选一模式 ---- */
+    function choiceView(w) {
+      var ds = pickDistractors(pool, w, 3);
+      if (ds.length < 3) return recallView(w);   // 词池太小退回回想
+      var opts = [w].concat(ds);
+      shuffle(opts);
+      var ans = opts.indexOf(w);
+      var h = '<div class="flash-shell">' + header();
+      h += '<div class="fcard" style="justify-content:flex-start;padding-top:34px;text-align:center;min-height:0">';
+      h += '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(w.w) + '</div>';
+      if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
+      h += '<div class="fpos">' + esc(w.posZh) + '</div>';
+      h += '<div style="font-size:.84rem;color:var(--text-3);margin-top:14px">选出正确的释义</div></div>';
+      h += '<div class="qopts" style="margin-top:16px">';
+      opts.forEach(function (o, k) {
+        h += '<button class="qopt" data-k="' + k + '"' + (k === ans ? ' data-ans="1"' : '') + '>' +
+             '<span class="key">' + 'ABCD'[k] + '</span><span>' + esc(o.zh || '') + '</span></button>';
+      });
+      h += '</div><div id="wfb"></div></div>';
+      setTimeout(function () {
+        host.querySelectorAll('.qopt').forEach(function (b) {
+          b.addEventListener('click', function () {
+            judgeChoice(w, parseInt(b.getAttribute('data-k'), 10), Array.prototype.indexOf.call(host.querySelectorAll('.qopt'), b), ans);
+          });
+        });
+      }, 0);
+      return h;
+    }
+
+    function judgeChoice(w, k, clickedIdx, ans) {
+      if (answered) return;
+      answered = true;
+      var ok = k === ans;
+      host.querySelectorAll('.qopt').forEach(function (b) {
+        var bi = parseInt(b.getAttribute('data-k'), 10);
+        b.classList.add('locked');
+        if (bi === ans) b.classList.add('right');
+        else if (bi === k) b.classList.add('wrong');
+      });
+      if (ok) { streak++; if (streak > best) best = streak; } else streak = 0;
+      var fb = host.querySelector('#wfb');
+      fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
+        (ok ? '✓ 对了' + (streak >= 3 ? ' · 连击 ' + streak : '') : '✗ 正确答案：' + esc(w.zh)) + '</b>' +
+        esc(w.w) + (w.ph ? ' /' + esc(w.ph) + '/' : '') + ' · ' + esc(w.posZh) +
+        (w.ex && w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.84rem">' + esc(w.ex[0]) + '</div>' : '') +
+        '</div>' +
+        '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="wnext">下一词 →</button></div>';
+      var nx = fb.querySelector('#wnext');
+      nx.addEventListener('click', function () { idx++; draw(); });
+      nx.focus();
+      // 四选一自动评级：对了算「会了」，错了算「忘了」
+      recordAndRate(w, ok ? 2 : 0, ok);
+    }
+
+    function recordAndRate(w, g, countedOk) {
       P.srsRate(w.w, g);
       sessionN++;
-      if (g >= 2) sessionOk++;
-      if (g === 0) {
-        // 忘了的卡放到末尾再来一次
-        queue.push(w);
-      }
+      if (countedOk) sessionOk++;
+      if (opts.onRate) opts.onRate(w, g);
+      var st = host.querySelector('#qs');
+      if (st) st.textContent = '连击 ' + streak;
+    }
+
+    /* ---- 回想模式自评 ---- */
+    function rate(g) {
+      var w = queue[idx];
+      recordAndRate(w, g, g >= 2);
+      if (g === 0) queue.push(w);   // 忘了的稍后再来一次
       idx++;
       draw();
-      if (opts.onRate) opts.onRate(w, g);
+    }
+
+    function bindKeys() {
+      if (host.__keys) return;
+      host.__keys = 1;
+      document.addEventListener('keydown', function (e) {
+        if (!document.body.contains(host) || finished) return;
+        var tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea') return;
+        if (card === 'choice') {
+          if (/^[1-4]$/.test(e.key) && !answered) {
+            var b = host.querySelector('.qopt[data-k="' + (parseInt(e.key, 10) - 1) + '"]');
+            if (b) { e.preventDefault(); b.click(); }
+          } else if (e.key === 'Enter' && answered) {
+            var nx = host.querySelector('#wnext');
+            if (nx) { e.preventDefault(); nx.click(); }
+          }
+          return;
+        }
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          if (!revealed) revealRecall(); else rate(2);
+        } else if (revealed && /^[1-4]$/.test(e.key)) {
+          rate(parseInt(e.key, 10) - 1);
+        }
+      });
     }
 
     function done() {
+      finished = true;
       var st = P.srsStats();
       host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
         '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮完成</div>' +
-        '<div style="font-family:var(--serif);font-size:2.6rem;font-weight:600;margin:10px 0">' + sessionOk + '<span style="font-size:1.2rem;color:var(--text-3)"> / ' + sessionN + '</span></div>' +
-        '<div style="color:var(--text-2)">张卡已归档 · 库里共 ' + st.total + ' 张，今天还有 ' + st.due + ' 张到期</div>' +
+        '<div style="font-family:var(--serif);font-size:2.6rem;font-weight:600;margin:10px 0">' + sessionOk +
+          '<span style="font-size:1.2rem;color:var(--text-3)"> / ' + sessionN + '</span></div>' +
+        '<div style="color:var(--text-2)">个词记住了 · 最高连击 ' + best + '<br>' +
+          '记忆库共 ' + st.total + ' 个词，今天还有 ' + st.due + ' 个到期</div>' +
         '<div style="margin-top:26px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-          '<button class="btn primary" id="fagain">再来一轮</button>' +
+          '<button class="btn primary" id="wagain">再来一轮</button>' +
           '<a class="btn ghost" href="' + (opts.backHref || 'index.html') + '">返回</a>' +
         '</div></div>';
-      host.querySelector('#fagain').addEventListener('click', build);
+      host.querySelector('#wagain').addEventListener('click', build);
+      if (opts.onFinish) opts.onFinish({ ok: sessionOk, total: sessionN, best: best });
     }
 
     build();
     return { rebuild: build };
+  };
+
+  /* 兼容旧调用名 */
+  P.flashcards = function (opts) {
+    return P.wordStudy(Object.assign({}, opts, { card: opts.card || 'recall' }));
   };
 })();

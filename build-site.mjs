@@ -112,9 +112,8 @@ const NAV = [
   { href: 'words.html', label: '词汇', key: 'words' },
   { href: 'grammar.html', label: '语法', key: 'grammar' },
   { href: 'bank.html', label: '题库', key: 'bank' },
-  { href: 'quiz.html', label: '测验', key: 'quiz' },
-  { href: 'review.html', label: '复习', key: 'review' },
-  { href: 'voc.html', label: '词汇自测', key: 'voc' },
+  { href: 'quiz.html', label: '背单词', key: 'words-study' },
+  { href: 'review.html', label: '语法练习', key: 'grammar-drill' },
   { href: 'traps.html', label: '易错点', key: 'traps' },
   { href: 'plan.html', label: '计划', key: 'plan' },
   { href: 'stats.html', label: '数据', key: 'stats' },
@@ -146,13 +145,13 @@ const FOOTER = (base) => `<footer class="foot">
       <h4>词汇</h4>
       <a href="${base}words.html">全部词表</a>
       <a href="${base}topics/index.html">按话题</a>
-      <a href="${base}review.html">间隔重复复习</a>
+      <a href="${base}quiz.html">背单词</a>
     </div>
     <div class="col">
       <h4>语法</h4>
       <a href="${base}grammar.html">语法体系</a>
       <a href="${base}bank.html">易错题库</a>
-      <a href="${base}quiz.html">随机测验</a>
+      <a href="${base}review.html">语法练习</a>
     </div>
     <div class="col">
       <h4>关于</h4>
@@ -219,8 +218,8 @@ function buildHome() {
     <b>语法拆成可勾选的考点</b>，每个考点配易错对比和真题式练习。
   </p>
   <div class="hero-cta">
-    <a class="btn primary" href="review.html">开始今天的复习 <span aria-hidden="true">→</span></a>
-    <a class="btn ghost" href="quiz.html">先测 10 题</a>
+    <a class="btn primary" href="quiz.html">开始背单词 <span aria-hidden="true">→</span></a>
+    <a class="btn ghost" href="review.html">练一组语法</a>
   </div>
   <div class="stats reveal">
     <div class="stat"><b data-count="${STATS.words}">${STATS.words}</b><span>官方单词</span></div>
@@ -280,17 +279,17 @@ function buildHome() {
     <div class="card">
       <h3 style="margin-bottom:12px">每天 15 分钟</h3>
       <p class="desc" style="margin:0">
-        <b>5 分钟</b> 打开「复习」，做完今天到期的词卡（系统按遗忘曲线排期）。<br>
+        <b>5 分钟</b> 打开「背单词」，做完今天到期的词（系统按遗忘曲线排期）。<br>
         <b>5 分钟</b> 读一个语法考点，重点看 ✕/✓ 那几组对比句。<br>
-        <b>5 分钟</b> 做 10 道该考点的题，错题解析会说明错因。
+        <b>5 分钟</b> 在「语法练习」里练 10 道，错题自动进错题本。
       </p>
     </div>
     <div class="card">
       <h3 style="margin-bottom:12px">考前两周</h3>
       <p class="desc" style="margin:0">
-        ① 在「数据」页看各考点正确率，专攻低于 60% 的；<br>
+        ① 在「语法练习」页用「专攻最弱考点」，只练低于 60% 的那个；<br>
         ② 用「词汇」页把「核心」档过一遍，只看没掌握的；<br>
-        ③ 用「题库」按题型刷改错题（写作最容易扣分的地方）。
+        ③ 用「语法练习」的「只练错题本」把答错过的题重做一遍。
       </p>
     </div>
   </div>
@@ -609,142 +608,71 @@ function qCard(q, topicName) {
 }
 
 /* ==========================================================
-   6. 测验（随机抽题）
+   6. 背单词（SRS 驱动的记忆页）
    ========================================================== */
-function buildQuiz() {
+function buildStudy() {
+  const dueToday = `document.querySelector('#kDue').textContent`;
   write('quiz.html', page({
-    dataKeys: ['QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
-    title: 'PET 语法测验 · 随机抽题',
-    desc: '从 261 道易错题中随机抽题，可选题型与题量，即时判分与解析。',
-    active: 'quiz',
-    body: `
-<div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 测验</div>
-  <h1>随机测验</h1>
-  <p class="lede">从 ${Q_STATS.total} 道题里抽。答错会立刻告诉你错因，连续答对有连击计数。键盘 <b>1–4</b> 选答案，<b>Enter</b> 下一题。</p>
-</div>
-
-<section class="section" style="margin-top:28px" id="setup">
-  <div class="card" style="max-width:620px">
-    <h3 style="margin-bottom:16px">出题设置</h3>
-    <div style="margin-bottom:16px">
-      <div class="kicker">题型</div>
-      <div class="chips" id="typeChips">
-        <button class="chip on" data-t="all">全部</button>
-        <button class="chip" data-t="choice">单项选择</button>
-        <button class="chip" data-t="correct">改错</button>
-        <button class="chip" data-t="fill">填空</button>
-      </div>
-    </div>
-    <div style="margin-bottom:20px">
-      <div class="kicker">语法族</div>
-      <div class="chips" id="groupChips">
-        <button class="chip on" data-g="all">全部考点</button>
-        ${GRAMMAR.map((g) => `<button class="chip" data-g="${g.id}">${esc(g.name)}</button>`).join('')}
-      </div>
-    </div>
-    <div style="margin-bottom:20px">
-      <div class="kicker">题量</div>
-      <div class="chips" id="lenChips">
-        <button class="chip" data-l="10">10 题</button>
-        <button class="chip on" data-l="20">20 题</button>
-        <button class="chip" data-l="40">40 题</button>
-      </div>
-    </div>
-    <button class="btn primary" id="startBtn">开始 →</button>
-  </div>
-</section>
-
-<section class="section" id="quizZone" style="display:none">
-  <div id="qz"></div>
-</section>
-`,
-    script: `
-const { QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
-const ALL = [...QUESTIONS, ...QUESTIONS_2];
-const GT = new Map();
-GRAMMAR.forEach(g => g.topics.forEach(t => GT.set(t.id, g.id)));
-let type = 'all', grp = 'all', len = 20;
-
-function pick(sel, attr, cb) {
-  document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
-    document.querySelectorAll(sel + ' .chip').forEach(x => x.classList.remove('on'));
-    c.classList.add('on'); cb(c.getAttribute(attr));
-  }));
-}
-pick('#typeChips', 'data-t', v => type = v);
-pick('#groupChips', 'data-g', v => grp = v);
-pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
-
-document.querySelector('#startBtn').addEventListener('click', () => {
-  let pool = ALL.filter(q => {
-    if (type !== 'all' && (q.type || 'choice') !== type) return false;
-    if (grp !== 'all' && GT.get(q.topic) !== grp) return false;
-    return true;
-  });
-  document.querySelector('#setup').style.display = 'none';
-  document.querySelector('#quizZone').style.display = '';
-  window.PET.quiz({
-    mount: '#qz', questions: pool, limit: len, shuffle: true,
-    reviewHref: 'bank.html',
-    onRestart: () => location.reload(),
-  });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-`,
-  }));
-}
-
-/* ==========================================================
-   7. 复习（间隔重复）
-   ========================================================== */
-function buildReview() {
-  write('review.html', page({
     dataKeys: ['WORDS', 'STATS'],
-    title: '间隔重复复习 · PET 单词记忆',
-    desc: '按 SM-2 遗忘曲线安排每天该复习的单词，每天 10–20 张卡。',
-    active: 'review',
+    title: '背单词 · 间隔重复记忆',
+    desc: `按遗忘曲线安排 ${STATS.total} 条 PET 词条的复习：看词回想或四选一识别，答完自动排下次时间。`,
+    active: 'words-study',
     body: `
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 复习</div>
-  <h1>今天的复习</h1>
-  <p class="lede">系统按遗忘曲线排期：忘记的卡 10 分钟后再出现，记得越牢间隔越长（1 天 → 3 天 → 7 天 → 21 天以上）。
-  每天做完到期的卡就够，不要贪多。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 背单词</div>
+  <h1>背单词</h1>
+  <p class="lede">不按字母顺序背，按<b>你忘得快的地方</b>背。每答一个词都会记进记忆库：
+  忘了 10 分钟后再来，记得越牢间隔越长（1 天 → 3 天 → 7 天 → 21 天以上）。</p>
 </div>
 
 <section class="section" style="margin-top:26px">
   <div class="kv" id="srsKv">
-    <div class="k"><b id="kDue">—</b><span>今天到期</span></div>
-    <div class="k"><b id="kTotal">—</b><span>卡库总数</span></div>
+    <div class="k"><b id="kDue">—</b><span>今天待复习</span></div>
+    <div class="k"><b id="kTotal">—</b><span>记忆库总词数</span></div>
+    <div class="k"><b id="kLeft">—</b><span>本范围内还没背过</span></div>
     <div class="k"><b id="kMature">—</b><span>已牢固（间隔 ≥ 21 天）</span></div>
-    <div class="k"><b id="kRev">—</b><span>累计复习次数</span></div>
   </div>
 </section>
 
 <section class="section" style="margin-top:30px" id="setup">
-  <div class="card" style="max-width:620px">
-    <h3 style="margin-bottom:16px">选择模式</h3>
-    <div class="chips" id="modeChips">
-      <button class="chip on" data-m="due">到期复习</button>
-      <button class="chip" data-m="new">只学新词</button>
-      <button class="chip" data-m="mix">混合（到期 + 新词）</button>
+  <div class="card" style="max-width:660px">
+    <h3 style="margin-bottom:18px">开始一轮</h3>
+
+    <div class="kicker">怎么背</div>
+    <div class="chips" id="cardChips">
+      <button class="chip on" data-c="recall">看词回想（自己判断）</button>
+      <button class="chip" data-c="choice">四选一（自动判分）</button>
     </div>
-    <div style="margin-top:16px" class="kicker">词源范围</div>
+
+    <div class="kicker" style="margin-top:18px">背哪些</div>
+    <div class="chips" id="modeChips">
+      <button class="chip on" data-m="mix">混合（到期 + 新词）</button>
+      <button class="chip" data-m="due">只复习到期的</button>
+      <button class="chip" data-m="new">只学新词</button>
+    </div>
+
+    <div class="kicker" style="margin-top:18px">词源范围</div>
     <div class="chips" id="srcChips">
       <button class="chip on" data-s="core">核心词（${STATS.core}）</button>
-      <button class="chip" data-s="all">全部词（${STATS.total}）</button>
+      <button class="chip" data-s="all">全部（${STATS.total}）</button>
+      <button class="chip" data-s="phrase">只背短语（${STATS.phrases}）</button>
     </div>
-    <div style="margin-top:16px" class="kicker">每轮张数</div>
+
+    <div class="kicker" style="margin-top:18px">每轮词数</div>
     <div class="chips" id="lenChips">
-      <button class="chip" data-l="10">10 张</button>
-      <button class="chip on" data-l="20">20 张</button>
-      <button class="chip" data-l="30">30 张</button>
+      <button class="chip" data-l="10">10 个</button>
+      <button class="chip on" data-l="20">20 个</button>
+      <button class="chip" data-l="30">30 个</button>
     </div>
-    <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn primary" id="startBtn">开始复习 →</button>
+
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn primary" id="startBtn">开始 →</button>
       <button class="btn ghost" id="resetBtn">重置记忆数据</button>
     </div>
-    <div class="note" style="margin-bottom:0">空格键翻卡；翻卡后按 <b>1</b> 忘了 · <b>2</b> 困难 · <b>3</b> 会了 · <b>4</b> 很熟。</div>
+    <div class="note" style="margin-bottom:0">
+      回想模式：空格翻卡，翻卡后 <b>1</b> 忘了 · <b>2</b> 困难 · <b>3</b> 会了 · <b>4</b> 很熟。<br>
+      四选一模式：<b>1–4</b> 选答案，<b>Enter</b> 下一词；答对自动记「会了」，答错自动记「忘了」。
+    </div>
   </div>
 </section>
 
@@ -753,12 +681,21 @@ function buildReview() {
     script: `
 const { WORDS, STATS } = window.PET_DATA;
 const P = window.PET;
-let mode = 'due', src = 'core', len = 20;
+let card = 'recall', mode = 'mix', src = 'core', len = 20;
 
 function refreshKv() {
   const s = P.srsStats();
+  const pool = src === 'core' ? WORDS.filter(w => w.tag === 'core')
+             : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
+             : WORDS;
+  // 「没碰过」只统计当前范围里还没进记忆库的词，避免和其他两栏口径混淆
+  const seen = new Set(Object.keys(P.srsAll ? P.srsAll() : {}));
+  const left = pool.filter(w => !seen.has(w.w.toLowerCase())).length;
   const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
-  set('#kDue', s.due); set('#kTotal', s.total); set('#kMature', s.mature); set('#kRev', s.reviews);
+  set('#kDue', s.due);
+  set('#kTotal', s.total);
+  set('#kLeft', left);
+  set('#kMature', s.mature);
 }
 refreshKv();
 document.addEventListener('pet:srs', refreshKv);
@@ -769,15 +706,18 @@ function pick(sel, attr, cb) {
     c.classList.add('on'); cb(c.getAttribute(attr));
   }));
 }
-pick('#modeChips', 'data-m', v => mode = v);
-pick('#srcChips', 'data-s', v => src = v);
+pick('#cardChips', 'data-c', v => card = v);
+pick('#modeChips', 'data-m', v => { mode = v; refreshKv(); });
+pick('#srcChips', 'data-s', v => { src = v; refreshKv(); });
 pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
 
 document.querySelector('#startBtn').addEventListener('click', () => {
-  const pool = src === 'core' ? WORDS.filter(w => w.tag === 'core') : WORDS;
+  const pool = src === 'core' ? WORDS.filter(w => w.tag === 'core')
+             : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
+             : WORDS;
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.flashcards({ mount: '#fc', words: pool, mode, limit: len, backHref: 'review.html' });
+  P.wordStudy({ mount: '#fc', words: pool, mode, card, limit: len, backHref: 'quiz.html' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
@@ -789,76 +729,175 @@ document.querySelector('#resetBtn').addEventListener('click', () => {
 }
 
 /* ==========================================================
-   7b. 词汇自测
+   7. 语法练习（按考点练 + 正确率 + 错题本）
    ========================================================== */
-function buildVocQuiz() {
-  write('voc.html', page({
-    dataKeys: ['WORDS', 'STATS'],
-    title: '词汇自测 · 看词选义 / 看义选词',
-    desc: `从 ${STATS.total} 条官方词条随机出题，四选一，干扰项取自同话题同词性，练到不靠排除法。`,
-    active: 'voc',
+function buildDrill() {
+  const topicName = new Map();
+  GRAMMAR.forEach((g) => g.topics.forEach((t) => topicName.set(t.id, { name: t.name, group: g.name, gid: g.id })));
+
+  const groupOptions = GRAMMAR.map((g) => {
+    const n = g.topics.reduce((a, t) => a + (Q_BY_TOPIC.get(t.id) || []).length, 0);
+    return `<button class="chip" data-g="${g.id}">${esc(g.name)} · ${n}</button>`;
+  }).join('');
+
+  write('review.html', page({
+    dataKeys: ['QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
+    title: '语法练习 · 按考点刷题',
+    desc: `${Q_STATS.total} 道 PET 语法易错题，按考点或语法族练习，自动记录各考点正确率并收集错题。`,
+    active: 'grammar-drill',
     body: `
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 词汇自测</div>
-  <h1>词汇自测</h1>
-  <p class="lede">从 ${STATS.total} 条词条里随机抽。干扰项优先取<b>同一话题、同一词性</b>的词 —— 靠"哪个看着眼熟"排除不掉，必须真的认识。
-  答对答错都会写进记忆库，影响「复习」页的排期。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 语法练习</div>
+  <h1>语法练习</h1>
+  <p class="lede">${Q_STATS.total} 道题按 <b>${GT_IDS.size} 个考点</b>分组。每次答完会记下考点与题号：
+  正确率低的考点会浮到前面，答错过的题会进错题本 —— 下一次就专练这些。</p>
 </div>
 
-<section class="section" style="margin-top:28px" id="setup">
-  <div class="card" style="max-width:640px">
-    <h3 style="margin-bottom:16px">出题设置</h3>
-    <div style="margin-bottom:16px">
-      <div class="kicker">方向</div>
-      <div class="chips" id="dirChips">
-        <button class="chip on" data-d="zh">看单词选释义</button>
-        <button class="chip" data-d="en">看释义选单词</button>
-      </div>
-    </div>
-    <div style="margin-bottom:16px">
-      <div class="kicker">词源</div>
-      <div class="chips" id="srcChips">
-        <button class="chip on" data-s="core">核心词（${STATS.core}）</button>
-        <button class="chip" data-s="all">全部词（${STATS.total}）</button>
-        <button class="chip" data-s="phrase">短语（${STATS.phrases}）</button>
-      </div>
-    </div>
-    <div style="margin-bottom:20px">
-      <div class="kicker">题量</div>
-      <div class="chips" id="lenChips">
-        <button class="chip" data-l="10">10 题</button>
-        <button class="chip on" data-l="20">20 题</button>
-        <button class="chip" data-l="30">30 题</button>
-      </div>
-    </div>
-    <button class="btn primary" id="startBtn">开始 →</button>
+<section class="section" style="margin-top:26px">
+  <div class="kv">
+    <div class="k"><b id="kQn">0</b><span>累计已答</span></div>
+    <div class="k"><b id="kRate">—</b><span>总正确率</span></div>
+    <div class="k"><b id="kWrong">0</b><span>错题本</span></div>
+    <div class="k"><b id="kWeak">—</b><span>最弱考点</span></div>
   </div>
 </section>
 
-<section class="section" id="zone" style="display:none"><div id="vq"></div></section>
+<section class="section" style="margin-top:30px" id="setup">
+  <div class="card" style="max-width:700px">
+    <h3 style="margin-bottom:18px">开始一组</h3>
+
+    <div class="kicker">练哪里</div>
+    <div class="chips" id="scopeChips">
+      <button class="chip on" data-scope="all">全部考点</button>
+      <button class="chip" data-scope="wrong">只练错题本（<span id="wrongN">0</span>）</button>
+      <button class="chip" data-scope="weak">专攻最弱考点</button>
+    </div>
+
+    <div class="kicker" style="margin-top:18px">语法族（选「全部考点」时生效）</div>
+    <div class="chips" id="groupChips">
+      <button class="chip on" data-g="all">不限</button>
+      ${groupOptions}
+    </div>
+
+    <div class="kicker" style="margin-top:18px">题型</div>
+    <div class="chips" id="typeChips">
+      <button class="chip on" data-t="all">混合</button>
+      <button class="chip" data-t="choice">单项选择</button>
+      <button class="chip" data-t="correct">改错</button>
+      <button class="chip" data-t="fill">填空</button>
+    </div>
+
+    <div class="kicker" style="margin-top:18px">题量</div>
+    <div class="chips" id="lenChips">
+      <button class="chip" data-l="10">10 题</button>
+      <button class="chip on" data-l="20">20 题</button>
+      <button class="chip" data-l="40">40 题</button>
+    </div>
+
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn primary" id="startBtn">开始 →</button>
+      <button class="btn ghost" id="resetBtn">清空练习记录</button>
+    </div>
+    <div class="note" style="margin-bottom:0">键盘 <b>1–4</b> 选答案、<b>Enter</b> 下一题。填空题按 <b>Enter</b> 提交。</div>
+  </div>
+</section>
+
+<section class="section" id="zone" style="display:none"><div id="qz"></div></section>
+
+<section class="section" id="weakSection" style="display:none">
+  <div class="section-head"><h2>各考点正确率</h2><span class="sub">答过 3 题以上的才计入，按正确率升序</span></div>
+  <div id="weakList"></div>
+</section>
 `,
     script: `
-const { WORDS, STATS } = window.PET_DATA;
+const { QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
 const P = window.PET;
-let dir = 'zh', src = 'core', len = 20;
+const ALL = [...QUESTIONS, ...QUESTIONS_2];
+const BY_TOPIC = new Map();
+ALL.forEach(q => { if (!BY_TOPIC.has(q.topic)) BY_TOPIC.set(q.topic, []); BY_TOPIC.get(q.topic).push(q); });
+const GT = new Map();
+const TNAME = new Map();
+GRAMMAR.forEach(g => g.topics.forEach(t => { GT.set(t.id, g.id); TNAME.set(t.id, t.name); }));
+
+let scope = 'all', grp = 'all', type = 'all', len = 20;
+
 function pick(sel, attr, cb) {
   document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
     document.querySelectorAll(sel + ' .chip').forEach(x => x.classList.remove('on'));
     c.classList.add('on'); cb(c.getAttribute(attr));
   }));
 }
-pick('#dirChips', 'data-d', v => dir = v);
-pick('#srcChips', 'data-s', v => src = v);
+pick('#scopeChips', 'data-scope', v => scope = v);
+pick('#groupChips', 'data-g', v => grp = v);
+pick('#typeChips', 'data-t', v => type = v);
 pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
 
+function weakestTopic() {
+  const st = P.qTopicStats().filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
+  return st.length ? st[0].topic : null;
+}
+
+function refreshStats() {
+  const st = P.qTopicStats();
+  const n = st.reduce((a, x) => a + x.n, 0);
+  const ok = st.reduce((a, x) => a + x.ok, 0);
+  const wrong = P.wrongIds().length;
+  const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
+  set('#kQn', n);
+  set('#kRate', n ? Math.round(ok / n * 100) + '%' : '—');
+  set('#kWrong', wrong);
+  const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
+  const w = weakestTopic();
+  set('#kWeak', w ? TNAME.get(w) || w : '—');
+
+  // 正确率表
+  const sec = document.querySelector('#weakSection');
+  const list = document.querySelector('#weakList');
+  const rows = st.filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
+  if (rows.length && list) {
+    sec.style.display = '';
+    list.innerHTML = '<div class="wordlist">' + rows.map(x => {
+      const pct = Math.round(x.rate * 100);
+      const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar';
+      return '<div class="wrow" style="grid-template-columns:1.4fr 120px 1fr auto;cursor:default">' +
+        '<span class="w" style="cursor:default">' + (TNAME.get(x.topic) || x.topic) + '</span>' +
+        '<span class="pos">' + x.ok + ' / ' + x.n + ' 题</span>' +
+        '<span class="' + cls + '"><i style="width:' + pct + '%"></i></span>' +
+        '<span class="flag">' + pct + '%</span></div>';
+    }).join('') + '</div>';
+  } else if (sec) {
+    sec.style.display = 'none';
+  }
+}
+refreshStats();
+document.addEventListener('pet:qlog', refreshStats);
+
 document.querySelector('#startBtn').addEventListener('click', () => {
-  let pool = src === 'core' ? WORDS.filter(w => w.tag === 'core' && w.t === 'word')
-           : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
-           : WORDS;
+  let pool = ALL.slice();
+  if (scope === 'wrong') {
+    const ids = new Set(P.wrongIds());
+    pool = pool.filter(q => ids.has(q.id));
+    if (!pool.length) { alert('错题本是空的 —— 先随便练一组，答错的题会自动收进来。'); return; }
+  } else if (scope === 'weak') {
+    const w = weakestTopic();
+    if (!w) { alert('还没积累足够数据 —— 先练几组，系统才能判断你最弱的考点。'); return; }
+    pool = pool.filter(q => q.topic === w);
+  } else {
+    if (grp !== 'all') pool = pool.filter(q => GT.get(q.topic) === grp);
+  }
+  if (type !== 'all') pool = pool.filter(q => (q.type || 'choice') === type);
+  if (!pool.length) { alert('这个组合下没有题，换一个筛选试试。'); return; }
+
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.vocabQuiz({ mount: '#vq', words: pool, direction: dir, limit: len, feedSrs: true });
+  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true, reviewHref: 'bank.html',
+    onRestart: () => location.reload(),
+    onFinish: refreshStats });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+document.querySelector('#resetBtn').addEventListener('click', () => {
+  if (confirm('清空练习记录与错题本？')) { P.qReset(); refreshStats(); }
 });
 `,
   }));
@@ -1049,7 +1088,7 @@ function buildPlan() {
       vocab: '只复习「复习」页里到期的卡；错词本过两遍',
       grammar: ['tense', 'passive', 'nonfinite', 'clause'],
       focus: '回看「数据」页各考点正确率，专攻低于 60% 的；把「易错点速查」整页扫两遍。',
-      drill: '每天一次 40 题随机测验；错题只看解析不看题目，检验是否真的理解。',
+      drill: '每天一组 40 题语法练习；错题只看解析不看题目，检验是否真的理解。',
     },
   ];
 
@@ -1087,7 +1126,7 @@ function buildPlan() {
     <div class="k"><b>${STATS.pet + STATS.ext}</b><span>常考 + 拓展（第 5–6 周）</span></div>
     <div class="k"><b>${Q_STATS.total}</b><span>练习题</span></div>
   </div>
-  <div class="note" style="margin-top:20px">每天建议 30–40 分钟：复习页 10 分钟（做完到期的卡）+ 读一个语法考点 10 分钟 + 做题 15 分钟。
+  <div class="note" style="margin-top:20px">每天建议 30–40 分钟：背单词 10 分钟（做完今天到期的词）+ 读一个语法考点 10 分钟 + 语法练习 15 分钟。
   如果只有 15 分钟，优先做「复习」和「测验」，读语法可以放到周末集中看。</div>
 </section>
 
@@ -1100,11 +1139,11 @@ function buildPlan() {
   <div class="grid c3">
     <a class="card" href="quiz.html">
       <h3>第 2 周末</h3>
-      <p class="desc">做一次 40 题随机测验。如果正确率低于 60%，说明时态还没稳，把第 1–2 周重来一遍再往下走。</p>
+      <p class="desc">做一组 40 题语法练习。如果正确率低于 60%，说明时态还没稳，把第 1–2 周重来一遍再往下走。</p>
     </a>
     <a class="card" href="stats.html">
       <h3>第 5 周末</h3>
-      <p class="desc">看「数据」页的考点正确率。把低于 60% 的考点挑出来，在题库里只做那几族，不要平均用力。</p>
+      <p class="desc">在「语法练习」页看各考点正确率，用「专攻最弱考点」直接练那一个，不要平均用力。</p>
     </a>
     <a class="card" href="traps.html">
       <h3>考前三天</h3>
@@ -1126,9 +1165,8 @@ function main() {
   buildTopics();
   buildGrammar();
   buildBank();
-  buildQuiz();
-  buildReview();
-  buildVocQuiz();
+  buildStudy();
+  buildDrill();
   buildTraps();
   buildStats();
   buildPlan();
