@@ -222,7 +222,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
   P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
-    reviewHref: 'grammar.html', reviewLabel: '看对应考点',
+    reviewHref: 'grammar.html', reviewLabel: '看全部语法族',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
   window.scrollTo({ top: 0, behavior: 'smooth' });

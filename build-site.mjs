@@ -35,6 +35,10 @@ ALL_Q.forEach((q) => {
   Q_BY_TOPIC.get(q.topic).push(q);
 });
 const GT_IDS = new Set(GRAMMAR.flatMap((g) => g.topics.map((t) => t.id)));
+// 考点 -> 所属语法族（详情页与易错点页的返回链接都要用）
+const TOPIC_GID = new Map();
+GRAMMAR.forEach((g) => g.topics.forEach((t) => TOPIC_GID.set(t.id, g.id)));
+const GNAME = new Map(GRAMMAR.map((g) => [g.id, g.name]));
 const Q_TOPIC_MISS = [...GT_IDS].filter((id) => !Q_BY_TOPIC.has(id));
 
 const TYPE_OF_Q = (q) => q.type || 'choice';
@@ -200,7 +204,7 @@ function buildHome() {
     <div class="meta">${t.n} 词</div>
   </a>`).join('');
 
-  const grammarCards = GRAMMAR.map((g) => `<a class="card" href="grammar.html#${g.id}">
+  const grammarCards = GRAMMAR.map((g) => `<a class="card" href="grammar/${g.id}.html">
     <div class="card-ico">${g.icon}</div>
     <h3>${esc(g.name)}</h3>
     <div class="meta">${g.topics.length} 个考点 · ${g.topics.reduce((s, t) => s + t.traps.length, 0)} 条易错</div>
@@ -404,19 +408,20 @@ window.PET.renderWordList({ mount: '#wlist', words: list, pageSize: 40, search: 
 }
 
 /* ==========================================================
-   4. 语法总览
+   4. 语法：族索引页 + 每个族一个详情页
+   考点在详情页里用可折叠卡片，默认收起，避免长页面
    ========================================================== */
-function buildGrammar() {
-  const sections = GRAMMAR.map((g) => {
-    const topics = g.topics.map((t) => {
-      const qn = (Q_BY_TOPIC.get(t.id) || []).length;
-      return `
-<div class="gtopic" id="${t.id}">
-  <h3>${esc(t.name)} <span class="lv ${esc(t.level)}">${esc(t.level)}</span></h3>
-  <div class="grule">${rich(t.rule)}</div>
-  ${t.form ? `<div class="gform">${esc(t.form)}</div>` : ''}
+function topicCardHtml(t, index) {
+  const qn = (Q_BY_TOPIC.get(t.id) || []).length;
+  const trapN = t.traps.length;
+  // 摘要要剥离 **加粗** 与 `代码` 标记，否则折叠标题里会露出原始星号
+  const plainRule = t.rule.replace(/\*\*([^*]*)\*\*/g, '$1').replace(/`([^`]*)`/g, '$1');
+  const quick = plainRule.length > 64 ? plainRule.slice(0, 62) + '…' : plainRule;
+
+  const body = `
+  ${t.form ? `<div class="gform" style="margin-top:16px">${esc(t.form)}</div>` : ''}
   ${t.table ? `<table class="gtable"><thead><tr>${t.table.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${
-    t.table.rows.map((r) => `<tr>${r.map((c, i) => `<td>${i === 0 ? esc(c) : esc(c)}</td>`).join('')}</tr>`).join('')
+    t.table.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')
   }</tbody></table>` : ''}
   <ul class="exlist">${t.examples.map((e) => `<li><span class="en">${esc(e.en)}</span><span class="zh">${esc(e.zh)}</span></li>`).join('')}</ul>
   <div class="traps">${t.traps.map((x) => `
@@ -427,40 +432,122 @@ function buildGrammar() {
       <div class="why">${rich(x.why)}</div>
     </div>`).join('')}
   </div>
-  ${qn ? `<div style="margin-top:16px"><a class="btn sm" href="review.html?topic=${t.id}">练这个考点（${qn} 题）→</a></div>` : ''}
-</div>`;
-    }).join('');
+  ${qn ? `<div style="margin-top:16px"><a class="btn sm" href="../review.html?topic=${t.id}">练这个考点（${qn} 题）→</a></div>` : ''}`;
 
-    return `
-<section class="section" id="${g.id}">
-  <div class="section-head">
-    <h2>${g.icon} ${esc(g.name)}</h2>
-    <span class="sub">${g.topics.length} 个考点</span>
-  </div>
-  <p class="note" style="margin-top:0">${esc(g.hook)}</p>
-  ${topics}
-</section>`;
-  }).join('<hr class="rule">');
+  return `
+<details class="tcard" id="${t.id}">
+  <summary class="tcard-sum">
+    <span class="tcard-num">${String(index + 1).padStart(2, '0')}</span>
+    <span class="tcard-main">
+      <span class="tcard-title">${esc(t.name)}<span class="lv ${esc(t.level)}">${esc(t.level)}</span></span>
+      <span class="tcard-quick">${esc(quick)}</span>
+    </span>
+    <span class="tcard-meta">${trapN} 条易错${qn ? ` · ${qn} 题` : ''}</span>
+    <span class="tcard-caret" aria-hidden="true"></span>
+  </summary>
+  <div class="tcard-body">${body}</div>
+</details>`;
+}
 
-  const toc = GRAMMAR.map((g) => `<a class="chip" href="#${g.id}">${g.icon} ${esc(g.name)}</a>`).join('');
+function buildGrammar() {
+  /* ---------- 族索引页 ---------- */
+  const cards = GRAMMAR.map((g) => {
+    const trapN = g.topics.reduce((a, t) => a + t.traps.length, 0);
+    const qN = g.topics.reduce((a, t) => a + (Q_BY_TOPIC.get(t.id) || []).length, 0);
+    const names = g.topics.map((t) => esc(t.name)).join(' · ');
+    return `<a class="card gfam" href="grammar/${g.id}.html">
+      <div class="gfam-top"><span class="card-ico">${g.icon}</span><span class="gfam-count">${g.topics.length} 个考点</span></div>
+      <h3>${esc(g.name)}</h3>
+      <p class="gfam-list">${names}</p>
+      <div class="meta">${trapN} 条易错对比 · ${qN} 道练习题</div>
+    </a>`;
+  }).join('');
 
   write('grammar.html', page({
-    title: `PET 语法体系 · ${GRAMMAR_STATS.topics} 个考点`,
-    desc: `B1 Preliminary 语法 ${GRAMMAR_STATS.sections} 大族 ${GRAMMAR_STATS.topics} 考点，每个考点含规则、变化表、例句与 ${GRAMMAR_STATS.traps} 条易错对比。`,
+    title: `PET 语法体系 · ${GRAMMAR_STATS.sections} 族 ${GRAMMAR_STATS.topics} 个考点`,
+    desc: `B1 Preliminary 语法 ${GRAMMAR_STATS.sections} 大族 ${GRAMMAR_STATS.topics} 考点，按族分页，每页考点可折叠展开。`,
     active: 'grammar',
     body: `
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 语法</div>
-  <h1>语法体系 · ${GRAMMAR_STATS.sections} 族 ${GRAMMAR_STATS.topics} 个考点</h1>
-  <p class="lede">按 B1 Preliminary 的考查权重组织，不是语法书目录。每个考点只讲考试真正会卡住你的部分：规则、形式变化、例句，以及 <b>✕ 错句 / ✓ 对句</b> 的对照 —— 后者才是分数所在。</p>
+  <h1>语法体系</h1>
+  <p class="lede">${GRAMMAR_STATS.sections} 个语法族、${GRAMMAR_STATS.topics} 个考点。点进任一族看考点明细 ——
+  每个考点一张可折叠的卡，先看标题和一句话规则，需要时再展开表格、例句与 <b>✕ 错句 / ✓ 对句</b>。</p>
 </div>
-<section class="section" style="margin-top:26px">
-  <div class="chips">${toc}</div>
+
+<section class="section" style="margin-top:28px">
+  <div class="kv">
+    <div class="k"><b>${GRAMMAR_STATS.sections}</b><span>语法族</span></div>
+    <div class="k"><b>${GRAMMAR_STATS.topics}</b><span>考点</span></div>
+    <div class="k"><b>${GRAMMAR_STATS.traps}</b><span>易错对比</span></div>
+    <div class="k"><b>${GRAMMAR_STATS.examples}</b><span>例句</span></div>
+  </div>
 </section>
-${sections}
-<div class="note">语法族的排序按考试中出现的密度排列，不代表难度。带 <span class="lv A2">A2</span> 的考点是复习性考点（KET 已覆盖），带 <span class="lv B1">B1</span> 的是 PET 主力考点，带 <span class="lv B1+">B1+</span> 的是进阶考点（出现在阅读长难句里，写作不强制）。</div>
+
+<section class="section">
+  <div class="grid c3">${cards}</div>
+</section>
+
+<div class="note">语法族的排序按考试中出现的密度排列，不代表难度。考点卡上带 <span class="lv A2">A2</span> 的是复习性考点（KET 已覆盖），带 <span class="lv B1">B1</span> 的是 PET 主力考点，带 <span class="lv B1+">B1+</span> 的是进阶考点（出现在阅读长难句里，写作不强制）。</div>
 `,
   }));
+
+  /* ---------- 每个族一个详情页 ---------- */
+  GRAMMAR.forEach((g, gi) => {
+    const prev = GRAMMAR[gi - 1];
+    const next = GRAMMAR[gi + 1];
+    const cardsHtml = g.topics.map((t, i) => topicCardHtml(t, i)).join('');
+    const navBtns = `
+  <div class="gfam-pager">
+    ${prev ? `<a class="btn sm" href="${prev.id}.html">← ${esc(prev.name)}</a>` : '<span></span>'}
+    <a class="btn sm" href="../grammar.html">全部语法族</a>
+    ${next ? `<a class="btn sm" href="${next.id}.html">${esc(next.name)} →</a>` : '<span></span>'}
+  </div>`;
+
+    write(`grammar/${g.id}.html`, page({
+      base: '../',
+      title: `${g.name} · ${g.topics.length} 个 PET 语法考点`,
+      desc: `${g.name}：${g.topics.map((t) => t.name).join('、')}。每个考点含规则、变化表、例句与易错对比。`,
+      active: 'grammar',
+      body: `
+<div class="page-head">
+  <div class="crumb"><a href="../index.html">首页</a> / <a href="../grammar.html">语法</a> / ${esc(g.name)}</div>
+  <h1>${g.icon} ${esc(g.name)}</h1>
+  <p class="lede">${esc(g.hook)}</p>
+</div>
+
+<section class="section" style="margin-top:24px">
+  <div class="toolbar">
+    <button class="chip" id="expandAll">全部展开</button>
+    <button class="chip" id="collapseAll">全部收起</button>
+    <span class="quiz-count" style="margin-left:auto">${g.topics.length} 个考点</span>
+  </div>
+  <div class="tcards">${cardsHtml}</div>
+  ${navBtns}
+</section>
+
+<div class="note">点标题展开或收起。带 <span class="lv A2">A2</span> 的是复习性考点，<span class="lv B1">B1</span> 是 PET 主力考点，<span class="lv B1+">B1+</span> 是进阶考点。</div>
+`,
+      rawScript: `<script>
+(function(){
+  var expand = document.querySelector('#expandAll');
+  var collapse = document.querySelector('#collapseAll');
+  var all = function(){ return document.querySelectorAll('.tcard'); };
+  if (expand) expand.addEventListener('click', function(){ all().forEach(function(d){ d.open = true; }); });
+  if (collapse) collapse.addEventListener('click', function(){ all().forEach(function(d){ d.open = false; }); });
+  // 从外部带 #考点id 进来时，自动展开并滚动到该卡
+  var hash = location.hash.replace('#','');
+  if (hash) {
+    var target = document.getElementById(hash);
+    if (target && target.tagName === 'DETAILS') {
+      target.open = true;
+      setTimeout(function(){ target.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60);
+    }
+  }
+})();
+</script>`,
+    }));
+  });
 }
 
 /* ==========================================================
@@ -764,7 +851,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
   P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
-    reviewHref: 'grammar.html', reviewLabel: '看对应考点',
+    reviewHref: 'grammar.html', reviewLabel: '看全部语法族',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -789,7 +876,7 @@ function buildTraps() {
     <span class="bad">${esc(x.bad)}</span>
     <span class="good">${esc(x.good)}</span>
     <div class="why">${rich(x.why)}</div>
-    <div style="margin-top:8px"><a class="btn sm" href="grammar.html#${x.tid}">看考点规则 →</a></div>
+    <div style="margin-top:8px"><a class="btn sm" href="grammar/${TOPIC_GID.get(x.tid)}.html#${x.tid}">看考点规则 →</a></div>
   </div>`).join('');
 
   write('traps.html', page({
@@ -974,7 +1061,7 @@ function buildPlan() {
   <table class="gtable" style="margin:14px 0">
     <tbody>
       <tr><td style="width:88px">词汇</td><td>${esc(k.vocab)}</td></tr>
-      <tr><td>语法</td><td>${k.grammar.map((g) => `<a href="grammar.html#${g}">${esc(gname.get(g) || g)}</a>`).join(' · ')}</td></tr>
+      <tr><td>语法</td><td>${k.grammar.map((g) => `<a href="grammar/${g}.html">${esc(gname.get(g) || g)}</a>`).join(' · ')}</td></tr>
       <tr><td>重点</td><td>${esc(k.focus)}</td></tr>
       <tr><td>练习</td><td>${esc(k.drill)}</td></tr>
     </tbody>

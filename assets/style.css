@@ -522,3 +522,86 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   body { background: #fff; color: #000; }
   .card, .gtopic, .wordlist { break-inside: avoid; }
 }
+
+/* ==========================================================
+   语法族卡片 / 可折叠考点卡
+   ========================================================== */
+.gfam { display: block; }
+.gfam-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gfam-top .card-ico { margin-bottom: 0; }
+.gfam-count {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .05em;
+  color: var(--text-3); border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 99px;
+}
+.gfam h3 { margin-bottom: 8px; }
+.gfam-list {
+  font-size: .82rem; color: var(--text-2); line-height: 1.65;
+  margin: 0 0 12px; min-height: 2.7em;
+}
+
+.tcards { display: grid; gap: 10px; }
+
+.tcard {
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); box-shadow: var(--shadow-1);
+  overflow: hidden; transition: border-color .18s, box-shadow .18s;
+}
+.tcard[open] { border-color: var(--border-2); box-shadow: var(--shadow-2); }
+.tcard:hover { border-color: var(--border-2); }
+
+.tcard-sum {
+  display: grid; grid-template-columns: auto 1fr auto auto;
+  gap: 14px; align-items: center;
+  padding: 15px 18px; cursor: pointer; list-style: none;
+  transition: background .16s;
+}
+.tcard-sum::-webkit-details-marker { display: none; }
+.tcard-sum:hover { background: var(--bg-3); }
+.tcard-sum:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.tcard-num {
+  font-family: var(--mono); font-size: .72rem; color: var(--text-3);
+  width: 24px; text-align: right; flex: none;
+}
+.tcard-main { min-width: 0; display: block; }
+.tcard-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-family: var(--serif); font-size: 1.06rem; font-weight: 600;
+  letter-spacing: -.01em; color: var(--text);
+}
+.tcard-quick {
+  display: block; font-size: .82rem; color: var(--text-3);
+  margin-top: 3px; line-height: 1.5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tcard-meta {
+  font-size: .74rem; color: var(--text-3); white-space: nowrap; flex: none;
+}
+.tcard-caret {
+  width: 0; height: 0; flex: none;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 6px solid var(--text-3);
+  transition: transform .2s var(--ease);
+}
+.tcard[open] .tcard-caret { transform: rotate(180deg); }
+
+.tcard-body {
+  padding: 4px 18px 20px; border-top: 1px solid var(--border);
+  animation: tcardIn .22s var(--ease-out);
+}
+.tcard-body > .grule { margin-top: 14px; }
+@keyframes tcardIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.gfam-pager {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: 26px; flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .tcard-sum { grid-template-columns: auto 1fr auto; gap: 10px; padding: 13px 14px; }
+  .tcard-meta { display: none; }
+  .tcard-quick { white-space: normal; }
+  .tcard-body { padding: 4px 14px 18px; }
+  .gfam-list { min-height: 0; }
+}
