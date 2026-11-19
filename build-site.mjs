@@ -1,5 +1,5 @@
 /* ==========================================================
-   PET 备考站 · 静态站点生成器
+   PET 备考小站 · 静态站点生成器
    用法：node build-site.mjs
    输出：根目录 index.html + topics/ grammar/ 等
    ========================================================== */
@@ -122,7 +122,7 @@ const NAV = [
   { href: 'stats.html', label: '数据', key: 'stats' },
 ];
 
-const LOGO_HTML = (base) => `<a class="logo" href="${base}index.html">PET <em>B1 备考站</em></a>`;
+const LOGO_HTML = (base) => `<a class="logo" href="${base}index.html">PET <em>备考小站</em></a>`;
 
 const HEADER = (base, active) => `<div class="scroll-progress"></div>
 <header class="hdr">
@@ -141,7 +141,7 @@ const HEADER = (base, active) => `<div class="scroll-progress"></div>
 const FOOTER = (base) => `<footer class="foot">
   <div class="foot-in">
     <div class="col">
-      <h4>PET B1 备考站</h4>
+      <h4>PET 备考小站</h4>
       <span style="display:block;line-height:1.7">B1 Preliminary 官方词表 ${STATS.total} 条 + ${GRAMMAR_STATS.topics} 个语法考点 + ${Q_STATS.total} 道易错题</span>
     </div>
     <div class="col">
@@ -164,16 +164,20 @@ const FOOTER = (base) => `<footer class="foot">
   </div>
 </footer>`;
 
+const SITE_NAME = 'PET 备考小站';
+
 function page({ base = '', active = '', title, desc = '', body, script = '', rawScript = '', dataKeys = [], dataExtra = null }) {
+  // 统一加站名后缀，标签页里始终能看到站点身份；已含站名的不重复加
+  const fullTitle = title.includes(SITE_NAME) ? title : `${title} · ${SITE_NAME}`;
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>${esc(title)}</title>
+<title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(desc)}">
-<meta property="og:title" content="${esc(title)}">
+<meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(desc)}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231b6b52'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='17' font-weight='600' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="${base}assets/style.css">
@@ -277,7 +281,7 @@ function buildHome() {
 
 `;
   write('index.html', page({
-    title: 'PET B1 备考站 · 官方词表 + 语法体系 + 背单词与语法练习',
+    title: 'PET 备考小站 · 官方词表 + 语法体系 + 背单词与语法练习',
     desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析，按遗忘曲线背单词。`,
     active: 'home',
     body,
@@ -337,7 +341,7 @@ document.addEventListener('pet:known', drawKnown);
 `;
   write('words.html', page({
     dataKeys: ['WORDS', 'STATS'],
-    title: `PET 官方词汇表 · ${STATS.total} 条`,
+    title: `官方词汇表 · ${STATS.total} 条`,
     desc: 'B1 Preliminary 官方词表全量，含中文释义、音标、词性、官方例句与频率分档。',
     active: 'words',
     body, script,
@@ -377,7 +381,7 @@ function buildTopics() {
       base: '../',
       dataKeys: [],
       dataExtra: { TOPIC_WORDS: list.map((w) => ({ w: w.w, pos: w.pos, posZh: w.posZh, t: w.t, zh: w.zh, tag: w.tag, ph: w.ph, ex: w.ex, tp: w.tp, al: w.al })) },
-      title: `${t.name} · ${list.length} 个 PET 单词`,
+      title: `${t.name} · ${list.length} 个单词`,
       desc: `${t.official} 话题下的 B1 Preliminary 词汇。`,
       active: 'words',
       body: `
@@ -464,7 +468,7 @@ function buildGrammar() {
   }).join('');
 
   write('grammar.html', page({
-    title: `PET 语法体系 · ${GRAMMAR_STATS.sections} 族 ${GRAMMAR_STATS.topics} 个考点`,
+    title: `语法体系 · ${GRAMMAR_STATS.sections} 族 ${GRAMMAR_STATS.topics} 个考点`,
     desc: `B1 Preliminary 语法 ${GRAMMAR_STATS.sections} 大族 ${GRAMMAR_STATS.topics} 考点，按族分页，每页考点可折叠展开。`,
     active: 'grammar',
     body: `
@@ -506,7 +510,7 @@ function buildGrammar() {
 
     write(`grammar/${g.id}.html`, page({
       base: '../',
-      title: `${g.name} · ${g.topics.length} 个 PET 语法考点`,
+      title: `${g.name} · ${g.topics.length} 个语法考点`,
       desc: `${g.name}：${g.topics.map((t) => t.name).join('、')}。每个考点含规则、变化表、例句与易错对比。`,
       active: 'grammar',
       body: `
@@ -911,7 +915,7 @@ function buildTraps() {
   })));
 
   write('traps.html', page({
-    title: `PET 语法易错点 · ${TOTAL} 条按族查`,
+    title: `语法易错点 · ${TOTAL} 条按族查`,
     desc: `${TOTAL} 条易错对比按 ${GRAMMAR.length} 个语法族分页：错误写法、正确写法、错因一句话。`,
     active: 'traps',
     body: `
@@ -1076,7 +1080,7 @@ function buildStats() {
   }).join('');
 
   write('stats.html', page({
-    title: 'PET 备考站 · 数据总览',
+    title: 'PET 备考小站 · 数据总览',
     desc: '词表规模、频档分布、话题词量、语法考点与题量，全部实时计算。',
     active: 'stats',
     body: `
