@@ -271,34 +271,10 @@ function buildHome() {
   <div class="grid c3">${grammarCards}</div>
 </section>
 
-<section class="section">
-  <div class="section-head"><h2>怎么用这个站</h2></div>
-  <div class="grid c2">
-    <div class="card">
-      <h3 style="margin-bottom:12px">每天 15 分钟</h3>
-      <p class="desc" style="margin:0">
-        <b>5 分钟</b> 打开「背单词」，做完今天到期的词（系统按遗忘曲线排期）。<br>
-        <b>5 分钟</b> 读一个语法考点，重点看 ✕/✓ 那几组对比句。<br>
-        <b>5 分钟</b> 在「语法练习」里练 10 道，错题自动进错题本。
-      </p>
-    </div>
-    <div class="card">
-      <h3 style="margin-bottom:12px">考前两周</h3>
-      <p class="desc" style="margin:0">
-        ① 在「语法练习」页用「专攻最弱考点」，只练低于 60% 的那个；<br>
-        ② 用「词汇」页把「核心」档过一遍，只看没掌握的；<br>
-        ③ 用「语法练习」的「只练错题本」把答错过的题重做一遍。
-      </p>
-    </div>
-  </div>
-  <div class="note">
-    数据口径：词表来自 Cambridge 官方 <i>B1 Preliminary Vocabulary List</i>（2025 年 8 月版）附录 1 与附录 2，共 ${STATS.words} 词 + ${STATS.phrases} 短语；中文释义来自 ECDICT 并以人工覆盖表校正高频多义词；频档依据考试大纲标签与语料词频。语法考点与题目为本站按 B1 考查范围整理，非官方材料。
-  </div>
-</section>
 `;
   write('index.html', page({
-    title: 'PET B1 备考站 · 官方词表 + 语法体系 + 易错题库',
-    desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析。`,
+    title: 'PET B1 备考站 · 官方词表 + 语法体系 + 背单词与语法练习',
+    desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析，按遗忘曲线背单词。`,
     active: 'home',
     body,
   }));
