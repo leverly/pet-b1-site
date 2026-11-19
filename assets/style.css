@@ -605,3 +605,19 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   .tcard-body { padding: 4px 14px 18px; }
   .gfam-list { min-height: 0; }
 }
+
+/* ==========================================================
+   易错点：按考点分组的区块
+   ========================================================== */
+.tgroup { margin-bottom: 26px; }
+.tgroup-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding-bottom: 10px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tgroup-head h3 { font-size: 1.04rem; }
+.tgroup-n {
+  font-family: var(--mono); font-size: .7rem; color: var(--text-3);
+  border: 1px solid var(--border); padding: 1px 7px; border-radius: 99px;
+}
+#jump { margin-bottom: 4px; }
