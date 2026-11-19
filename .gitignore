@@ -1,0 +1,5 @@
+# 本地环境与大数据文件：不参与部署
+.venv/
+reference/ecdict.csv
+reference/raw.txt
+.DS_Store
