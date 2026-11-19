@@ -132,6 +132,32 @@ pet-site/
 
 `reference/` 下的 PDF、`raw.txt`、`ecdict.csv`（66MB）不参与运行时，只用于重建数据。
 
+## 部署
+
+已上线 GitHub Pages：
+
+- 线上地址：**https://leverly.github.io/pet-b1-site/**
+- 仓库：https://github.com/leverly/pet-b1-site （public，main 分支根目录）
+- 平台：GitHub Pages（`main` / `/`），仓库根有 `.nojekyll`
+
+**推送方式**：本机没有 `gh` CLI 和可用 SSH key，token 存在 macOS 钥匙串：
+
+```bash
+TOKEN=$(security find-generic-password -s "GitHub - https://api.github.com" -w)
+git push "https://leverly:${TOKEN}@github.com/leverly/pet-b1-site.git" main
+```
+
+`git remote` 保持干净 URL，token 只在推送命令里临时拼接，不落盘。
+
+**部署注意**：
+
+1. 站点在 `/pet-b1-site/` 子路径下，所有链接必须是相对路径。当前全部相对，
+   `topics/` 下用 `../`，已验证线上零 404。
+2. `reference/ecdict.csv`（65MB）、`reference/raw.txt`、`.venv/` 已 gitignore，
+   不参与部署；提交集约 4.8MB。
+3. 数据内联方案让站点完全自包含：线上零外部请求（无 CDN、无字体外链），
+   离线双击也一致。
+
 ## 已知限制
 
 - 附录 1 的 word sets（数字、星期、月份等封闭清单）没有逐条计入词条总数，
