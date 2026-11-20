@@ -35,10 +35,6 @@ ALL_Q.forEach((q) => {
   Q_BY_TOPIC.get(q.topic).push(q);
 });
 const GT_IDS = new Set(GRAMMAR.flatMap((g) => g.topics.map((t) => t.id)));
-// 考点 -> 所属语法族（详情页与易错点页的返回链接都要用）
-const TOPIC_GID = new Map();
-GRAMMAR.forEach((g) => g.topics.forEach((t) => TOPIC_GID.set(t.id, g.id)));
-const GNAME = new Map(GRAMMAR.map((g) => [g.id, g.name]));
 const Q_TOPIC_MISS = [...GT_IDS].filter((id) => !Q_BY_TOPIC.has(id));
 
 const TYPE_OF_Q = (q) => q.type || 'choice';
@@ -117,7 +113,6 @@ const NAV = [
   { href: 'grammar.html', label: '语法', key: 'grammar' },
   { href: 'quiz.html', label: '背单词', key: 'words-study' },
   { href: 'review.html', label: '语法练习', key: 'grammar-drill' },
-  { href: 'traps.html', label: '易错点', key: 'traps' },
   { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '计划', key: 'plan' },
   { href: 'stats.html', label: '数据', key: 'stats' },
@@ -160,7 +155,6 @@ const FOOTER = (base) => `<footer class="foot">
       <h4>关于</h4>
       <a href="${base}plan.html">8 周计划</a>
       <a href="${base}stats.html">数据总览</a>
-      <a href="${base}traps.html">易错点</a>
       <a href="${base}wrong.html">错题本</a>
     </div>
   </div>
@@ -272,9 +266,9 @@ function buildHome() {
         <span class="tt-main"><b>清错题本</b><small id="ttWrong">做错的单词和语法题</small></span>
         <span class="tt-go">→</span>
       </a>
-      <a class="today-task" href="traps.html" id="taskTraps">
+      <a class="today-task" href="grammar.html" id="taskTraps">
         <span class="tt-ico">✕</span>
-        <span class="tt-main"><b>扫易错点</b><small>睡前 3 分钟，看一组 ✕/✓</small></span>
+        <span class="tt-main"><b>看考点易错</b><small>睡前 3 分钟，看一组 ✕/✓</small></span>
         <span class="tt-go">→</span>
       </a>
     </div>
@@ -1034,201 +1028,6 @@ document.querySelector('#resetBtn').addEventListener('click', () => {
 }
 
 /* ==========================================================
-   8. 易错点：族索引 + 每族一页
-   每个族的易错点按考点分组，页顶有小导航
-   ========================================================== */
-function trapItemHtml(x, opts) {
-  const o = opts || {};
-  const txt = esc((x.t + ' ' + x.bad + ' ' + x.good + ' ' + x.why).toLowerCase());
-  const link = o.gid && o.tid
-    ? `<div style="margin-top:8px"><a class="btn sm" href="${o.prefix || ''}grammar/${o.gid}.html#${o.tid}">看考点规则 →</a></div>`
-    : '';
-  const flag = o.label ? `<span class="flag" style="margin-left:auto">${esc(o.label)}</span>` : '';
-  return `<div class="trap" data-txt="${txt}">
-    <div class="tth">${esc(x.t)}${flag}</div>
-    <span class="bad">${esc(x.bad)}</span>
-    <span class="good">${esc(x.good)}</span>
-    <div class="why">${rich(x.why)}</div>
-    ${link}
-  </div>`;
-}
-
-function buildTraps() {
-  const TOTAL = GRAMMAR.reduce((a, g) => a + g.topics.reduce((b, t) => b + t.traps.length, 0), 0);
-
-  /* ---------- 索引：12 张族卡 + 跨族搜索 ---------- */
-  const cards = GRAMMAR.map((g) => {
-    const n = g.topics.reduce((a, t) => a + t.traps.length, 0);
-    const topicsWithTraps = g.topics.filter((t) => t.traps.length);
-    const names = topicsWithTraps.map((t) => esc(t.name)).join(' · ');
-    return `<a class="card gfam" href="traps/${g.id}.html" data-txt="${esc((g.name + ' ' + g.topics.map((t) => t.name).join(' ')).toLowerCase())}">
-      <div class="gfam-top"><span class="card-ico">${g.icon}</span><span class="gfam-count">${n} 条</span></div>
-      <h3>${esc(g.name)}</h3>
-      <p class="gfam-list">${names}</p>
-      <div class="meta">${topicsWithTraps.length} 个考点</div>
-    </a>`;
-  }).join('');
-
-  // 跨族搜索索引：只带渲染需要的字段，避免把所有族页内容塞进索引页
-  const searchIndex = [];
-  GRAMMAR.forEach((g) => g.topics.forEach((t) => t.traps.forEach((x) => {
-    searchIndex.push({
-      k: x.t, b: x.bad, g: x.good, w: x.why,
-      f: g.name, tp: t.name, gid: g.id, tid: t.id,
-      txt: (x.t + ' ' + x.bad + ' ' + x.good + ' ' + x.why).toLowerCase(),
-    });
-  })));
-
-  write('traps.html', page({
-    title: `语法易错点 · ${TOTAL} 条按族查`,
-    desc: `${TOTAL} 条易错对比按 ${GRAMMAR.length} 个语法族分页：错误写法、正确写法、错因一句话。`,
-    active: 'traps',
-    body: `
-<div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 易错点</div>
-  <h1>易错点</h1>
-  <p class="lede">全站 ${TOTAL} 条 <b>✕ 错句 / ✓ 对句</b> 按语法族分页收好。选一族进去逐条看，
-  或者直接搜关键词 —— 搜的是错法和错因，不是族名。</p>
-</div>
-
-<section class="section" style="margin-top:24px">
-  <div class="toolbar">
-    <input class="field" id="tf" type="search" placeholder="筛选语法族，如 时态 / 冠词 / 从句…" autocomplete="off">
-  </div>
-  <div class="grid c3" id="famGrid">${cards}</div>
-  <div class="empty" id="fempty" style="display:none"><b>没有匹配的族</b>换个词试试</div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>跨族搜索</h2><span class="sub">在全部 ${TOTAL} 条里找</span></div>
-  <div class="toolbar">
-    <input class="field" id="tq" type="search" placeholder="输入关键词，如 第三人称 / since / although / 冠词…" autocomplete="off">
-  </div>
-  <div id="tres" class="traps"></div>
-  <div class="note" id="thint">输入关键词后显示匹配的易错点（最多 30 条）。平时按族浏览更快。</div>
-  <div class="empty" id="tempty" style="display:none"><b>没找到</b>换个关键词</div>
-</section>
-`,
-    dataKeys: [],
-    dataExtra: { PET_TRAPS: searchIndex },
-    script: `
-(function(){
-  // 族卡筛选
-  var tf = document.querySelector('#tf');
-  if (tf) tf.addEventListener('input', function(){
-    var t = tf.value.trim().toLowerCase(), any = false;
-    document.querySelectorAll('#famGrid .gfam').forEach(function(el){
-      var ok = !t || (el.getAttribute('data-txt')||'').indexOf(t) >= 0;
-      el.style.display = ok ? '' : 'none'; if (ok) any = true;
-    });
-    var em = document.querySelector('#fempty');
-    if (em) em.style.display = any || !t ? 'none' : '';
-  });
-
-  // 跨族搜索：从内联索引里按需渲染，避免一上来就输出 119 条
-  var DATA = (window.PET_DATA && window.PET_DATA.PET_TRAPS) || [];
-  var q = document.querySelector('#tq');
-  var res = document.querySelector('#tres');
-  var hint = document.querySelector('#thint');
-  var empty = document.querySelector('#tempty');
-  if (!q || !res) return;
-  function escHtml(s){ return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
-  q.addEventListener('input', function(){
-    var term = q.value.trim().toLowerCase();
-    if (!term) { res.innerHTML = ''; hint.style.display = ''; empty.style.display = 'none'; return; }
-    hint.style.display = 'none';
-    var hit = DATA.filter(function(x){ return x.txt.indexOf(term) >= 0; }).slice(0, 30);
-    if (!hit.length) { res.innerHTML = ''; empty.style.display = ''; return; }
-    empty.style.display = 'none';
-    res.innerHTML = hit.map(function(x){
-      return '<div class="trap">' +
-        '<div class="tth">' + escHtml(x.k) + '<span class="flag" style="margin-left:auto">' + escHtml(x.f) + ' · ' + escHtml(x.tp) + '</span></div>' +
-        '<span class="bad">' + escHtml(x.b) + '</span>' +
-        '<span class="good">' + escHtml(x.g) + '</span>' +
-        '<div class="why">' + escHtml(x.w) + '</div>' +
-        '<div style="margin-top:8px"><a class="btn sm" href="grammar/' + x.gid + '.html#' + x.tid + '">看考点规则 →</a></div>' +
-        '</div>';
-    }).join('');
-  });
-})();
-`,
-  }));
-
-  /* ---------- 每个族一页 ---------- */
-  GRAMMAR.forEach((g, gi) => {
-    const prev = GRAMMAR[gi - 1];
-    const next = GRAMMAR[gi + 1];
-    const total = g.topics.reduce((a, t) => a + t.traps.length, 0);
-
-    const groups = g.topics.filter((t) => t.traps.length).map((t) => `
-<section class="tgroup" id="${t.id}">
-  <div class="tgroup-head">
-    <h3>${esc(t.name)}</h3>
-    <span class="lv ${esc(t.level)}">${esc(t.level)}</span>
-    <span class="tgroup-n">${t.traps.length} 条</span>
-    <a class="btn sm" href="../grammar/${g.id}.html#${t.id}" style="margin-left:auto">考点规则 →</a>
-  </div>
-  <div class="traps">${t.traps.map((x) => trapItemHtml(x, null)).join('')}</div>
-</section>`).join('');
-
-    const jump = g.topics.filter((t) => t.traps.length)
-      .map((t) => `<a class="chip" href="#${t.id}">${esc(t.name)} <span style="opacity:.6">${t.traps.length}</span></a>`).join('');
-
-    const pager = `
-  <div class="gfam-pager">
-    ${prev ? `<a class="btn sm" href="${prev.id}.html">← ${esc(prev.name)}</a>` : '<span></span>'}
-    <a class="btn sm" href="../traps.html">全部错点</a>
-    ${next ? `<a class="btn sm" href="${next.id}.html">${esc(next.name)} →</a>` : '<span></span>'}
-  </div>`;
-
-    write(`traps/${g.id}.html`, page({
-      base: '../',
-      title: `${g.name} · ${total} 条易错点`,
-      desc: `${g.name}的 ${total} 条易错对比：错误写法、正确写法、错因一句话。`,
-      active: 'traps',
-      body: `
-<div class="page-head">
-  <div class="crumb"><a href="../index.html">首页</a> / <a href="../traps.html">易错点</a> / ${esc(g.name)}</div>
-  <h1>${g.icon} ${esc(g.name)}</h1>
-  <p class="lede">${total} 条易错对比，按考点分组。每条都是「✕ 错法 → ✓ 对法 → 一句话原因」。</p>
-</div>
-
-<section class="section" style="margin-top:22px">
-  <div class="chips" id="jump">${jump}</div>
-  <div class="toolbar" style="margin-top:16px">
-    <input class="field" id="tq" type="search" placeholder="在本族内搜索…" autocomplete="off">
-    <span class="quiz-count" style="margin-left:auto">${total} 条</span>
-  </div>
-  <div id="tgroups">${groups}</div>
-  <div class="empty" id="tempty" style="display:none"><b>没找到</b>换个关键词</div>
-  ${pager}
-</section>
-`,
-      rawScript: `<script>
-(function(){
-  var q = document.querySelector('#tq');
-  if (!q) return;
-  q.addEventListener('input', function(){
-    var t = q.value.trim().toLowerCase(), any = false;
-    document.querySelectorAll('#tgroups .trap').forEach(function(el){
-      var ok = !t || (el.getAttribute('data-txt')||'').indexOf(t) >= 0;
-      el.style.display = ok ? '' : 'none'; if (ok) any = true;
-    });
-    // 整组都不匹配就把组标题也藏起来
-    document.querySelectorAll('#tgroups .tgroup').forEach(function(g){
-      var shown = Array.prototype.some.call(g.querySelectorAll('.trap'), function(x){ return x.style.display !== 'none'; });
-      g.style.display = (shown || !t) ? '' : 'none';
-    });
-    var em = document.querySelector('#tempty');
-    if (em) em.style.display = (any || !t) ? 'none' : '';
-  });
-})();
-</script>`,
-    }));
-  });
-}
-
-/* ==========================================================
    8b. 错题本：单词错题 + 语法错题，分页、可重做、确认掌握即移除
    ========================================================== */
 function buildWrongBook() {
@@ -1663,7 +1462,7 @@ function buildPlan() {
       w: 8, title: '综合冲刺',
       vocab: '只复习「复习」页里到期的卡；错词本过两遍',
       grammar: ['tense', 'passive', 'nonfinite', 'clause'],
-      focus: '回看「语法练习」页各考点正确率，专攻低于 60% 的；把「易错点」按族扫一遍。',
+      focus: '回看「语法练习」页各考点正确率，专攻低于 60% 的；把语法页里各考点的 ✕/✓ 易错对比扫一遍。',
       drill: '每天一组 40 题语法练习；错题只看解析不看题目，检验是否真的理解。',
     },
   ];
@@ -1721,9 +1520,9 @@ function buildPlan() {
       <h3>第 5 周末</h3>
       <p class="desc">在「语法练习」页看各考点正确率，用「专攻最弱考点」直接练那一个，不要平均用力。</p>
     </a>
-    <a class="card" href="traps.html">
+    <a class="card" href="grammar.html">
       <h3>考前三天</h3>
-      <p class="desc">把「易错点」按族扫一遍（119 条，12 页，每页 6–19 条）。这比重新读语法规则有效，因为考试考的就是这些边界情况。</p>
+      <p class="desc">把语法页每个考点卡展开，只扫里面的 ✕ 错句 / ✓ 对句（共 119 条）。这比重新读语法规则有效，因为考试考的就是这些边界情况。</p>
     </a>
   </div>
 </section>
@@ -1742,7 +1541,6 @@ function main() {
   buildGrammar();
   buildStudy();
   buildDrill();
-  buildTraps();
   buildWrongBook();
   buildStats();
   buildPlan();
