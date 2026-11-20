@@ -858,42 +858,59 @@ function buildDrill() {
 </section>
 
 <section class="section" style="margin-top:30px" id="setup">
-  <div class="card" style="max-width:700px">
-    <h3 style="margin-bottom:18px">开始一组</h3>
-
-    <div class="kicker">练哪里</div>
-    <div class="chips" id="scopeChips">
-      <button class="chip on" data-scope="all">全部考点</button>
-      <button class="chip" data-scope="wrong">只练错题本（<span id="wrongN">0</span>）</button>
-      <button class="chip" data-scope="weak">专攻最弱考点</button>
+  <div class="card setup-card">
+    <div class="setup-head">
+      <h3>开始一组</h3>
+      <div class="setup-actions">
+        <button class="btn primary" id="startBtn">开始 →</button>
+        <button class="btn ghost" id="resetBtn">清空记录</button>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">语法族（选「全部考点」时生效）</div>
-    <div class="chips" id="groupChips">
-      <button class="chip on" data-g="all">不限</button>
-      ${groupOptions}
+    <div class="setup-grid">
+      <div class="setup-group">
+        <div class="kicker">练哪里</div>
+        <div class="chips" id="scopeChips">
+          <button class="chip on" data-scope="all">全部考点</button>
+          <button class="chip" data-scope="wrong">只练错题本 <span id="wrongN">0</span></button>
+          <button class="chip" data-scope="weak">专攻最弱考点</button>
+        </div>
+        <p class="setup-hint">选「最弱考点」会自动挑你正确率最低的那一个</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">题型</div>
+        <div class="chips" id="typeChips">
+          <button class="chip on" data-t="all">混合</button>
+          <button class="chip" data-t="choice">单项选择</button>
+          <button class="chip" data-t="correct">改错</button>
+          <button class="chip" data-t="fill">填空</button>
+        </div>
+        <p class="setup-hint">混合更接近真考；改错题最适合自查写作</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">题量</div>
+        <div class="chips" id="lenChips">
+          <button class="chip" data-l="10">10 题</button>
+          <button class="chip on" data-l="20">20 题</button>
+          <button class="chip" data-l="40">40 题</button>
+        </div>
+        <p class="setup-hint">20 题约 8–10 分钟</p>
+      </div>
+
+      <div class="setup-group wide">
+        <div class="kicker">语法族范围 <span style="text-transform:none;letter-spacing:0">· 仅在选择「全部考点」时生效</span></div>
+        <div class="chips" id="groupChips">
+          <button class="chip on" data-g="all">不限</button>
+          ${groupOptions}
+        </div>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">题型</div>
-    <div class="chips" id="typeChips">
-      <button class="chip on" data-t="all">混合</button>
-      <button class="chip" data-t="choice">单项选择</button>
-      <button class="chip" data-t="correct">改错</button>
-      <button class="chip" data-t="fill">填空</button>
+    <div class="note setup-note">
+      键盘 <b>1–4</b> 选答案、<b>Enter</b> 下一题。填空题按 <b>Enter</b> 提交。答错的题会自动进入<a href="wrong.html">错题本</a>。
     </div>
-
-    <div class="kicker" style="margin-top:18px">题量</div>
-    <div class="chips" id="lenChips">
-      <button class="chip" data-l="10">10 题</button>
-      <button class="chip on" data-l="20">20 题</button>
-      <button class="chip" data-l="40">40 题</button>
-    </div>
-
-    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn primary" id="startBtn">开始 →</button>
-      <button class="btn ghost" id="resetBtn">清空练习记录</button>
-    </div>
-    <div class="note" style="margin-bottom:0">键盘 <b>1–4</b> 选答案、<b>Enter</b> 下一题。填空题按 <b>Enter</b> 提交。</div>
   </div>
 </section>
 
@@ -1235,6 +1252,11 @@ function buildWrongBook() {
   </div>
   <div class="toolbar" style="margin-top:16px">
     <input class="field" id="wq" type="search" placeholder="在错题本里搜索…" autocomplete="off">
+    <select class="field" id="psize" style="max-width:130px;padding:6px 10px;font-size:.84rem">
+      <option value="10">每页 10 条</option>
+      <option value="20">每页 20 条</option>
+      <option value="50">每页 50 条</option>
+    </select>
     <button class="btn sm" id="redoBtn">重做本页</button>
     <button class="btn ghost sm" id="clearBtn">清空当前列表</button>
   </div>
@@ -1259,7 +1281,9 @@ const WBYW = new Map(WORDS.map(w => [w.w.toLowerCase(), w]));
 const TNAME = new Map();
 GRAMMAR.forEach(g => g.topics.forEach(t => TNAME.set(t.id, t.name)));
 
-const PAGE_SIZE = 10;
+const PSIZE_KEY = 'pet-wb-psize';
+let PAGE_SIZE = parseInt(localStorage.getItem(PSIZE_KEY) || '10', 10);
+if ([10, 20, 50].indexOf(PAGE_SIZE) < 0) PAGE_SIZE = 10;
 let tab = 'word';
 let page = 0;
 let query = '';
@@ -1391,6 +1415,18 @@ q.addEventListener('input', () => {
   page = 0;
   draw();
 });
+
+// 每页条数
+const psizeSel = document.querySelector('#psize');
+if (psizeSel) {
+  psizeSel.value = String(PAGE_SIZE);
+  psizeSel.addEventListener('change', () => {
+    PAGE_SIZE = parseInt(psizeSel.value, 10);
+    try { localStorage.setItem(PSIZE_KEY, String(PAGE_SIZE)); } catch (e) {}
+    page = 0;
+    draw();
+  });
+}
 
 document.addEventListener('pet:wordbook', draw);
 document.addEventListener('pet:qlog', draw);

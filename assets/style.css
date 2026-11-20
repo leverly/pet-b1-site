@@ -687,7 +687,11 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   display: grid; gap: 20px 28px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 18px;
+  /* 让各配置块顶部对齐、按内容高度自然排列，避免一栏被另一栏拉出大片空白 */
+  align-items: start;
 }
+/* 语法族这类选项多、占宽大的块，跨两栏放到最后，左右高度就不会失衡 */
+.setup-group.wide { grid-column: 1 / -1; }
 .setup-group { min-width: 0; }
 .setup-group .kicker { margin-bottom: 8px; }
 .setup-group .chips { gap: 7px; }

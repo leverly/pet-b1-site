@@ -43,6 +43,11 @@
   </div>
   <div class="toolbar" style="margin-top:16px">
     <input class="field" id="wq" type="search" placeholder="在错题本里搜索…" autocomplete="off">
+    <select class="field" id="psize" style="max-width:130px;padding:6px 10px;font-size:.84rem">
+      <option value="10">每页 10 条</option>
+      <option value="20">每页 20 条</option>
+      <option value="50">每页 50 条</option>
+    </select>
     <button class="btn sm" id="redoBtn">重做本页</button>
     <button class="btn ghost sm" id="clearBtn">清空当前列表</button>
   </div>
@@ -100,7 +105,9 @@ const WBYW = new Map(WORDS.map(w => [w.w.toLowerCase(), w]));
 const TNAME = new Map();
 GRAMMAR.forEach(g => g.topics.forEach(t => TNAME.set(t.id, t.name)));
 
-const PAGE_SIZE = 10;
+const PSIZE_KEY = 'pet-wb-psize';
+let PAGE_SIZE = parseInt(localStorage.getItem(PSIZE_KEY) || '10', 10);
+if ([10, 20, 50].indexOf(PAGE_SIZE) < 0) PAGE_SIZE = 10;
 let tab = 'word';
 let page = 0;
 let query = '';
@@ -232,6 +239,18 @@ q.addEventListener('input', () => {
   page = 0;
   draw();
 });
+
+// 每页条数
+const psizeSel = document.querySelector('#psize');
+if (psizeSel) {
+  psizeSel.value = String(PAGE_SIZE);
+  psizeSel.addEventListener('change', () => {
+    PAGE_SIZE = parseInt(psizeSel.value, 10);
+    try { localStorage.setItem(PSIZE_KEY, String(PAGE_SIZE)); } catch (e) {}
+    page = 0;
+    draw();
+  });
+}
 
 document.addEventListener('pet:wordbook', draw);
 document.addEventListener('pet:qlog', draw);
