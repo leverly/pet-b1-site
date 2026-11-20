@@ -76,22 +76,35 @@
     } catch (e) {}
   };
 
-  /* ---------------- 主题（默认浅色护眼，支持夜间深色） ---------------- */
-  function applyTheme(t) {
+  /* ---------------- 主题（按系统本地时间自动切换：6:00-19:00 浅色，19:00-6:00 深色，支持手动切换） ---------------- */
+  var THEME_KEY = 'pet-theme-manual';
+  function autoThemeByTime() {
+    var h = new Date().getHours();
+    return (h >= 19 || h < 6) ? 'dark' : 'light';
+  }
+  function resolveTheme() {
+    var m = load(THEME_KEY, null);
+    return (m === 'light' || m === 'dark') ? m : autoThemeByTime();
+  }
+  function applyTheme(t, persist) {
     document.documentElement.setAttribute('data-theme', t);
-    store('pet-theme', t);
+    if (persist) store(THEME_KEY, t);
+    var isManual = !!load(THEME_KEY, null);
     var b = document.querySelector('.theme-btn');
     if (b) {
       b.textContent = t === 'light' ? '☾' : '☀';
-      b.setAttribute('aria-label', t === 'light' ? '切换到深色护眼模式' : '切换到明亮模式');
-      b.title = t === 'light' ? '夜间深色模式' : '明亮护眼模式';
+      b.setAttribute('aria-label', t === 'light' ? '切换到深色模式' : '切换到浅色模式');
+      b.title = (t === 'light' ? '切换到深色模式' : '切换到浅色模式') + (isManual ? '（当前手动设置）' : '（当前随系统时间自动切换）');
     }
   }
-  P.theme = function () { return document.documentElement.getAttribute('data-theme') || 'light'; };
-  P.toggleTheme = function () { applyTheme(P.theme() === 'light' ? 'dark' : 'light'); };
+  P.theme = function () { return document.documentElement.getAttribute('data-theme') || resolveTheme(); };
+  P.toggleTheme = function () { applyTheme(P.theme() === 'light' ? 'dark' : 'light', true); };
+  P.resetThemeAuto = function () {
+    try { localStorage.removeItem(THEME_KEY); } catch (e) {}
+    applyTheme(autoThemeByTime(), false);
+  };
 
-  var savedTheme = load('pet-theme', null);
-  document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', resolveTheme());
 
   /* ---------------- 考生档案 / 备考倒计时 ---------------- */
   var PROFILE_KEY = 'pet-profile-v1';
@@ -480,7 +493,18 @@
 
     var tb = document.querySelector('.theme-btn');
     if (tb) tb.addEventListener('click', P.toggleTheme);
-    applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+    applyTheme(resolveTheme(), false);
+
+    function syncAutoTheme() {
+      if (!load(THEME_KEY, null)) {
+        var autoT = autoThemeByTime();
+        if (P.theme() !== autoT) applyTheme(autoT, false);
+      }
+    }
+    setInterval(syncAutoTheme, 60000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) syncAutoTheme();
+    });
 
     document.querySelectorAll('[data-open-exam]').forEach(function (el) {
       el.addEventListener('click', function (e) {

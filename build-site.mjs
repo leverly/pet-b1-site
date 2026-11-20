@@ -3,7 +3,8 @@
    用法：node build-site.mjs
    输出：根目录 index.html + topics/ grammar/ 等
    ========================================================== */
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,6 +21,10 @@ import { QUESTIONS_2 } from './src/data-quiz2.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = __dir;
+
+const assetHash = (rel) => createHash('sha256').update(readFileSync(join(__dir, rel))).digest('hex').slice(0, 8);
+const CSS_VER = assetHash('assets/style.css');
+const JS_VER = assetHash('assets/app.js');
 
 const ALL_Q = [...QUESTIONS, ...QUESTIONS_2];
 
@@ -173,8 +178,8 @@ function page({ base = '', active = '', title, desc = '', body, script = '', raw
 <meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(desc)}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='800' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="${base}assets/style.css">
-<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
+<link rel="stylesheet" href="${base}assets/style.css?v=${CSS_VER}">
+<script>try{var m=JSON.parse(localStorage.getItem('pet-theme-manual')||'null');var h=new Date().getHours();var t=(m==='light'||m==='dark')?m:((h>=19||h<6)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){var h2=new Date().getHours();document.documentElement.setAttribute('data-theme',(h2>=19||h2<6)?'dark':'light');}</script>
 </head>
 <body data-base="${base}">
 ${HEADER(base, active)}
@@ -184,7 +189,7 @@ ${body}
 </div>
 </main>
 ${FOOTER(base)}
-<script src="${base}assets/app.js"></script>
+<script src="${base}assets/app.js?v=${JS_VER}"></script>
 ${script ? `${inlineData(dataKeys, dataExtra)}<script>${script}</script>` : ''}
 ${rawScript}
 </body>
