@@ -715,3 +715,10 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   .wb-row .zh { grid-column: 1 / -1; }
   .wb-gram { grid-template-columns: 1fr; }
 }
+
+/* 答对后自动进入下一词的提示 */
+.feedback.auto-next { animation: slideIn .2s var(--ease-out); }
+.auto-next-hint {
+  display: block; margin-top: 6px; font-size: .78rem;
+  color: var(--text-3); letter-spacing: .02em;
+}

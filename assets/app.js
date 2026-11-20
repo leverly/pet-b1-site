@@ -703,8 +703,11 @@
     var queue = [], idx = 0, revealed = false;
     var sessionN = 0, sessionOk = 0, streak = 0, best = 0;
     var answered = false, finished = false;
+    var autoNextTimer = null;
+    var AUTO_NEXT_MS = 750;   // 答对后自动翻页的停顿，够看清反馈又不拖沓
 
     function build() {
+      clearTimeout(autoNextTimer);
       var now = Date.now();
       var scored = pool.map(function (w) {
         var r = P.srsGet(w.w);
@@ -831,17 +834,29 @@
       });
       if (ok) { streak++; if (streak > best) best = streak; } else streak = 0;
       var fb = host.querySelector('#wfb');
-      fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
-        (ok ? '✓ 对了' + (streak >= 3 ? ' · 连击 ' + streak : '') : '✗ 正确答案：' + esc(w.zh)) + '</b>' +
-        esc(w.w) + (w.ph ? ' /' + esc(w.ph) + '/' : '') + ' · ' + esc(w.posZh) +
-        (w.ex && w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.84rem">' + esc(w.ex[0]) + '</div>' : '') +
-        '</div>' +
-        '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="wnext">下一词 →</button></div>';
-      var nx = fb.querySelector('#wnext');
-      nx.addEventListener('click', function () { idx++; draw(); });
-      nx.focus();
+      if (ok) {
+        // 答对：短暂给出确认反馈后自动进入下一词，不打断节奏
+        fb.innerHTML = '<div class="feedback auto-next"><b>✓ 对了' +
+          (streak >= 3 ? ' · 连击 ' + streak : '') + '</b>' +
+          esc(w.zh) + (w.posZh ? ' · ' + esc(w.posZh) : '') +
+          '<span class="auto-next-hint">即将进入下一词…</span></div>';
+      } else {
+        // 答错：停下来让用户看清正确答案，手动进入下一题
+        fb.innerHTML = '<div class="feedback bad"><b>✗ 正确答案：' + esc(w.zh) + '</b>' +
+          esc(w.w) + (w.ph ? ' /' + esc(w.ph) + '/' : '') + ' · ' + esc(w.posZh) +
+          (w.ex && w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.84rem">' + esc(w.ex[0]) + '</div>' : '') +
+          '</div>' +
+          '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="wnext">下一词 →</button></div>';
+        var nx = fb.querySelector('#wnext');
+        nx.addEventListener('click', function () { idx++; draw(); });
+        nx.focus();
+      }
       // 四选一自动评级：对了算「会了」，错了算「忘了」
       recordAndRate(w, ok ? 2 : 0, ok);
+      if (ok) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = setTimeout(function () { idx++; draw(); }, AUTO_NEXT_MS);
+      }
     }
 
     function recordAndRate(w, g, countedOk) {
@@ -890,6 +905,7 @@
 
     function done() {
       finished = true;
+      clearTimeout(autoNextTimer);
       var st = P.srsStats();
       host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
         '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮完成</div>' +
