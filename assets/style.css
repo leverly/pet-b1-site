@@ -733,3 +733,28 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
 .say-btn:hover { background: var(--accent); color: #fff; transform: scale(1.08); }
 [data-theme="dark"] .say-btn:hover { color: #08201a; }
 .say-btn:active { transform: scale(.94); }
+
+/* ==========================================================
+   背单词页顶部的「背词范围」开关
+   ========================================================== */
+.scope-bar {
+  margin-top: 22px; padding: 16px 18px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); box-shadow: var(--shadow-1);
+}
+.scope-bar-label {
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 10px;
+}
+.scope-bar .chip { padding: 7px 14px; }
+.scope-bar .chip b {
+  font-family: var(--mono); font-size: .74rem; font-weight: 500;
+  opacity: .62; margin-left: 3px;
+}
+.scope-bar .chip.on b { opacity: .85; }
+.scope-bar-hint {
+  margin: 10px 0 0; font-size: .8rem; color: var(--text-3); line-height: 1.5;
+}
+@media (max-width: 720px) {
+  .scope-bar { padding: 14px; }
+}

@@ -34,6 +34,18 @@
   <h1>背单词</h1>
   <p class="lede">给英文，选出正确的中文含义 —— 和考试里的词义判断同一种思路。
   不按字母顺序背，按<b>你忘得快的地方</b>背：答错 10 分钟后再来，答得越稳间隔越长（1 天 → 3 天 → 7 天 → 21 天以上）。</p>
+
+  <div class="scope-bar">
+    <div class="scope-bar-label">背词范围</div>
+    <div class="chips" id="scopeBar">
+      <button class="chip on" data-s="b1">高频词 <b>907</b></button>
+      <button class="chip" data-s="b2">中频词 <b>1782</b></button>
+      <button class="chip" data-s="b3">低频词 <b>420</b></button>
+      <button class="chip" data-s="all">全部 <b>3109</b></button>
+      <button class="chip" data-s="phrase">只背短语 <b>266</b></button>
+    </div>
+    <p class="scope-bar-hint" id="scopeHint">先拿下卷面最常见的高频词</p>
+  </div>
 </div>
 
 <section class="section" style="margin-top:26px">
@@ -91,16 +103,6 @@
           <button class="chip" data-m="new">只学新词</button>
         </div>
         <p class="setup-hint" id="modeHint">到期复习 + 少量新词，兼顾巩固与推进</p>
-      </div>
-
-      <div class="setup-group">
-        <div class="kicker">词源范围</div>
-        <div class="chips" id="srcChips">
-          <button class="chip on" data-s="b1">高频词 907</button>
-          <button class="chip" data-s="all">全部 3109</button>
-          <button class="chip" data-s="phrase">短语 266</button>
-        </div>
-        <p class="setup-hint" id="srcHint">只背 PET 高频词，优先拿分</p>
       </div>
 
       <div class="setup-group">
@@ -165,9 +167,9 @@ let autoSay = (function () {
 function refreshKv() {
   // 四张卡统一按「当前选中的范围」统计，保证 已学过 + 还没背过 = 本范围词条数，
   // 不会出现两个口径相减对不上的情况。
-  const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
-             : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
-             : WORDS;
+  const pool = src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
+             : src === 'all' ? WORDS
+             : WORDS.filter(w => w.tag === src);
   const all = P.srsAll ? P.srsAll() : {};
   const now = Date.now();
   let learned = 0, due = 0, mature = 0, left = 0;
@@ -225,8 +227,10 @@ const HINTS = {
     new: '只学没背过的词，适合赶进度'
   },
   src: {
-    b1: '只背 PET 高频词，优先拿分',
-    all: '包含全部词条与派生词，覆盖最全',
+    b1: '先拿下卷面最常见的高频词（约 900 个）',
+    b2: '高频词之后的中间层，阅读与写作的主力',
+    b3: '低频词，认识即可，冲刺阶段再补',
+    all: '全部词条与短语，覆盖最全',
     phrase: '只背短语与固定搭配，专攻完形与写作'
   },
   len: {
@@ -254,13 +258,31 @@ document.querySelectorAll('#sayChips .chip').forEach(c => {
     setHint('sayHint', autoSay ? '每题出现时自动读 3 遍，用耳朵也能记' : '不出声；想听时点单词旁的 🔊');
   });
 });
-pick('#srcChips', 'data-s', v => { src = v; setHint('srcHint', HINTS.src[v]); refreshKv(); });
+// 范围是页面级的，选择要记住
+(function initScope() {
+  try {
+    const saved = localStorage.getItem('pet-scope');
+    if (saved && HINTS.src[saved]) src = saved;
+  } catch (e) {}
+  document.querySelectorAll('#scopeBar .chip').forEach(c => {
+    c.classList.toggle('on', c.getAttribute('data-s') === src);
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#scopeBar .chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+      src = c.getAttribute('data-s');
+      try { localStorage.setItem('pet-scope', src); } catch (e) {}
+      setHint('scopeHint', HINTS.src[src]);
+      refreshKv();
+    });
+  });
+  setHint('scopeHint', HINTS.src[src]);
+})();
 pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
 
 document.querySelector('#startBtn').addEventListener('click', () => {
-  const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
-             : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
-             : WORDS;
+  const pool = src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
+             : src === 'all' ? WORDS
+             : WORDS.filter(w => w.tag === src);
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
   P.wordStudy({ mount: '#fc', words: pool, mode, card: 'choice', limit: len, backHref: 'quiz.html', autoSay: autoSay });
