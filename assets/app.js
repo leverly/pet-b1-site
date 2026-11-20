@@ -641,12 +641,17 @@
      发音播放：音频是构建期预合成的（单词连读 3 遍），
      所以这里只负责播放，不在运行时请求 TTS。
      ---------------------------------------------------------- */
-  var audioMap = (window.PET_AUDIO || {});
+  // 数据是页面内联注入的，且可能晚于本脚本执行 —— 每次访问时再取
+  function audioMapGet() {
+    return (window.PET_DATA && window.PET_DATA.PET_AUDIO) || window.PET_AUDIO || {};
+  }
+  var audioMap = audioMapGet();
   var currentAudio = null;
+  var playTimer = null;
 
-  P.hasAudio = function (w) { return !!audioMap[w]; };
+  P.hasAudio = function (w) { return !!audioMapGet()[w]; };
   P.audioSrc = function (w) {
-    var rel = audioMap[w];
+    var rel = audioMapGet()[w];
     if (!rel) return '';
     // 站点可能部署在子路径下：以当前页面所在目录为基准解析
     return rel;
@@ -655,20 +660,34 @@
     var src = P.audioSrc(w);
     if (!src) return false;
     var o = opts || {};
+    var times = o.times || 3;     // 音频只存 1 遍，连着播 3 遍 = 朗读三次
+    var gap = o.gap == null ? 260 : o.gap;
     try {
       if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      if (playTimer) { clearTimeout(playTimer); playTimer = null; }
       var a = new Audio(src);
       a.volume = o.volume == null ? 1 : o.volume;
       currentAudio = a;
+      var played = 0;
+      a.addEventListener('ended', function () {
+        played++;
+        if (played < times) {
+          playTimer = setTimeout(function () {
+            try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {}
+          }, gap);
+        } else if (o.onend) {
+          o.onend();
+        }
+      });
       var p = a.play();
       if (p && p.catch) p.catch(function () { /* 浏览器可能拦截自动播放 */ });
-      if (o.onend) a.addEventListener('ended', o.onend);
       return true;
     } catch (e) {
       return false;
     }
   };
   P.stopAudio = function () {
+    if (playTimer) { clearTimeout(playTimer); playTimer = null; }
     if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
   };
 
@@ -850,7 +869,7 @@
       var canPlay = P.hasAudio(w.w);
       h += '<div class="fcard" style="justify-content:flex-start;padding-top:30px;text-align:center;min-height:0">';
       h += '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(w.w) +
-           (canPlay ? '<button class="say-btn" id="sayBtn" title="朗读 3 遍" aria-label="朗读单词">🔊</button>' : '') +
+           (canPlay ? '<button class="say-btn" id="sayBtn" title="朗读 3 遍" aria-label="朗读单词三遍">🔊</button>' : '') +
            '</div>';
       if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
       h += '<div class="fpos">' + esc(w.posZh) + '</div>';

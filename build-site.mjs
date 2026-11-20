@@ -8,7 +8,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { WORDS, TOPICS, STATS } from './src/data-words.js';
-import { AUDIO } from './src/data-audio.js';
+let AUDIO = {};
+try {
+  ({ AUDIO } = await import('./src/data-audio.js'));
+} catch (e) {
+  AUDIO = {};   // 音频尚未生成时不阻塞构建
+}
 import { GRAMMAR, GRAMMAR_STATS } from './src/data-grammar.js';
 import { QUESTIONS } from './src/data-quiz.js';
 import { QUESTIONS_2 } from './src/data-quiz2.js';
