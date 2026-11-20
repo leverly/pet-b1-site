@@ -121,7 +121,7 @@ const NAV = [
   { href: 'review.html', label: '练语法', key: 'grammar-drill' },
   { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '计划', key: 'plan' },
-  { href: 'stats.html', label: '数据', key: 'stats' },
+  { href: 'stats.html', label: '备注', key: 'stats' },
 ];
 
 const LOGO_HTML = (base) => `<a class="logo" href="${base}index.html">PET <em>备考站</em></a>`;
@@ -160,7 +160,7 @@ const FOOTER = (base) => `<footer class="foot">
     <div class="col">
       <h4>关于</h4>
       <a href="${base}plan.html">8 周计划</a>
-      <a href="${base}stats.html">数据总览</a>
+      <a href="${base}stats.html">备注</a>
       <a href="${base}wrong.html">错题本</a>
     </div>
   </div>
@@ -1388,7 +1388,7 @@ draw();
 }
 
 /* ==========================================================
-   9. 数据总览
+   9. 备注
    ========================================================== */
 function buildStats() {
   const tagRows = [
@@ -1404,14 +1404,14 @@ function buildStats() {
   }).join('');
 
   write('stats.html', page({
-    title: 'PET 备考站 · 数据总览',
-    desc: '词表规模、频档分布、话题词量、语法考点与题量，全部实时计算。',
+    title: 'PET 备考站 · 备注',
+    desc: '本站备注：词表规模、频档分布、话题词量、语法考点与题量的口径说明，全部实时计算。',
     active: 'stats',
     body: `
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 数据</div>
-  <h1>数据总览</h1>
-  <p class="lede">本站所有数字都由构建脚本实时计算，不存在手写死数字。词表口径为 Cambridge 官方 B1 Preliminary 词汇表（2025 年 8 月版）。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 备注</div>
+  <h1>备注</h1>
+  <p class="lede">这一页是本站的备注：词表规模、频档分布、话题词量与题量的口径说明。所有数字都由构建脚本实时计算，不存在手写死数字。词表口径为 Cambridge 官方 B1 Preliminary 词汇表（2025 年 8 月版）。</p>
 </div>
 
 <section class="section">
