@@ -131,7 +131,66 @@
   };
   P.resetDaily = function () { daylog = {}; store(DAYLOG_KEY, daylog); };
 
+  /* ---------------- 单词错题本 ----------------
+     语法题用 qlog.wrongIds；单词没有题号，单独存一份。
+     记录：错几次 / 错的时间 / 之后答对几次。
+     连续答对 MASTER_STREAK 次才判定「已掌握」，从错题本移除。
+     ---------------------------------------- */
+  var WBOOK_KEY = 'pet-wordbook-v1';
+  var wbook = load(WBOOK_KEY, {}) || {};
+  var MASTER_STREAK = 2;
+
+  P.wordBook = function () { return wbook; };
+  P.wordBookList = function () {
+    return Object.keys(wbook).map(function (k) {
+      var r = wbook[k];
+      return { w: k, wrong: r.wrong || 1, right: r.right || 0, last: r.last || 0, at: r.at || 0 };
+    }).sort(function (a, b) { return b.at - a.at; });
+  };
+  P.wordBookCount = function () { return Object.keys(wbook).length; };
+  /** 记录一次单词结果：ok=false 进错题本；ok=true 累计对题，达标则移除 */
+  P.wordAttempt = function (w, ok) {
+    var k = String(w).toLowerCase();
+    if (!ok) {
+      var r = wbook[k] || { wrong: 0, right: 0, at: 0 };
+      r.wrong = (r.wrong || 0) + 1;
+      r.right = 0;             // 答错即清零连对
+      r.at = Date.now();
+      r.last = r.at;
+      wbook[k] = r;
+      store(WBOOK_KEY, wbook);
+      document.dispatchEvent(new CustomEvent('pet:wordbook', { detail: { word: w, ok: false } }));
+      return false;
+    }
+    var e = wbook[k];
+    if (!e) return false;      // 不在错题本里，答对无需处理
+    e.right = (e.right || 0) + 1;
+    e.last = Date.now();
+    var mastered = e.right >= MASTER_STREAK;
+    if (mastered) delete wbook[k];
+    store(WBOOK_KEY, wbook);
+    document.dispatchEvent(new CustomEvent('pet:wordbook', { detail: { word: w, ok: true, mastered: mastered } }));
+    return mastered;
+  };
+  /** 手动确认掌握，直接移出错题本 */
+  P.wordMaster = function (w) {
+    var k = String(w).toLowerCase();
+    if (!wbook[k]) return false;
+    delete wbook[k];
+    store(WBOOK_KEY, wbook);
+    document.dispatchEvent(new CustomEvent('pet:wordbook', { detail: { word: w, ok: true, mastered: true } }));
+    return true;
+  };
+  P.wordBookReset = function () {
+    wbook = {};
+    store(WBOOK_KEY, wbook);
+    document.dispatchEvent(new CustomEvent('pet:wordbook', { detail: { reset: true } }));
+  };
+  P.MASTER_STREAK = MASTER_STREAK;
+
   P.srsRate = function (w, grade) {
+    // 同步更新错题本：忘了/困难记为错，会了/很熟记为对
+    P.wordAttempt(w, grade >= 2);
     var k = String(w).toLowerCase();
     var r = srs[k] || { ease: 2.5, ivl: 0, due: 0, reps: 0, lapses: 0 };
     if (grade === 0) {

@@ -118,6 +118,7 @@ const NAV = [
   { href: 'quiz.html', label: '背单词', key: 'words-study' },
   { href: 'review.html', label: '语法练习', key: 'grammar-drill' },
   { href: 'traps.html', label: '易错点', key: 'traps' },
+  { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '计划', key: 'plan' },
   { href: 'stats.html', label: '数据', key: 'stats' },
 ];
@@ -160,6 +161,7 @@ const FOOTER = (base) => `<footer class="foot">
       <a href="${base}plan.html">8 周计划</a>
       <a href="${base}stats.html">数据总览</a>
       <a href="${base}traps.html">易错点</a>
+      <a href="${base}wrong.html">错题本</a>
     </div>
   </div>
 </footer>`;
@@ -265,6 +267,11 @@ function buildHome() {
         <span class="tt-main"><b>语法练习</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
         <span class="tt-go">→</span>
       </a>
+      <a class="today-task" href="wrong.html" id="taskWrong">
+        <span class="tt-ico">↺</span>
+        <span class="tt-main"><b>清错题本</b><small id="ttWrong">做错的单词和语法题</small></span>
+        <span class="tt-go">→</span>
+      </a>
       <a class="today-task" href="traps.html" id="taskTraps">
         <span class="tt-ico">✕</span>
         <span class="tt-main"><b>扫易错点</b><small>睡前 3 分钟，看一组 ✕/✓</small></span>
@@ -341,6 +348,8 @@ function refresh() {
   set('#ttGrammar', q ? '今天已练 ' + q + ' 题，继续专攻弱项' : '练 10 题，专攻正确率低的');
   const due = P.srsStats().due;
   set('#ttWords', due ? '今天有 ' + due + ' 个词到期' : '按遗忘曲线学新词');
+  const wn = P.wordBookCount() + P.wrongIds().length;
+  set('#ttWrong', wn ? wn + ' 道错题待清理' : '暂时没有错题');
 }
 refresh();
 document.addEventListener('pet:daily', refresh);
@@ -657,41 +666,58 @@ function buildStudy() {
 </section>
 
 <section class="section" style="margin-top:30px" id="setup">
-  <div class="card" style="max-width:660px">
-    <h3 style="margin-bottom:18px">开始一轮</h3>
-
-    <div class="kicker">怎么背</div>
-    <div class="chips" id="cardChips">
-      <button class="chip on" data-c="recall">看词回想（自己判断）</button>
-      <button class="chip" data-c="choice">四选一（自动判分）</button>
+  <div class="card setup-card">
+    <div class="setup-head">
+      <h3>开始一轮</h3>
+      <div class="setup-actions">
+        <button class="btn primary" id="startBtn">开始 →</button>
+        <button class="btn ghost" id="resetBtn">重置记忆数据</button>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">背哪些</div>
-    <div class="chips" id="modeChips">
-      <button class="chip on" data-m="mix">混合（到期 + 新词）</button>
-      <button class="chip" data-m="due">只复习到期的</button>
-      <button class="chip" data-m="new">只学新词</button>
+    <div class="setup-grid">
+      <div class="setup-group">
+        <div class="kicker">怎么背</div>
+        <div class="chips" id="cardChips">
+          <button class="chip on" data-c="recall">看词回想</button>
+          <button class="chip" data-c="choice">四选一</button>
+        </div>
+        <p class="setup-hint" id="cardHint">自己判断是否记得，更贴近真实回忆</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">背哪些</div>
+        <div class="chips" id="modeChips">
+          <button class="chip on" data-m="mix">混合</button>
+          <button class="chip" data-m="due">只复习到期</button>
+          <button class="chip" data-m="new">只学新词</button>
+        </div>
+        <p class="setup-hint" id="modeHint">到期复习 + 少量新词，兼顾巩固与推进</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">词源范围</div>
+        <div class="chips" id="srcChips">
+          <button class="chip on" data-s="b1">高频词 ${STATS.b1}</button>
+          <button class="chip" data-s="all">全部 ${STATS.total}</button>
+          <button class="chip" data-s="phrase">短语 ${STATS.phrases}</button>
+        </div>
+        <p class="setup-hint" id="srcHint">只背 PET 高频词，优先拿分</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">每轮词数</div>
+        <div class="chips" id="lenChips">
+          <button class="chip" data-l="10">10 个</button>
+          <button class="chip on" data-l="20">20 个</button>
+          <button class="chip" data-l="30">30 个</button>
+          <button class="chip" data-l="50">50 个</button>
+        </div>
+        <p class="setup-hint" id="lenHint">20 个约 5–8 分钟，适合每天一轮</p>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">词源范围</div>
-    <div class="chips" id="srcChips">
-      <button class="chip on" data-s="b1">高频词（${STATS.b1}）</button>
-      <button class="chip" data-s="all">全部（${STATS.total}）</button>
-      <button class="chip" data-s="phrase">只背短语（${STATS.phrases}）</button>
-    </div>
-
-    <div class="kicker" style="margin-top:18px">每轮词数</div>
-    <div class="chips" id="lenChips">
-      <button class="chip" data-l="10">10 个</button>
-      <button class="chip on" data-l="20">20 个</button>
-      <button class="chip" data-l="30">30 个</button>
-    </div>
-
-    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn primary" id="startBtn">开始 →</button>
-      <button class="btn ghost" id="resetBtn">重置记忆数据</button>
-    </div>
-    <div class="note" style="margin-bottom:0">
+    <div class="note setup-note">
       回想模式：空格翻卡，翻卡后 <b>1</b> 忘了 · <b>2</b> 困难 · <b>3</b> 会了 · <b>4</b> 很熟。<br>
       四选一模式：<b>1–4</b> 选答案，<b>Enter</b> 下一词；答对自动记「会了」，答错自动记「忘了」。
     </div>
@@ -747,10 +773,38 @@ function pick(sel, attr, cb) {
     c.classList.add('on'); cb(c.getAttribute(attr));
   }));
 }
-pick('#cardChips', 'data-c', v => card = v);
-pick('#modeChips', 'data-m', v => { mode = v; refreshKv(); });
-pick('#srcChips', 'data-s', v => { src = v; refreshKv(); });
-pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
+/* 选项变化时同步更新提示文案 */
+const HINTS = {
+  card: {
+    recall: '自己判断是否记得，更贴近真实回忆',
+    choice: '四选一自动判分，适合快速过词'
+  },
+  mode: {
+    mix: '到期复习 + 少量新词，兼顾巩固与推进',
+    due: '只复习今天到期的词，不再加新词',
+    new: '只学没背过的词，适合赶进度'
+  },
+  src: {
+    b1: '只背 PET 高频词，优先拿分',
+    all: '包含全部词条与派生词，覆盖最全',
+    phrase: '只背短语与固定搭配，专攻完形与写作'
+  },
+  len: {
+    '10': '10 个约 3–4 分钟，适合碎片时间',
+    '20': '20 个约 5–8 分钟，适合每天一轮',
+    '30': '30 个约 10–12 分钟，适合冲刺',
+    '50': '50 个约 15–20 分钟，适合集中突破'
+  }
+};
+function setHint(id, text) {
+  const el = document.querySelector('#' + id);
+  if (el) el.textContent = text;
+}
+
+pick('#cardChips', 'data-c', v => { card = v; setHint('cardHint', HINTS.card[v]); });
+pick('#modeChips', 'data-m', v => { mode = v; setHint('modeHint', HINTS.mode[v]); refreshKv(); });
+pick('#srcChips', 'data-s', v => { src = v; setHint('srcHint', HINTS.src[v]); refreshKv(); });
+pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
 
 document.querySelector('#startBtn').addEventListener('click', () => {
   const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
@@ -1158,6 +1212,287 @@ function buildTraps() {
 }
 
 /* ==========================================================
+   8b. 错题本：单词错题 + 语法错题，分页、可重做、确认掌握即移除
+   ========================================================== */
+function buildWrongBook() {
+  write('wrong.html', page({
+    dataKeys: ['WORDS', 'QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
+    title: '错题本 · 做错的单词与语法题',
+    desc: '自动收集做错的单词和语法题，分页浏览，支持重做；连续答对或手动确认后移出错题本。',
+    active: 'wrong',
+    body: `
+<div class="page-head">
+  <div class="crumb"><a href="index.html">首页</a> / 错题本</div>
+  <h1>错题本</h1>
+  <p class="lede">做错的会自动收进来。单词错题<b>连续答对 2 次</b>才算掌握，
+  语法题<b>再答对一次</b>即移出 —— 也可以随时手动点「已掌握」。</p>
+</div>
+
+<section class="section" style="margin-top:24px">
+  <div class="chips" id="tabs">
+    <button class="chip on" data-tab="word">单词错题 <span id="nWord">0</span></button>
+    <button class="chip" data-tab="gram">语法错题 <span id="nGram">0</span></button>
+  </div>
+  <div class="toolbar" style="margin-top:16px">
+    <input class="field" id="wq" type="search" placeholder="在错题本里搜索…" autocomplete="off">
+    <button class="btn sm" id="redoBtn">重做本页</button>
+    <button class="btn ghost sm" id="clearBtn">清空当前列表</button>
+  </div>
+  <div id="wbList"></div>
+  <div class="pager" id="wbPager"></div>
+  <div class="empty" id="wbEmpty" style="display:none">
+    <b>错题本是空的</b>去<a href="quiz.html">背单词</a>或<a href="review.html">练语法</a>，答错的题会自动收进来
+  </div>
+</section>
+
+<section class="section" id="redoZone" style="display:none">
+  <div class="section-head"><h2>重做</h2><span class="sub" id="redoInfo"></span></div>
+  <div id="redoHost"></div>
+</section>
+`,
+    script: `
+const { WORDS, QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
+const P = window.PET;
+const ALLQ = [...QUESTIONS, ...QUESTIONS_2];
+const QBYID = new Map(ALLQ.map(q => [q.id, q]));
+const WBYW = new Map(WORDS.map(w => [w.w.toLowerCase(), w]));
+const TNAME = new Map();
+GRAMMAR.forEach(g => g.topics.forEach(t => TNAME.set(t.id, t.name)));
+
+const PAGE_SIZE = 10;
+let tab = 'word';
+let page = 0;
+let query = '';
+
+function wordItems() {
+  return P.wordBookList().map(x => {
+    const meta = WBYW.get(x.w) || {};
+    return { kind: 'word', key: x.w, rec: x, meta };
+  });
+}
+function gramItems() {
+  return P.wrongIds().map(id => {
+    const q = QBYID.get(id);
+    const rec = (P.qLog().wrongIds || {})[id] || {};
+    return { kind: 'gram', key: id, rec, q, topicName: TNAME.get(q && q.topic) || '' };
+  }).filter(x => x.q);
+}
+function currentItems() {
+  let arr = tab === 'word' ? wordItems() : gramItems();
+  if (query) {
+    const t = query.toLowerCase();
+    arr = arr.filter(it => JSON.stringify(it).toLowerCase().includes(t));
+  }
+  return arr;
+}
+
+function wordRow(it) {
+  const m = it.meta;
+  return '<div class="wrow wb-row" data-key="' + P.esc(it.key) + '">' +
+    '<span class="w">' + P.esc(it.key) + (m.ph ? '<span class="ph">/' + P.esc(m.ph) + '/</span>' : '') + '</span>' +
+    '<span class="pos">' + P.esc(m.posZh || '') + '</span>' +
+    '<span class="zh">' + P.esc(m.zh || '（无释义）') + '</span>' +
+    '<span class="flag">错 ' + it.rec.wrong + ' 次' + (it.rec.right ? ' · 已对 ' + it.rec.right : '') + '</span>' +
+    '<span class="wb-actions">' +
+      '<button class="btn sm" data-master="' + P.esc(it.key) + '">已掌握</button>' +
+    '</span>' +
+  '</div>';
+}
+
+function gramRow(it) {
+  const q = it.q;
+  const typeName = q.type === 'correct' ? '改错' : q.type === 'fill' ? '填空' : '选择';
+  return '<div class="wb-gram" data-key="' + P.esc(it.key) + '">' +
+    '<div class="qmeta"><span class="qtype">' + typeName + '</span>' +
+      '<span class="flag">' + P.esc(it.topicName) + '</span>' +
+      (q.level ? '<span class="lv ' + P.esc(q.level) + '">' + P.esc(q.level) + '</span>' : '') +
+    '</div>' +
+    '<div class="wb-stem">' + P.esc(q.stem) + '</div>' +
+    '<div class="wb-actions"><button class="btn sm" data-master="' + P.esc(it.key) + '">已掌握</button></div>' +
+  '</div>';
+}
+
+function draw() {
+  const items = currentItems();
+  const total = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  if (page >= total) page = total - 1;
+  if (page < 0) page = 0;
+  const slice = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  document.querySelector('#nWord').textContent = P.wordBookCount();
+  document.querySelector('#nGram').textContent = P.wrongIds().length;
+
+  const host = document.querySelector('#wbList');
+  const empty = document.querySelector('#wbEmpty');
+  const pager = document.querySelector('#wbPager');
+  const redoBtn = document.querySelector('#redoBtn');
+  const clearBtn = document.querySelector('#clearBtn');
+
+  if (!items.length) {
+    host.innerHTML = '';
+    pager.innerHTML = '';
+    empty.style.display = '';
+    redoBtn.disabled = true;
+    clearBtn.disabled = true;
+    return;
+  }
+  empty.style.display = 'none';
+  redoBtn.disabled = false;
+  clearBtn.disabled = false;
+
+  host.innerHTML = tab === 'word'
+    ? '<div class="wordlist">' + slice.map(wordRow).join('') + '</div>'
+    : slice.map(gramRow).join('');
+
+  // 分页
+  let html = '<button data-pg="' + (page - 1) + '"' + (page === 0 ? ' disabled' : '') + '>‹</button>';
+  for (let i = 0; i < total; i++) {
+    if (total > 9 && i > 1 && i < total - 2 && Math.abs(i - page) > 1) {
+      if (i === 2 || i === total - 3) html += '<span class="pager dots">…</span>';
+      continue;
+    }
+    html += '<button data-pg="' + i + '"' + (i === page ? ' class="on"' : '') + '>' + (i + 1) + '</button>';
+  }
+  html += '<button data-pg="' + (page + 1) + '"' + (page === total - 1 ? ' disabled' : '') + '>›</button>';
+  pager.innerHTML = html;
+  pager.querySelectorAll('[data-pg]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = parseInt(b.getAttribute('data-pg'), 10);
+      if (!isNaN(p)) { page = p; draw(); window.scrollTo({ top: 200, behavior: 'smooth' }); }
+    });
+  });
+
+  // 手动标记掌握
+  host.querySelectorAll('[data-master]').forEach(b => {
+    b.addEventListener('click', () => {
+      const key = b.getAttribute('data-master');
+      if (tab === 'word') P.wordMaster(key);
+      else P.qClearWrong(key);
+      draw();
+    });
+  });
+}
+
+// tab 切换
+document.querySelectorAll('#tabs .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#tabs .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    tab = c.getAttribute('data-tab');
+    page = 0;
+    draw();
+  });
+});
+
+// 搜索
+const q = document.querySelector('#wq');
+q.addEventListener('input', () => {
+  query = q.value.trim();
+  page = 0;
+  draw();
+});
+
+document.addEventListener('pet:wordbook', draw);
+document.addEventListener('pet:qlog', draw);
+
+// 清空
+document.querySelector('#clearBtn').addEventListener('click', () => {
+  const label = tab === 'word' ? '单词错题' : '语法错题';
+  if (!confirm('清空全部' + label + '？此操作不可撤销。')) return;
+  if (tab === 'word') P.wordBookReset(); else P.qClearWrong();
+  draw();
+});
+
+// 重做本页
+document.querySelector('#redoBtn').addEventListener('click', () => {
+  const items = currentItems();
+  const slice = items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  if (!slice.length) return;
+  const zone = document.querySelector('#redoZone');
+  zone.style.display = '';
+  document.querySelector('#redoInfo').textContent = '本页 ' + slice.length + ' 题 · 答对即移出错题本';
+  if (tab === 'word') redoWords(slice); else redoGram(slice);
+  zone.scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+
+function redoWords(slice) {
+  const host = document.querySelector('#redoHost');
+  let i = 0, done = 0, released = 0;
+  const pool = WORDS;
+
+  function step() {
+    if (i >= slice.length) {
+      host.innerHTML = '<div class="qcard" style="text-align:center">' +
+        '<div style="font-family:var(--serif);font-size:1.5rem;font-weight:600">本页重做完成</div>' +
+        '<div style="color:var(--text-2);margin-top:8px">答对 ' + done + ' / ' + slice.length +
+        ' · 其中 ' + released + ' 个已移出错题本</div>' +
+        '<div style="margin-top:20px"><button class="btn primary" id="rdAgain">返回列表</button></div></div>';
+      host.querySelector('#rdAgain').addEventListener('click', () => {
+        document.querySelector('#redoZone').style.display = 'none';
+        draw();
+      });
+      return;
+    }
+    const it = slice[i];
+    const w = it.meta;
+    const ds = P.pickDistractors(pool, w, 3);
+    const opts = [w].concat(ds);
+    P.shuffle(opts);
+    const ans = opts.indexOf(w);
+    host.innerHTML = '<div class="flash-shell">' +
+      '<div class="quiz-top"><div class="quiz-progress"><i style="width:' + (i / slice.length * 100) + '%"></i></div>' +
+      '<span class="quiz-count">' + (i + 1) + ' / ' + slice.length + '</span></div>' +
+      '<div class="fcard" style="justify-content:flex-start;padding-top:30px;text-align:center;min-height:0">' +
+        '<div class="fword" style="font-size:clamp(1.5rem,5vw,2rem)">' + P.esc(w.w) + '</div>' +
+        '<div style="font-size:.84rem;color:var(--text-3);margin-top:12px">选出正确的释义</div></div>' +
+      '<div class="qopts" style="margin-top:14px">' +
+        opts.map((o, k) => '<button class="qopt" data-k="' + k + '"><span class="key">' + 'ABCD'[k] + '</span><span>' + P.esc(o.zh || '') + '</span></button>').join('') +
+      '</div><div id="rfb"></div></div>';
+
+    let answered = false;
+    host.querySelectorAll('.qopt').forEach(b => {
+      b.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        const k = parseInt(b.getAttribute('data-k'), 10);
+        const ok = k === ans;
+        host.querySelectorAll('.qopt').forEach(x => {
+          const xi = parseInt(x.getAttribute('data-k'), 10);
+          x.classList.add('locked');
+          if (xi === ans) x.classList.add('right');
+          else if (xi === k) x.classList.add('wrong');
+        });
+        const mastered = P.wordAttempt(w.w, ok);
+        if (ok) { done++; if (mastered) released++; }
+        const fb = host.querySelector('#rfb');
+        fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
+          (ok ? '✓ 对了' + (mastered ? ' · 已移出错题本' : ' · 再对 ' + (P.MASTER_STREAK - (P.wordBook()[w.w.toLowerCase()] || {}).right) + ' 次就移出') : '✗ 正确答案：' + P.esc(w.zh)) +
+          '</b>' + P.esc(w.w) + ' · ' + P.esc(w.posZh || '') + '</div>' +
+          '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="rn">下一题 →</button></div>';
+        fb.querySelector('#rn').addEventListener('click', () => { i++; step(); });
+      });
+    });
+  }
+  step();
+}
+
+function redoGram(slice) {
+  const host = document.querySelector('#redoHost');
+  P.quiz({
+    mount: '#redoHost',
+    questions: slice.map(it => it.q),
+    shuffle: true,
+    reviewHref: '',
+    onRestart: () => { document.querySelector('#redoZone').style.display = 'none'; draw(); },
+  });
+}
+
+draw();
+`,
+  }));
+}
+
+/* ==========================================================
    9. 数据总览
    ========================================================== */
 function buildStats() {
@@ -1372,6 +1707,7 @@ function main() {
   buildStudy();
   buildDrill();
   buildTraps();
+  buildWrongBook();
   buildStats();
   buildPlan();
 

@@ -19,7 +19,7 @@
     <a class="logo" href="index.html">PET <em>备考小站</em></a>
     <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     <nav class="hdr-nav">
-      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html" class="on">背单词</a><a href="review.html">语法练习</a><a href="traps.html">易错点</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
+      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html" class="on">背单词</a><a href="review.html">语法练习</a><a href="traps.html">易错点</a><a href="wrong.html">错题本</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
     </nav>
     <div class="hdr-tools">
       <button class="theme-btn" aria-label="切换主题">☀</button>
@@ -60,41 +60,58 @@
 </section>
 
 <section class="section" style="margin-top:30px" id="setup">
-  <div class="card" style="max-width:660px">
-    <h3 style="margin-bottom:18px">开始一轮</h3>
-
-    <div class="kicker">怎么背</div>
-    <div class="chips" id="cardChips">
-      <button class="chip on" data-c="recall">看词回想（自己判断）</button>
-      <button class="chip" data-c="choice">四选一（自动判分）</button>
+  <div class="card setup-card">
+    <div class="setup-head">
+      <h3>开始一轮</h3>
+      <div class="setup-actions">
+        <button class="btn primary" id="startBtn">开始 →</button>
+        <button class="btn ghost" id="resetBtn">重置记忆数据</button>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">背哪些</div>
-    <div class="chips" id="modeChips">
-      <button class="chip on" data-m="mix">混合（到期 + 新词）</button>
-      <button class="chip" data-m="due">只复习到期的</button>
-      <button class="chip" data-m="new">只学新词</button>
+    <div class="setup-grid">
+      <div class="setup-group">
+        <div class="kicker">怎么背</div>
+        <div class="chips" id="cardChips">
+          <button class="chip on" data-c="recall">看词回想</button>
+          <button class="chip" data-c="choice">四选一</button>
+        </div>
+        <p class="setup-hint" id="cardHint">自己判断是否记得，更贴近真实回忆</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">背哪些</div>
+        <div class="chips" id="modeChips">
+          <button class="chip on" data-m="mix">混合</button>
+          <button class="chip" data-m="due">只复习到期</button>
+          <button class="chip" data-m="new">只学新词</button>
+        </div>
+        <p class="setup-hint" id="modeHint">到期复习 + 少量新词，兼顾巩固与推进</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">词源范围</div>
+        <div class="chips" id="srcChips">
+          <button class="chip on" data-s="b1">高频词 907</button>
+          <button class="chip" data-s="all">全部 3109</button>
+          <button class="chip" data-s="phrase">短语 266</button>
+        </div>
+        <p class="setup-hint" id="srcHint">只背 PET 高频词，优先拿分</p>
+      </div>
+
+      <div class="setup-group">
+        <div class="kicker">每轮词数</div>
+        <div class="chips" id="lenChips">
+          <button class="chip" data-l="10">10 个</button>
+          <button class="chip on" data-l="20">20 个</button>
+          <button class="chip" data-l="30">30 个</button>
+          <button class="chip" data-l="50">50 个</button>
+        </div>
+        <p class="setup-hint" id="lenHint">20 个约 5–8 分钟，适合每天一轮</p>
+      </div>
     </div>
 
-    <div class="kicker" style="margin-top:18px">词源范围</div>
-    <div class="chips" id="srcChips">
-      <button class="chip on" data-s="b1">高频词（907）</button>
-      <button class="chip" data-s="all">全部（3109）</button>
-      <button class="chip" data-s="phrase">只背短语（266）</button>
-    </div>
-
-    <div class="kicker" style="margin-top:18px">每轮词数</div>
-    <div class="chips" id="lenChips">
-      <button class="chip" data-l="10">10 个</button>
-      <button class="chip on" data-l="20">20 个</button>
-      <button class="chip" data-l="30">30 个</button>
-    </div>
-
-    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn primary" id="startBtn">开始 →</button>
-      <button class="btn ghost" id="resetBtn">重置记忆数据</button>
-    </div>
-    <div class="note" style="margin-bottom:0">
+    <div class="note setup-note">
       回想模式：空格翻卡，翻卡后 <b>1</b> 忘了 · <b>2</b> 困难 · <b>3</b> 会了 · <b>4</b> 很熟。<br>
       四选一模式：<b>1–4</b> 选答案，<b>Enter</b> 下一词；答对自动记「会了」，答错自动记「忘了」。
     </div>
@@ -127,6 +144,7 @@
       <a href="plan.html">8 周计划</a>
       <a href="stats.html">数据总览</a>
       <a href="traps.html">易错点</a>
+      <a href="wrong.html">错题本</a>
     </div>
   </div>
 </footer>
@@ -180,10 +198,38 @@ function pick(sel, attr, cb) {
     c.classList.add('on'); cb(c.getAttribute(attr));
   }));
 }
-pick('#cardChips', 'data-c', v => card = v);
-pick('#modeChips', 'data-m', v => { mode = v; refreshKv(); });
-pick('#srcChips', 'data-s', v => { src = v; refreshKv(); });
-pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
+/* 选项变化时同步更新提示文案 */
+const HINTS = {
+  card: {
+    recall: '自己判断是否记得，更贴近真实回忆',
+    choice: '四选一自动判分，适合快速过词'
+  },
+  mode: {
+    mix: '到期复习 + 少量新词，兼顾巩固与推进',
+    due: '只复习今天到期的词，不再加新词',
+    new: '只学没背过的词，适合赶进度'
+  },
+  src: {
+    b1: '只背 PET 高频词，优先拿分',
+    all: '包含全部词条与派生词，覆盖最全',
+    phrase: '只背短语与固定搭配，专攻完形与写作'
+  },
+  len: {
+    '10': '10 个约 3–4 分钟，适合碎片时间',
+    '20': '20 个约 5–8 分钟，适合每天一轮',
+    '30': '30 个约 10–12 分钟，适合冲刺',
+    '50': '50 个约 15–20 分钟，适合集中突破'
+  }
+};
+function setHint(id, text) {
+  const el = document.querySelector('#' + id);
+  if (el) el.textContent = text;
+}
+
+pick('#cardChips', 'data-c', v => { card = v; setHint('cardHint', HINTS.card[v]); });
+pick('#modeChips', 'data-m', v => { mode = v; setHint('modeHint', HINTS.mode[v]); refreshKv(); });
+pick('#srcChips', 'data-s', v => { src = v; setHint('srcHint', HINTS.src[v]); refreshKv(); });
+pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
 
 document.querySelector('#startBtn').addEventListener('click', () => {
   const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')

@@ -19,7 +19,7 @@
     <a class="logo" href="index.html">PET <em>备考小站</em></a>
     <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     <nav class="hdr-nav">
-      <a href="index.html" class="on">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html">背单词</a><a href="review.html">语法练习</a><a href="traps.html">易错点</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
+      <a href="index.html" class="on">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html">背单词</a><a href="review.html">语法练习</a><a href="traps.html">易错点</a><a href="wrong.html">错题本</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
     </nav>
     <div class="hdr-tools">
       <button class="theme-btn" aria-label="切换主题">☀</button>
@@ -77,6 +77,11 @@
       <a class="today-task" href="review.html" id="taskGrammar">
         <span class="tt-ico">§</span>
         <span class="tt-main"><b>语法练习</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
+        <span class="tt-go">→</span>
+      </a>
+      <a class="today-task" href="wrong.html" id="taskWrong">
+        <span class="tt-ico">↺</span>
+        <span class="tt-main"><b>清错题本</b><small id="ttWrong">做错的单词和语法题</small></span>
         <span class="tt-go">→</span>
       </a>
       <a class="today-task" href="traps.html" id="taskTraps">
@@ -228,6 +233,7 @@
       <a href="plan.html">8 周计划</a>
       <a href="stats.html">数据总览</a>
       <a href="traps.html">易错点</a>
+      <a href="wrong.html">错题本</a>
     </div>
   </div>
 </footer>
@@ -250,6 +256,8 @@ function refresh() {
   set('#ttGrammar', q ? '今天已练 ' + q + ' 题，继续专攻弱项' : '练 10 题，专攻正确率低的');
   const due = P.srsStats().due;
   set('#ttWords', due ? '今天有 ' + due + ' 个词到期' : '按遗忘曲线学新词');
+  const wn = P.wordBookCount() + P.wrongIds().length;
+  set('#ttWrong', wn ? wn + ' 道错题待清理' : '暂时没有错题');
 }
 refresh();
 document.addEventListener('pet:daily', refresh);
