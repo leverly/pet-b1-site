@@ -242,7 +242,8 @@ document.querySelector('#startBtn').addEventListener('click', () => {
     reviewHref: 'grammar.html', reviewLabel: '看全部语法族',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const zone = document.querySelector('#zone');
+  window.scrollTo({ top: Math.max(0, zone.getBoundingClientRect().top + window.scrollY - 80), behavior: 'smooth' });
 });
 
 document.querySelector('#resetBtn').addEventListener('click', () => {

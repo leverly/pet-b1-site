@@ -32,8 +32,8 @@
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 背单词</div>
   <h1>背单词</h1>
-  <p class="lede">不按字母顺序背，按<b>你忘得快的地方</b>背。每答一个词都会记进记忆库：
-  忘了 10 分钟后再来，记得越牢间隔越长（1 天 → 3 天 → 7 天 → 21 天以上）。</p>
+  <p class="lede">给英文，选出正确的中文含义 —— 和考试里的词义判断同一种思路。
+  不按字母顺序背，按<b>你忘得快的地方</b>背：答错 10 分钟后再来，答得越稳间隔越长（1 天 → 3 天 → 7 天 → 21 天以上）。</p>
 </div>
 
 <section class="section" style="margin-top:26px">
@@ -71,12 +71,11 @@
 
     <div class="setup-grid">
       <div class="setup-group">
-        <div class="kicker">怎么背</div>
-        <div class="chips" id="cardChips">
-          <button class="chip on" data-c="recall">看词回想</button>
-          <button class="chip" data-c="choice">四选一</button>
+        <div class="kicker">怎么考</div>
+        <div class="chips">
+          <button class="chip on" disabled>选择题</button>
         </div>
-        <p class="setup-hint" id="cardHint">自己判断是否记得，更贴近真实回忆</p>
+        <p class="setup-hint">给英文单词，四选一选出正确的中文含义；答对答错自动计入记忆库</p>
       </div>
 
       <div class="setup-group">
@@ -112,8 +111,7 @@
     </div>
 
     <div class="note setup-note">
-      回想模式：空格翻卡，翻卡后 <b>1</b> 忘了 · <b>2</b> 困难 · <b>3</b> 会了 · <b>4</b> 很熟。<br>
-      四选一模式：<b>1–4</b> 选答案，<b>Enter</b> 下一词；答对自动记「会了」，答错自动记「忘了」。
+      键盘 <b>1–4</b> 选答案、<b>Enter</b> 下一词。答对自动记「会了」，答错自动记「忘了」并进入<a href="wrong.html">错题本</a>。
     </div>
   </div>
 </section>
@@ -153,7 +151,7 @@ window.PET_DATA.WORDS=[{"w":"a","pos":"det","posZh":"限定词","t":"word","zh":
 window.PET_DATA.STATS={"words":2843,"phrases":266,"total":3109,"b1":907,"b2":1782,"b3":420,"topics":23,"withExample":466};</script><script>
 const { WORDS, STATS } = window.PET_DATA;
 const P = window.PET;
-let card = 'recall', mode = 'mix', src = 'core', len = 20;
+let mode = 'mix', src = 'b1', len = 20;
 
 function refreshKv() {
   const s = P.srsStats();
@@ -225,7 +223,6 @@ function setHint(id, text) {
   if (el) el.textContent = text;
 }
 
-pick('#cardChips', 'data-c', v => { card = v; setHint('cardHint', HINTS.card[v]); });
 pick('#modeChips', 'data-m', v => { mode = v; setHint('modeHint', HINTS.mode[v]); refreshKv(); });
 pick('#srcChips', 'data-s', v => { src = v; setHint('srcHint', HINTS.src[v]); refreshKv(); });
 pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
@@ -236,8 +233,11 @@ document.querySelector('#startBtn').addEventListener('click', () => {
              : WORDS;
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.wordStudy({ mount: '#fc', words: pool, mode, card, limit: len, backHref: 'quiz.html' });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  P.wordStudy({ mount: '#fc', words: pool, mode, card: 'choice', limit: len, backHref: 'quiz.html' });
+  // 直接滚到答题区，省得用户自己找题在哪（页头是 sticky，留 80px 余量）
+  const zone = document.querySelector('#zone');
+  const y = zone.getBoundingClientRect().top + window.scrollY - 80;
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 });
 
 document.querySelector('#resetBtn').addEventListener('click', () => {
