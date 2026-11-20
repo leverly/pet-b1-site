@@ -1,5 +1,5 @@
 /* ==========================================================
-   PET 备考小站 · 静态站点生成器
+   PET 备考站 · 静态站点生成器
    用法：node build-site.mjs
    输出：根目录 index.html + topics/ grammar/ 等
    ========================================================== */
@@ -124,7 +124,7 @@ const NAV = [
   { href: 'stats.html', label: '数据', key: 'stats' },
 ];
 
-const LOGO_HTML = (base) => `<a class="logo" href="${base}index.html">PET <em>备考小站</em></a>`;
+const LOGO_HTML = (base) => `<a class="logo" href="${base}index.html">PET <em>备考站</em></a>`;
 
 const HEADER = (base, active) => `<div class="scroll-progress"></div>
 <header class="hdr">
@@ -143,7 +143,7 @@ const HEADER = (base, active) => `<div class="scroll-progress"></div>
 const FOOTER = (base) => `<footer class="foot">
   <div class="foot-in">
     <div class="col">
-      <h4>PET 备考小站</h4>
+      <h4>PET 备考站</h4>
       <span style="display:block;line-height:1.7">B1 Preliminary 官方词表 ${STATS.total} 条 + ${GRAMMAR_STATS.topics} 个语法考点 + ${Q_STATS.total} 道易错题</span>
     </div>
     <div class="col">
@@ -166,7 +166,7 @@ const FOOTER = (base) => `<footer class="foot">
   </div>
 </footer>`;
 
-const SITE_NAME = 'PET 备考小站';
+const SITE_NAME = 'PET 备考站';
 
 function page({ base = '', active = '', title, desc = '', body, script = '', rawScript = '', dataKeys = [], dataExtra = null }) {
   // 统一加站名后缀，标签页里始终能看到站点身份；已含站名的不重复加
@@ -326,7 +326,7 @@ function buildHome() {
 
 `;
   write('index.html', page({
-    title: 'PET 备考小站 · 官方词表 + 语法体系 + 背单词与练语法',
+    title: 'PET 备考站 · 官方词表 + 语法体系 + 背单词与练语法',
     desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析，按遗忘曲线背单词。`,
     active: 'home',
     body,
@@ -1404,7 +1404,7 @@ function buildStats() {
   }).join('');
 
   write('stats.html', page({
-    title: 'PET 备考小站 · 数据总览',
+    title: 'PET 备考站 · 数据总览',
     desc: '词表规模、频档分布、话题词量、语法考点与题量，全部实时计算。',
     active: 'stats',
     body: `
