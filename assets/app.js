@@ -638,6 +638,41 @@
 
 
   /* ----------------------------------------------------------
+     发音播放：音频是构建期预合成的（单词连读 3 遍），
+     所以这里只负责播放，不在运行时请求 TTS。
+     ---------------------------------------------------------- */
+  var audioMap = (window.PET_AUDIO || {});
+  var currentAudio = null;
+
+  P.hasAudio = function (w) { return !!audioMap[w]; };
+  P.audioSrc = function (w) {
+    var rel = audioMap[w];
+    if (!rel) return '';
+    // 站点可能部署在子路径下：以当前页面所在目录为基准解析
+    return rel;
+  };
+  P.playWord = function (w, opts) {
+    var src = P.audioSrc(w);
+    if (!src) return false;
+    var o = opts || {};
+    try {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      var a = new Audio(src);
+      a.volume = o.volume == null ? 1 : o.volume;
+      currentAudio = a;
+      var p = a.play();
+      if (p && p.catch) p.catch(function () { /* 浏览器可能拦截自动播放 */ });
+      if (o.onend) a.addEventListener('ended', o.onend);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  P.stopAudio = function () {
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+  };
+
+  /* ----------------------------------------------------------
      干扰项挑选：优先同话题 + 同词性，并排除释义高度重叠的词
      ---------------------------------------------------------- */
   function glossSegments(t) {
@@ -704,7 +739,18 @@
     var sessionN = 0, sessionOk = 0, streak = 0, best = 0;
     var answered = false, finished = false;
     var autoNextTimer = null;
+    var pendingAdvance = false;   // 本题已判对、等待前进；保证只前进一次
     var AUTO_NEXT_MS = 750;   // 答对后自动翻页的停顿，够看清反馈又不拖沓
+
+    /* 前进到下一题：定时器与键盘/按钮都走这里，重复调用只生效一次 */
+    function advance() {
+      if (!pendingAdvance) return;
+      pendingAdvance = false;
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+      idx++;
+      draw();
+    }
 
     function build() {
       clearTimeout(autoNextTimer);
@@ -739,7 +785,7 @@
     function draw() {
       if (!queue.length) return emptyState();
       if (idx >= queue.length) return done();
-      revealed = false; answered = false;
+      revealed = false; answered = false; pendingAdvance = false;
       var w = queue[idx];
       host.innerHTML = card === 'choice' ? choiceView(w) : recallView(w);
       bindKeys();
@@ -801,11 +847,15 @@
       shuffle(opts);
       var ans = opts.indexOf(w);
       var h = '<div class="flash-shell">' + header();
-      h += '<div class="fcard" style="justify-content:flex-start;padding-top:34px;text-align:center;min-height:0">';
-      h += '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(w.w) + '</div>';
+      var canPlay = P.hasAudio(w.w);
+      h += '<div class="fcard" style="justify-content:flex-start;padding-top:30px;text-align:center;min-height:0">';
+      h += '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(w.w) +
+           (canPlay ? '<button class="say-btn" id="sayBtn" title="朗读 3 遍" aria-label="朗读单词">🔊</button>' : '') +
+           '</div>';
       if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
       h += '<div class="fpos">' + esc(w.posZh) + '</div>';
-      h += '<div style="font-size:.84rem;color:var(--text-3);margin-top:14px">选出正确的释义</div></div>';
+      h += '<div style="font-size:.84rem;color:var(--text-3);margin-top:12px">' +
+           (canPlay ? '听发音，选出正确的释义' : '选出正确的释义') + '</div></div>';
       h += '<div class="qopts" style="margin-top:16px">';
       opts.forEach(function (o, k) {
         h += '<button class="qopt" data-k="' + k + '"' + (k === ans ? ' data-ans="1"' : '') + '>' +
@@ -813,6 +863,10 @@
       });
       h += '</div><div id="wfb"></div></div>';
       setTimeout(function () {
+        var say = host.querySelector('#sayBtn');
+        if (say) say.addEventListener('click', function (e) { e.stopPropagation(); P.playWord(w.w); });
+        // 自动朗读：默认开启，用户可在页面上关掉
+        if (canPlay && opts.autoSay !== false) P.playWord(w.w);
         host.querySelectorAll('.qopt').forEach(function (b) {
           b.addEventListener('click', function () {
             judgeChoice(w, parseInt(b.getAttribute('data-k'), 10), Array.prototype.indexOf.call(host.querySelectorAll('.qopt'), b), ans);
@@ -854,8 +908,10 @@
       // 四选一自动评级：对了算「会了」，错了算「忘了」
       recordAndRate(w, ok ? 2 : 0, ok);
       if (ok) {
+        // 标记得以前进，让 Enter 抢答也能立即跳，且与定时器互斥
+        pendingAdvance = true;
         clearTimeout(autoNextTimer);
-        autoNextTimer = setTimeout(function () { idx++; draw(); }, AUTO_NEXT_MS);
+        autoNextTimer = setTimeout(advance, AUTO_NEXT_MS);
       }
     }
 
@@ -889,8 +945,12 @@
             var b = host.querySelector('.qopt[data-k="' + (parseInt(e.key, 10) - 1) + '"]');
             if (b) { e.preventDefault(); b.click(); }
           } else if (e.key === 'Enter' && answered) {
-            var nx = host.querySelector('#wnext');
-            if (nx) { e.preventDefault(); nx.click(); }
+            // 答对后 Enter 立即前进；答错时 Enter 走「下一词」按钮
+            if (pendingAdvance) { e.preventDefault(); advance(); }
+            else {
+              var nx = host.querySelector('#wnext');
+              if (nx) { e.preventDefault(); nx.click(); }
+            }
           }
           return;
         }
@@ -905,7 +965,9 @@
 
     function done() {
       finished = true;
+      pendingAdvance = false;
       clearTimeout(autoNextTimer);
+      autoNextTimer = null;
       var st = P.srsStats();
       host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
         '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮完成</div>' +

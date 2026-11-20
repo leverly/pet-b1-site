@@ -722,3 +722,14 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   display: block; margin-top: 6px; font-size: .78rem;
   color: var(--text-3); letter-spacing: .02em;
 }
+
+/* 发音按钮（嵌在单词旁） */
+.say-btn {
+  border: 0; background: var(--accent-soft); color: var(--accent);
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  margin-left: 10px; font-size: .82rem; vertical-align: middle;
+  display: inline-grid; place-items: center; transition: all .16s var(--ease);
+}
+.say-btn:hover { background: var(--accent); color: #fff; transform: scale(1.08); }
+[data-theme="dark"] .say-btn:hover { color: #08201a; }
+.say-btn:active { transform: scale(.94); }

@@ -8,6 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { WORDS, TOPICS, STATS } from './src/data-words.js';
+import { AUDIO } from './src/data-audio.js';
 import { GRAMMAR, GRAMMAR_STATS } from './src/data-grammar.js';
 import { QUESTIONS } from './src/data-quiz.js';
 import { QUESTIONS_2 } from './src/data-quiz2.js';
@@ -625,6 +626,7 @@ function buildStudy() {
   const dueToday = `document.querySelector('#kDue').textContent`;
   write('quiz.html', page({
     dataKeys: ['WORDS', 'STATS'],
+    dataExtra: { PET_AUDIO: AUDIO },
     title: '背单词 · 间隔重复记忆',
     desc: `按遗忘曲线安排 ${STATS.total} 条 PET 词条的复习：给英文选中文的四选一，答完自动排下次时间。`,
     active: 'words-study',
@@ -675,7 +677,12 @@ function buildStudy() {
         <div class="chips">
           <button class="chip on" disabled>选择题</button>
         </div>
-        <p class="setup-hint">给英文单词，四选一选出正确的中文含义；答对答错自动计入记忆库</p>
+        <div class="kicker" style="margin-top:14px">发音</div>
+        <div class="chips" id="sayChips">
+          <button class="chip on" data-say="on">自动朗读 3 遍</button>
+          <button class="chip" data-say="off">静音（点 🔊 才读）</button>
+        </div>
+        <p class="setup-hint" id="sayHint">每题出现时自动读 3 遍，用耳朵也能记</p>
       </div>
 
       <div class="setup-group">
@@ -722,6 +729,9 @@ function buildStudy() {
 const { WORDS, STATS } = window.PET_DATA;
 const P = window.PET;
 let mode = 'mix', src = 'b1', len = 20;
+let autoSay = (function () {
+  try { var v = localStorage.getItem('pet-autosay'); return v === null ? true : v === '1'; } catch (e) { return true; }
+})();
 
 function refreshKv() {
   const s = P.srsStats();
@@ -794,6 +804,18 @@ function setHint(id, text) {
 }
 
 pick('#modeChips', 'data-m', v => { mode = v; setHint('modeHint', HINTS.mode[v]); refreshKv(); });
+// 发音开关：默认自动朗读，选择持久化
+document.querySelectorAll('#sayChips .chip').forEach(c => {
+  if ((c.getAttribute('data-say') === 'on') !== autoSay) c.classList.remove('on');
+  else c.classList.add('on');
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#sayChips .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    autoSay = c.getAttribute('data-say') === 'on';
+    try { localStorage.setItem('pet-autosay', autoSay ? '1' : '0'); } catch (e) {}
+    setHint('sayHint', autoSay ? '每题出现时自动读 3 遍，用耳朵也能记' : '不出声；想听时点单词旁的 🔊');
+  });
+});
 pick('#srcChips', 'data-s', v => { src = v; setHint('srcHint', HINTS.src[v]); refreshKv(); });
 pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
 
@@ -803,7 +825,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
              : WORDS;
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.wordStudy({ mount: '#fc', words: pool, mode, card: 'choice', limit: len, backHref: 'quiz.html' });
+  P.wordStudy({ mount: '#fc', words: pool, mode, card: 'choice', limit: len, backHref: 'quiz.html', autoSay: autoSay });
   // 直接滚到答题区，省得用户自己找题在哪（页头是 sticky，留 80px 余量）
   const zone = document.querySelector('#zone');
   const y = zone.getBoundingClientRect().top + window.scrollY - 80;
@@ -1553,6 +1575,7 @@ function main() {
     `  话题 ${TOPIC_SORTED.length}（共 ${STATS.topics}，有词的 ${TOPIC_SORTED.length}）`,
     `  语法 ${GRAMMAR_STATS.sections} 族 / ${GRAMMAR_STATS.topics} 考点 / ${GRAMMAR_STATS.traps} 条易错`,
     `  题目 ${Q_STATS.total}（选择 ${Q_STATS.choice} / 改错 ${Q_STATS.correct} / 填空 ${Q_STATS.fill}）`,
+    `  发音 ${Object.keys(AUDIO).length} 条`,
     `  考点覆盖 ${GT_IDS.size - Q_TOPIC_MISS.length}/${GT_IDS.size}`,
     `  耗时 ${Date.now() - t0}ms`,
   ].join('\n');
