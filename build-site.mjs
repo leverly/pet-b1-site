@@ -909,6 +909,11 @@ function buildDrill() {
   </div>
 </section>
 
+<section class="section" id="weakSection" style="display:none">
+  <div class="section-head"><h2>各考点正确率</h2><span class="sub">答过 3 题以上的才计入，按正确率升序</span></div>
+  <div id="weakList"></div>
+</section>
+
 <section class="section" style="margin-top:30px" id="setup">
   <div class="card setup-card">
     <div class="setup-head">
@@ -968,10 +973,6 @@ function buildDrill() {
 
 <section class="section" id="zone" style="display:none"><div id="qz"></div></section>
 
-<section class="section" id="weakSection" style="display:none">
-  <div class="section-head"><h2>各考点正确率</h2><span class="sub">答过 3 题以上的才计入，按正确率升序</span></div>
-  <div id="weakList"></div>
-</section>
 `,
     script: `
 const { QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
