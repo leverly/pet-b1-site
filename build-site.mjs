@@ -1024,7 +1024,6 @@ function buildDrill() {
     <div class="k"><b id="kQn">0</b><span>累计精练题数</span></div>
     <div class="k"><b id="kRate" style="color:var(--accent)">—</b><span>综合正确率</span></div>
     <div class="k"><b id="kWrong" style="color:var(--rose)">0</b><span>语法错题本</span></div>
-    <div class="k k-wide"><b id="kWeak">—</b><span>当前最弱考点（优先攻克）</span></div>
   </div>
 </section>
 
@@ -1135,8 +1134,6 @@ function refreshStats() {
   set('#kRate', n ? Math.round(ok / n * 100) + '%' : '—');
   set('#kWrong', wrong);
   const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
-  const w = weakestTopic();
-  set('#kWeak', w ? TNAME.get(w) || w : '暂未形成（练满 3 题自动诊断）');
 
   const sec = document.querySelector('#weakSection');
   const list = document.querySelector('#weakList');
