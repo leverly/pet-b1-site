@@ -648,6 +648,7 @@
   var audioMap = audioMapGet();
   var currentAudio = null;
   var playTimer = null;
+  var playToken = 0;   // 每次播放自增；旧回调发现 token 变了就自行退出
 
   P.hasAudio = function (w) { return !!audioMapGet()[w]; };
   P.audioSrc = function (w) {
@@ -663,22 +664,28 @@
     var times = o.times || 3;     // 音频只存 1 遍，连着播 3 遍 = 朗读三次
     var gap = o.gap == null ? 260 : o.gap;
     try {
-      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      // 复用同一个 Audio 元素：换 src 即天然打断上一段。
+      // 若每题新建 Audio，快速答题时两段声音会叠在一起。
+      var token = ++playToken;
       if (playTimer) { clearTimeout(playTimer); playTimer = null; }
-      var a = new Audio(src);
+      var a = currentAudio || (currentAudio = new Audio());
+      a.onended = null;
+      try { a.pause(); } catch (e) {}
+      a.src = src;
       a.volume = o.volume == null ? 1 : o.volume;
-      currentAudio = a;
       var played = 0;
-      a.addEventListener('ended', function () {
+      a.onended = function () {
+        if (token !== playToken) return;   // 已经换词，放弃本轮连播
         played++;
         if (played < times) {
           playTimer = setTimeout(function () {
+            if (token !== playToken) return;
             try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {}
           }, gap);
         } else if (o.onend) {
           o.onend();
         }
-      });
+      };
       var p = a.play();
       if (p && p.catch) p.catch(function () { /* 浏览器可能拦截自动播放 */ });
       return true;
@@ -687,8 +694,11 @@
     }
   };
   P.stopAudio = function () {
+    playToken++;                      // 让所有待执行的重播回调失效
     if (playTimer) { clearTimeout(playTimer); playTimer = null; }
-    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+    if (currentAudio) {
+      try { currentAudio.onended = null; currentAudio.pause(); } catch (e) {}
+    }
   };
 
   /* ----------------------------------------------------------

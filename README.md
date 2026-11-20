@@ -36,7 +36,7 @@ PDF 正文的 3008 个去重词条中本站覆盖 **99.4%**，剩余 19 条是 `
 | `topics/index.html` | 23 个官方话题；每个话题有独立页面 |
 | `grammar.html` | 语法族索引：12 张族卡，每张列出考点与题量 |
 | `grammar/*.html` | 每个语法族一页（12 个），考点用可折叠卡片，默认收起；每个考点内嵌 ✕ 错句 / ✓ 对句 |
-| `quiz.html` | **背单词**：间隔重复（SM-2 简化版），给英文选中文的四选一，自动判分 |
+| `quiz.html` | **背单词**：间隔重复（SM-2 简化版），给英文选中文的四选一，自动判分；每题自动朗读 3 遍 |
 | `review.html` | **语法练习**：按考点或语法族刷题，记录各考点正确率，自动收集错题本 |
 | `wrong.html` | 错题本：单词错题 + 语法错题，分页、可重做、掌握即移出 |
 | `plan.html` | 8 周备考计划 |
@@ -135,6 +135,24 @@ pet-site/
 ```
 
 `reference/` 下的 PDF、`raw.txt`、`ecdict.csv`（66MB）不参与运行时，只用于重建数据。
+
+## 发音（Edge TTS）
+
+`reference/gen_audio.py` 用 Edge TTS（`en-GB-SoniaNeural`，剑桥考试偏英音）为全部 3109 条词条
+预生成音频，存放在 `audio/`，共 16.8MB。
+
+- **单遍存储 + 播放器重放 3 次** —— 把 3 遍都烘进文件会让体积翻三倍（原方案约 142MB）
+- mono 32kbps 转码，单个约 5–6KB
+- 可断点续跑：已存在的文件自动跳过
+- 页面可切换「自动朗读 3 遍 / 静音」，选择记在 localStorage
+
+重新生成：
+
+```bash
+python -m venv .venv-tts && .venv-tts/bin/pip install edge-tts
+.venv-tts/bin/python reference/gen_audio.py   # 约 35 分钟
+node build-site.mjs
+```
 
 ## 部署
 
