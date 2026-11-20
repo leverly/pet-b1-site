@@ -118,7 +118,7 @@ const NAV = [
   { href: 'words.html', label: '词汇', key: 'words' },
   { href: 'grammar.html', label: '语法', key: 'grammar' },
   { href: 'quiz.html', label: '背单词', key: 'words-study' },
-  { href: 'review.html', label: '语法练习', key: 'grammar-drill' },
+  { href: 'review.html', label: '练语法', key: 'grammar-drill' },
   { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '计划', key: 'plan' },
   { href: 'stats.html', label: '数据', key: 'stats' },
@@ -155,7 +155,7 @@ const FOOTER = (base) => `<footer class="foot">
     <div class="col">
       <h4>语法</h4>
       <a href="${base}grammar.html">语法体系</a>
-      <a href="${base}review.html">语法练习</a>
+      <a href="${base}review.html">练语法</a>
     </div>
     <div class="col">
       <h4>关于</h4>
@@ -264,7 +264,7 @@ function buildHome() {
       </a>
       <a class="today-task" href="review.html" id="taskGrammar">
         <span class="tt-ico">§</span>
-        <span class="tt-main"><b>语法练习</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
+        <span class="tt-main"><b>练语法</b><small id="ttGrammar">练 10 题，专攻正确率低的</small></span>
         <span class="tt-go">→</span>
       </a>
       <a class="today-task" href="wrong.html" id="taskWrong">
@@ -301,7 +301,7 @@ function buildHome() {
     </a>
     <a class="card" href="review.html">
       <div class="card-ico">?</div>
-      <h3>语法练习 · ${Q_STATS.total} 题</h3>
+      <h3>练语法 · ${Q_STATS.total} 题</h3>
       <p class="desc">三种题型混编：单项选择（对齐 PET Part 5）、挑出正确句（写作自查）、开放式填空（对齐 PET Part 6）。答完记录各考点正确率，错的题自动进错题本。</p>
       <div class="meta" style="margin-top:12px">选择 ${Q_STATS.choice} · 改错 ${Q_STATS.correct} · 填空 ${Q_STATS.fill}</div>
     </a>
@@ -326,7 +326,7 @@ function buildHome() {
 
 `;
   write('index.html', page({
-    title: 'PET 备考小站 · 官方词表 + 语法体系 + 背单词与语法练习',
+    title: 'PET 备考小站 · 官方词表 + 语法体系 + 背单词与练语法',
     desc: `Cambridge B1 Preliminary 官方词表 ${STATS.total} 条全量入库，${GRAMMAR_STATS.topics} 个语法考点逐条拆解，${Q_STATS.total} 道易错题带解析，按遗忘曲线背单词。`,
     active: 'home',
     body,
@@ -845,7 +845,7 @@ document.querySelector('#resetBtn').addEventListener('click', () => {
 }
 
 /* ==========================================================
-   7. 语法练习（按考点练 + 正确率 + 错题本）
+   7. 练语法（按考点练 + 正确率 + 错题本）
    ========================================================== */
 function buildDrill() {
   const topicName = new Map();
@@ -858,13 +858,13 @@ function buildDrill() {
 
   write('review.html', page({
     dataKeys: ['QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
-    title: '语法练习 · 按考点刷题',
+    title: '练语法 · 按考点刷题',
     desc: `${Q_STATS.total} 道 PET 语法易错题，按考点或语法族练习，自动记录各考点正确率并收集错题。`,
     active: 'grammar-drill',
     body: `
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 语法练习</div>
-  <h1>语法练习</h1>
+  <div class="crumb"><a href="index.html">首页</a> / 练语法</div>
+  <h1>练语法</h1>
   <p class="lede">${Q_STATS.total} 道题按 <b>${GT_IDS.size} 个考点</b>分组。每次答完会记下考点与题号：
   正确率低的考点会浮到前面，答错过的题会进错题本 —— 下一次就专练这些。</p>
 </div>
@@ -1490,8 +1490,8 @@ function buildPlan() {
       w: 8, title: '综合冲刺',
       vocab: '只复习「复习」页里到期的卡；错词本过两遍',
       grammar: ['tense', 'passive', 'nonfinite', 'clause'],
-      focus: '回看「语法练习」页各考点正确率，专攻低于 60% 的；把语法页里各考点的 ✕/✓ 易错对比扫一遍。',
-      drill: '每天一组 40 题语法练习；错题只看解析不看题目，检验是否真的理解。',
+      focus: '回看「练语法」页各考点正确率，专攻低于 60% 的；把语法页里各考点的 ✕/✓ 易错对比扫一遍。',
+      drill: '每天用「练语法」做一组 40 题；错题只看解析不看题目，检验是否真的理解。',
     },
   ];
 
@@ -1529,7 +1529,7 @@ function buildPlan() {
     <div class="k"><b>${STATS.b2 + STATS.b3}</b><span>中低频（第 5–6 周）</span></div>
     <div class="k"><b>${Q_STATS.total}</b><span>练习题</span></div>
   </div>
-  <div class="note" style="margin-top:20px">每天建议 30–40 分钟：背单词 10 分钟（做完今天到期的词）+ 读一个语法考点 10 分钟 + 语法练习 15 分钟。
+  <div class="note" style="margin-top:20px">每天建议 30–40 分钟：背单词 10 分钟（做完今天到期的词）+ 读一个语法考点 10 分钟 + 练语法 15 分钟。
   如果只有 15 分钟，优先做「复习」和「测验」，读语法可以放到周末集中看。</div>
 </section>
 
@@ -1542,11 +1542,11 @@ function buildPlan() {
   <div class="grid c3">
     <a class="card" href="quiz.html">
       <h3>第 2 周末</h3>
-      <p class="desc">做一组 40 题语法练习。如果正确率低于 60%，说明时态还没稳，把第 1–2 周重来一遍再往下走。</p>
+      <p class="desc">用「练语法」做一组 40 题。如果正确率低于 60%，说明时态还没稳，把第 1–2 周重来一遍再往下走。</p>
     </a>
     <a class="card" href="stats.html">
       <h3>第 5 周末</h3>
-      <p class="desc">在「语法练习」页看各考点正确率，用「专攻最弱考点」直接练那一个，不要平均用力。</p>
+      <p class="desc">在「练语法」页看各考点正确率，用「专攻最弱考点」直接练那一个，不要平均用力。</p>
     </a>
     <a class="card" href="grammar.html">
       <h3>考前三天</h3>
