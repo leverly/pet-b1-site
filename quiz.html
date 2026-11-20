@@ -52,10 +52,10 @@
     </div>
   </div>
   <div class="kv" id="srsKv" style="margin-top:14px">
+    <div class="k"><b id="kLeft">—</b><span>还没背过</span></div>
+    <div class="k"><b id="kTotal">—</b><span>已学过（已牢固 <b id="kMature" style="display:inline;font-size:1em">0</b>）</span></div>
     <div class="k"><b id="kDue">—</b><span>今天待复习</span></div>
-    <div class="k"><b id="kTotal">—</b><span>记忆库总词数</span></div>
-    <div class="k"><b id="kLeft">—</b><span>本范围内还没背过</span></div>
-    <div class="k"><b id="kMature">—</b><span>已牢固（间隔 ≥ 21 天）</span></div>
+    <div class="k"><b id="kScope">—</b><span>本范围共（参照）</span></div>
   </div>
 </section>
 
@@ -163,18 +163,27 @@ let autoSay = (function () {
 })();
 
 function refreshKv() {
-  const s = P.srsStats();
+  // 四张卡统一按「当前选中的范围」统计，保证 已学过 + 还没背过 = 本范围词条数，
+  // 不会出现两个口径相减对不上的情况。
   const pool = src === 'b1' ? WORDS.filter(w => w.tag === 'b1')
              : src === 'phrase' ? WORDS.filter(w => w.t === 'phrase')
              : WORDS;
-  // 「没碰过」只统计当前范围里还没进记忆库的词，避免和其他两栏口径混淆
-  const seen = new Set(Object.keys(P.srsAll ? P.srsAll() : {}));
-  const left = pool.filter(w => !seen.has(w.w.toLowerCase())).length;
+  const all = P.srsAll ? P.srsAll() : {};
+  const now = Date.now();
+  let learned = 0, due = 0, mature = 0, left = 0;
+  pool.forEach(w => {
+    const r = all[w.w.toLowerCase()];
+    if (!r) { left++; return; }
+    learned++;
+    if ((r.due || 0) <= now) due++;
+    if ((r.ivl || 0) >= 21) mature++;
+  });
   const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
-  set('#kDue', s.due);
-  set('#kTotal', s.total);
+  set('#kScope', pool.length);
   set('#kLeft', left);
-  set('#kMature', s.mature);
+  set('#kTotal', learned);
+  set('#kMature', mature);
+  set('#kDue', due);
 }
 refreshKv();
 document.addEventListener('pet:srs', refreshKv);
