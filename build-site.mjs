@@ -227,7 +227,7 @@ function buildHome() {
   </p>
   <div class="hero-cta">
     <a class="btn primary" href="quiz.html">开始背单词 <span aria-hidden="true">→</span></a>
-    <a class="btn ghost" href="review.html">练一组语法</a>
+    <a class="btn ghost" href="review.html">开始练语法</a>
   </div>
   <div class="stats reveal">
     <div class="stat"><b data-count="${STATS.words}">${STATS.words}</b><span>官方单词</span></div>
