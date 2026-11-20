@@ -790,18 +790,51 @@
       });
       if (mode === 'due') scored = scored.filter(function (s) { return !s.has || (s.due || 0) <= now; });
       else if (mode === 'new') scored = scored.filter(function (s) { return !s.has; });
-      scored.sort(function (a, b) {
-        if (mode === 'mix') {
-          var ad = (a.due || 0) <= now ? 0 : 1, bd = (b.due || 0) <= now ? 0 : 1;
-          if (ad !== bd) return ad - bd;
-          if (a.has !== b.has) return a.has ? 1 : -1;
+
+      var limit = opts.limit || 20;
+      // 到期的词优先，且同为到期时按到期时间先后
+      var dueList = scored.filter(function (s) { return s.has && (s.due || 0) <= now; })
+        .sort(function (a, b) { return (a.due || 0) - (b.due || 0); });
+      // 新词：先按词频排（常用词优先），再在优先窗口内随机取样。
+      // 只按顺序取会让每轮都是同一批词，只随机取又会抽到冷僻词，两者结合才对。
+      var newList = scored.filter(function (s) { return !s.has; });
+      var picked = [];
+
+      if (mode === 'due') {
+        picked = dueList.slice(0, limit);
+      } else if (mode === 'new') {
+        picked = sampleByFrequency(newList, limit);
+      } else {
+        // mix：先排到期的，剩余名额给新词
+        picked = dueList.slice(0, limit);
+        if (picked.length < limit) {
+          var room = limit - picked.length;
+          var takenKeys = {};
+          picked.forEach(function (s) { takenKeys[s.w.w] = 1; });
+          var extra = sampleByFrequency(newList.filter(function (s) { return !takenKeys[s.w.w]; }), room);
+          picked = picked.concat(extra);
         }
-        return (a.due || 0) - (b.due || 0);
-      });
-      queue = scored.slice(0, opts.limit || 20).map(function (s) { return s.w; });
+      }
+
+      queue = picked.map(function (s) { return s.w; });
       shuffle(queue);
       idx = 0; sessionN = 0; sessionOk = 0; streak = 0; best = 0; finished = false;
       draw();
+    }
+
+    /* 从新词里挑 n 个：按词频从常用到冷僻，但只在前 window 个里随机取，
+       这样每轮词表不同，又不会一开始就撞上生僻词 */
+    function sampleByFrequency(list, n) {
+      if (n <= 0 || !list.length) return [];
+      var sorted = list.slice().sort(function (a, b) {
+        var fa = a.w.frq == null ? 1e9 : a.w.frq;   // 无词频的排最后
+        var fb = b.w.frq == null ? 1e9 : b.w.frq;
+        return fa - fb;
+      });
+      var window = Math.max(n * 4, 80);
+      var pool = sorted.slice(0, window);
+      shuffle(pool);
+      return pool.slice(0, n);
     }
 
     function header() {
