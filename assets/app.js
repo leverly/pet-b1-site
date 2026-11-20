@@ -146,6 +146,16 @@
     document.dispatchEvent(new CustomEvent('pet:known', { detail: { word: w, on: !!known[k] } }));
     return !!known[k];
   };
+  // 背单词判分时调用：设成确定状态，不来回翻转，且状态没变就不广播事件
+  P.setKnown = function (w, on) {
+    var k = String(w).toLowerCase();
+    var had = !!known[k];
+    if (on === had) return had;
+    if (on) known[k] = 1; else delete known[k];
+    store(KNOWN_KEY, known);
+    document.dispatchEvent(new CustomEvent('pet:known', { detail: { word: w, on: on } }));
+    return on;
+  };
   P.knownCount = function () { return Object.keys(known).length; };
   P.clearKnown = function () { known = {}; store(KNOWN_KEY, known); document.dispatchEvent(new CustomEvent('pet:known', { detail: { reset: true } })); };
 
@@ -1243,6 +1253,10 @@
 
     function recordAndRate(w, g, countedOk) {
       P.srsRate(w.w, g);
+      // 背单词的结果同步到词库「已掌握」：四选一按对错，闪卡按自评
+      // 闪卡的「有点模糊」(g=1) 不算掌握也不算答错，保持原状态
+      if (countedOk) P.setKnown(w.w, true);
+      else if (g === 0) P.setKnown(w.w, false);
       sessionN++;
       if (countedOk) sessionOk++;
       if (opts.onRate) opts.onRate(w, g);
