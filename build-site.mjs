@@ -176,14 +176,14 @@ function page({ base = '', active = '', title, desc = '', body, script = '', raw
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(desc)}">
 <meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(desc)}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231b6b52'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='17' font-weight='600' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="${base}assets/style.css">
-<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 </head>
 <body data-base="${base}">
 ${HEADER(base, active)}

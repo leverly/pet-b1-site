@@ -33,10 +33,10 @@
   P.theme = function () { return document.documentElement.getAttribute('data-theme') || 'light'; };
   P.toggleTheme = function () { applyTheme(P.theme() === 'light' ? 'dark' : 'light'); };
 
+  // 默认深色：不再跟随系统偏好（白天系统多为浅色，会把站点变成亮色）
+  // 只有用户主动切换过才用他们选的那套
   var savedTheme = load('pet-theme', null);
-  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
-  else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.setAttribute('data-theme', 'dark');
-  else document.documentElement.setAttribute('data-theme', 'light');
+  document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
 
   /* ---------------- 已掌握进度 ---------------- */
   var KNOWN_KEY = 'pet-known-v1';
