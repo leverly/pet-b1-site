@@ -626,7 +626,7 @@ function buildStudy() {
   write('quiz.html', page({
     dataKeys: ['WORDS', 'STATS'],
     title: '背单词 · 间隔重复记忆',
-    desc: `按遗忘曲线安排 ${STATS.total} 条 PET 词条的复习：看词回想或四选一识别，答完自动排下次时间。`,
+    desc: `按遗忘曲线安排 ${STATS.total} 条 PET 词条的复习：给英文选中文的四选一，答完自动排下次时间。`,
     active: 'words-study',
     body: `
 <div class="page-head">
