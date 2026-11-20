@@ -219,10 +219,10 @@ function buildHome() {
       <div class="hero-badge"><span class="dot-live"></span>对齐 Cambridge B1 Preliminary (PET for Schools) 2025 官方考纲</div>
       <h1>8 周系统拿下剑桥 PET，<br><span class="accent-word">词汇 · 语法 · 刷题</span>一站通关</h1>
       <p class="lede">
-        专为 3–9 年级中小学生打造的 PET 科学备考系统：<b>${STATS.total.toLocaleString('en-US')} 个官方词条全配纯正英音</b>，
-        <b>${GRAMMAR_STATS.topics} 个语法考点配中式易错避坑</b>，<b>${Q_STATS.total} 道真题式精练</b>。
-        每天 20 分钟跟着艾宾浩斯遗忘曲线闯关，进步看得见，家长省心更放心。
-      </p>
+ 专为 3–9 年级中小学生打造的 PET 科学备考系统：<b>${STATS.total.toLocaleString('en-US')} 个官方词条全配纯正英音</b>，
+ <b>${GRAMMAR_STATS.topics} 个语法考点配中式易错避坑</b>，<b>${Q_STATS.total} 道真题式精练</b>。
+ 每天 20 分钟跟着艾宾浩斯遗忘曲线闯关，进步看得见，家长省心更放心。
+ </p>
       <div class="hero-cta">
         <a class="btn primary" href="quiz.html">开始背单词 <span aria-hidden="true">→</span></a>
         <a class="btn" href="review.html">真题练语法</a>
@@ -456,8 +456,7 @@ function buildWords() {
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 官方词库</div>
   <h1>剑桥 PET 官方词表</h1>
-  <p class="lede">完整收录 Cambridge B1 Preliminary (2025) 官方词表：${STATS.words} 个单词 + ${STATS.phrases} 个高频短语。
-  按真实语料词频分成三档，默认<b>最常考的高频词排在最前面</b>，点击 🔊 可直接听纯正剑桥英音。</p>
+  <p class="lede">完整收录 Cambridge B1 Preliminary (2025) 官方词表：${STATS.words} 词 + ${STATS.phrases} 短语，按真实语料词频分三档，<b>最常考的高频词排在最前</b>，点 🔊 可听剑桥英音。</p>
 </div>
 
 <section class="section" style="margin-top:24px">
@@ -648,7 +647,7 @@ function buildGrammar() {
   <div class="crumb"><a href="index.html">首页</a> / 语法体系</div>
   <h1>PET 语法避坑体系</h1>
   <p class="lede">按 PET 真题考查密度排成 ${GRAMMAR_STATS.sections} 个语法族、${GRAMMAR_STATS.topics} 个核心考点。
-  点进任意模块即可展开公式表、精选例句与 <b>✕ 易错句 vs ✓ 正确句</b> 对比，学完直接刷专项题。</p>
+ 点进任意模块即可展开公式表、精选例句与 <b>✕ 易错句 vs ✓ 正确句</b> 对比，学完直接刷专项题。</p>
 </div>
 
 <section class="section" style="margin-top:24px">
