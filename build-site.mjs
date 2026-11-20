@@ -489,7 +489,7 @@ function buildWords() {
   const script = `
 const { WORDS, STATS } = window.PET_DATA;
 const P = window.PET;
-P.renderWordList({ mount: '#wlist', words: WORDS, pageSize: 40, search: '#wq' });
+P.renderWordList({ mount: '#wlist', words: WORDS, pageSize: 40, search: '#wq', initialFilter: 'new' });
 function drawKnown() {
   const n = P.knownCount();
   const el = document.querySelector('#kKnown');

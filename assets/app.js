@@ -680,7 +680,7 @@
     var pageSize = opts.pageSize || 40;
     var page = 0;
     var query = '';
-    var filter = 'all';
+    var filter = opts.initialFilter || 'all';
 
     function match(w) {
       if (filter === 'b1' && w.tag !== 'b1') return false;
@@ -767,6 +767,12 @@
           row.classList.toggle('known', on);
           var btn = row.querySelector('.known-pill');
           if (btn) btn.textContent = on ? '✓ 已掌握' : '标掌握';
+          // 在「未掌握 / 已掌握」视图里，标记后该行已不属于当前筛选，稍后重绘把它移出
+          if (filter === 'new' || filter === 'known') {
+            row.style.transition = 'opacity .25s';
+            row.style.opacity = '.35';
+            setTimeout(draw, 320);
+          }
         });
       });
       host.querySelectorAll('[data-pg]').forEach(function (b) {
@@ -786,6 +792,7 @@
       });
     }
     document.querySelectorAll('[data-filter]').forEach(function (c) {
+      c.classList.toggle('on', c.getAttribute('data-filter') === filter);
       c.addEventListener('click', function () {
         document.querySelectorAll('[data-filter]').forEach(function (x) { x.classList.remove('on'); });
         c.classList.add('on');
