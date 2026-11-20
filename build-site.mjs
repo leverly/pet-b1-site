@@ -100,7 +100,7 @@ const NAV = [
   { href: 'grammar.html', label: '语法', key: 'grammar' },
   { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '8周计划', key: 'plan' },
-  { href: 'stats.html', label: '学情报告', key: 'stats' },
+  { href: 'stats.html', label: '学习数据', key: 'stats' },
 ];
 
 const LOGO_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
@@ -119,7 +119,6 @@ const HEADER = (base, active) => `<div class="scroll-progress"></div>
       ${NAV.map((n) => `<a href="${base}${n.href}"${n.key === active ? ' class="on"' : ''}>${n.label}</a>`).join('')}
     </nav>
     <div class="hdr-tools">
-      <button class="pro-pill" data-open-pro="PET 8周通关营" aria-label="开通 PET 通关营">✦ <span>开通通关营</span></button>
       <button class="theme-btn" aria-label="切换主题">☾</button>
       <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     </div>
@@ -134,7 +133,7 @@ const FOOTER = (base) => `<footer class="foot">
         <span>PET 领航</span>
         <span class="logo-badge">B1</span>
       </div>
-      <p style="line-height:1.7;margin:0;color:var(--text-2)">面向中小学生的剑桥 B1 Preliminary (PET for Schools) 系统备考平台。官方 ${STATS.total} 词全配英音、${GRAMMAR_STATS.topics} 个语法考点、${Q_STATS.total} 道真题式精练与家长学情周报。</p>
+      <p style="line-height:1.7;margin:0;color:var(--text-2)">面向中小学生的剑桥 B1 Preliminary (PET for Schools) 系统备考站。官方 ${STATS.total} 词全配英音、${GRAMMAR_STATS.topics} 个语法考点、${Q_STATS.total} 道真题式精练与 8 周打卡计划。</p>
     </div>
     <div class="col">
       <h4>每日备考</h4>
@@ -150,11 +149,9 @@ const FOOTER = (base) => `<footer class="foot">
       <a href="${base}grammar.html">12 大语法族</a>
     </div>
     <div class="col">
-      <h4>家长与服务</h4>
-      <a href="${base}stats.html">学情报告与周报</a>
-      <a href="${base}index.html#pricing">会员与通关方案</a>
-      <a href="${base}index.html#faq">家长常见问题</a>
-      <a href="#" data-open-pro="兑换码激活">兑换码激活</a>
+      <h4>数据与帮助</h4>
+      <a href="${base}stats.html">学习数据与备份</a>
+      <a href="${base}index.html#faq">常见问题</a>
     </div>
   </div>
   <div class="foot-bottom">
@@ -222,14 +219,14 @@ function buildHome() {
         每天 20 分钟跟着艾宾浩斯遗忘曲线闯关，进步看得见，家长省心更放心。
       </p>
       <div class="hero-cta">
-        <a class="btn primary" href="quiz.html">免费开始背单词 <span aria-hidden="true">→</span></a>
-        <a class="btn" href="#pricing">查看通关营方案</a>
+        <a class="btn primary" href="quiz.html">开始背单词 <span aria-hidden="true">→</span></a>
+        <a class="btn" href="review.html">真题练语法</a>
         <a class="btn ghost" href="plan.html">看 8 周计划</a>
       </div>
       <div class="hero-trust">
         <span><b>✓</b> 2025 剑桥官方全量词表</span>
         <span><b>✓</b> 100% 纯正英音朗读</span>
-        <span><b>✓</b> 一键生成家长微信周报</span>
+        <span><b>✓</b> 离线可用 · 支持档案备份</span>
       </div>
     </div>
 
@@ -251,7 +248,7 @@ function buildHome() {
           <div class="bar"><i id="tBar" style="width:0%"></i></div>
           <div class="cockpit-sub">
             <span id="cTarget">目标：Merit 优秀 (153+)</span>
-            <a href="stats.html" style="font-weight:600">查看学情报告 →</a>
+            <a href="stats.html" style="font-weight:600">查看学习数据 →</a>
           </div>
         </div>
       </div>
@@ -310,8 +307,8 @@ function buildHome() {
     </div>
     <div class="card step-card">
       <span class="step-num">STEP 04</span>
-      <h3>错题闭环 + 家长微信周报</h3>
-      <p class="desc">错词需连对 2 次才移出错题本，支持一键打印 A4 错题纸；家长可随时复制学情周报，不用天天盯在旁边催。</p>
+      <h3>错题闭环 + 打印复习纸</h3>
+      <p class="desc">错词需连对 2 次才移出错题本，支持一键打印 A4 错题纸；所有学习记录本地保存，支持随时导出备份。</p>
     </div>
   </div>
 </section>
@@ -346,66 +343,6 @@ function buildHome() {
   </div>
 </section>
 
-<section class="section reveal" id="pricing">
-  <div class="pricing-wrap">
-    <div class="pricing-head">
-      <span class="kicker">透明方案 · 性价比远超线下班</span>
-      <h2>选择适合孩子的 PET 备考方案</h2>
-      <p>少报一节 300 元的线下大班课，换一套孩子每天用得上、8 周系统闭环的剑桥 PET 备考系统</p>
-    </div>
-    <div class="pricing-grid">
-      <div class="pcard">
-        <div class="pcard-tier">FREE · 免费体验</div>
-        <h3>基础体验版</h3>
-        <p class="pcard-sub">先让孩子上手体验 3 天，看看是不是真的愿意每天打开学</p>
-        <div class="pcard-price"><b>¥0</b><span class="unit">/ 永久免费</span></div>
-        <div class="pcard-daily">无需注册，打开即学</div>
-        <ul class="pcard-list">
-          <li><span class="chk">✓</span><span>907 个 PET 核心高频词闯关与英音朗读</span></li>
-          <li><span class="chk">✓</span><span>12 大语法族基础规则与例句查阅</span></li>
-          <li><span class="chk">✓</span><span>艾宾浩斯遗忘曲线自动排期</span></li>
-          <li><span class="chk">✓</span><span>本地自动保存学习记录与连续天数</span></li>
-          <li class="mut"><span>—</span><span>不含家长微信周报导出与错题纸打印</span></li>
-        </ul>
-        <a class="btn block" href="quiz.html">免费开始体验</a>
-      </div>
-
-      <div class="pcard featured">
-        <div class="pcard-ribbon">🔥 最受欢迎 · 90% 备考家庭首选</div>
-        <div class="pcard-tier">PRO · 8 周系统冲刺</div>
-        <h3>PET 8周通关营</h3>
-        <p class="pcard-sub">专为考前 2–3 个月备考的 3–9 年级学生设计，从零基础到稳过 Pass/Merit</p>
-        <div class="pcard-price"><b>¥199</b><span class="unit">/ 90 天</span><span class="orig">¥399</span></div>
-        <div class="pcard-daily">折合每天仅 ¥2.2 · 一杯豆浆钱搞定系统备考</div>
-        <ul class="pcard-list">
-          <li><span class="chk">✓</span><span><b>全部 3,109 官方词条 + 266 短语</b>（100% 英音）</span></li>
-          <li><span class="chk">✓</span><span><b>43 个语法考点 + 119 条中式易错避坑</b></span></li>
-          <li><span class="chk">✓</span><span><b>261 道真题式精练</b> + 最弱考点智能定位</span></li>
-          <li><span class="chk">✓</span><span><b>8 周交互式打卡计划</b> + 考试倒计时节奏计算</span></li>
-          <li><span class="chk">✓</span><span><b>家长微信周报一键复制</b> + A4 错题纸打印</span></li>
-        </ul>
-        <button class="btn primary block" data-open-pro="PET 8周通关营（¥199 / 90天）">立即开通通关营</button>
-      </div>
-
-      <div class="pcard">
-        <div class="pcard-tier">EXCELLENCE · 冲刺卓越</div>
-        <h3>全年护航尊享版</h3>
-        <p class="pcard-sub">适合提前半年长线打基础、目标 Merit 优秀或 Distinction 卓越的考生</p>
-        <div class="pcard-price"><b>¥369</b><span class="unit">/ 365 天</span><span class="orig">¥699</span></div>
-        <div class="pcard-daily">折合每天仅 ¥1.0 · 含跨设备学习档案备份</div>
-        <ul class="pcard-list">
-          <li><span class="chk">✓</span><span>包含「PET 8周通关营」全部权益</span></li>
-          <li><span class="chk">✓</span><span><b>365 天超长有效期</b>，覆盖寒暑假 + 考前冲刺</span></li>
-          <li><span class="chk">✓</span><span><b>Distinction (160+) 卓越冲刺路线</b>（B1+ 进阶考点）</span></li>
-          <li><span class="chk">✓</span><span><b>学习档案 JSON 导出/导入</b>，手机平板电脑随时同步</span></li>
-          <li><span class="chk">✓</span><span>后续题库与 2025/2026 考纲更新免费同步</span></li>
-        </ul>
-        <button class="btn gold block" data-open-pro="全年护航尊享版（¥369 / 365天）">开通全年尊享版</button>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="section reveal">
   <div class="section-head">
     <div class="section-head-left">
@@ -430,45 +367,10 @@ function buildHome() {
   <div class="grid c3">${grammarCards}</div>
 </section>
 
-<section class="section reveal">
-  <div class="section-head">
-    <div class="section-head-left">
-      <span class="kicker">备考家庭真实反馈</span>
-      <h2>家长省心，孩子也能坚持下来</h2>
-    </div>
-  </div>
-  <div class="grid c3">
-    <div class="card review-card">
-      <div class="review-stars">★★★★★</div>
-      <p class="review-quote">“以前给娃买过几本厚厚的 PET 单词书，背到 C 字母就放弃了。这个网站把高频 907 词拎出来，每题还自动读 3 遍英音，娃每天晚饭后自己在 iPad 上闯关 15 分钟，已经连续打卡 34 天了。”</p>
-      <div class="review-author">
-        <div class="review-avatar">陈</div>
-        <div><b>陈妈妈 · 小学五年级</b><small>已顺利通过 PET Merit (156分)</small></div>
-      </div>
-    </div>
-    <div class="card review-card">
-      <div class="review-stars">★★★★★</div>
-      <p class="review-quote">“最喜欢语法页的红绿错句对比和错题本打印功能！孩子写作文老是把 although 和 but 连用，还有现在完成时和过去时混用，专攻最弱考点刷了两周，模考 Part 5 和 Part 6 正确率明显上来了。”</p>
-      <div class="review-author">
-        <div class="review-avatar">林</div>
-        <div><b>林爸爸 · 六年级备考</b><small>目标 Distinction 卓越冲刺</small></div>
-      </div>
-    </div>
-    <div class="card review-card">
-      <div class="review-stars">★★★★★</div>
-      <p class="review-quote">“界面很清爽，没有乱七八糟的广告和游戏弹窗，孩子不会被带偏。我每周日点一下学情报告里的复制周报，就能清楚看到这周背了多少词、哪个语法最弱，比报几千块的线上大班课实在多了。”</p>
-      <div class="review-author">
-        <div class="review-avatar">周</div>
-        <div><b>周妈妈 · 初一学生</b><small>PET 备考同步衔接校内中考</small></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="section reveal" id="faq">
   <div class="section-head">
     <div class="section-head-left">
-      <span class="kicker">家长常见问题</span>
+      <span class="kicker">常见问题</span>
       <h2>关于 PET 备考与使用，你可能想了解</h2>
     </div>
   </div>
@@ -487,7 +389,7 @@ function buildHome() {
     </details>
     <details class="faq-item">
       <summary>孩子的背词进度和错题本会丢失吗？换设备怎么办？</summary>
-      <p>学习记录实时保存在当前浏览器中，离线也能使用。如果需要在电脑和 iPad 之间切换，或担心清缓存丢失，可以随时在「学情报告」页点击<b>一键导出学习档案</b>，在新设备上导入即可无缝恢复。</p>
+      <p>学习记录实时保存在当前浏览器中，离线也能使用。如果需要在电脑和 iPad 之间切换，或担心清缓存丢失，可以随时在「学习数据」页点击<b>一键导出学习档案</b>，在新设备上导入即可无缝恢复。</p>
     </details>
     <details class="faq-item">
       <summary>这个网站覆盖了 PET 考试的哪些部分？</summary>
@@ -499,7 +401,7 @@ function buildHome() {
 
   write('index.html', page({
     title: 'PET 领航 · 剑桥 B1 官方词汇与语法系统备考平台',
-    desc: `面向中小学生的剑桥 PET (B1 Preliminary) 备考系统：${STATS.total} 官方词条纯正英音朗读、${GRAMMAR_STATS.topics} 个语法考点避坑、${Q_STATS.total} 道真题式精练、8 周打卡计划与家长学情周报。`,
+    desc: `面向中小学生的剑桥 PET (B1 Preliminary) 备考系统：${STATS.total} 官方词条纯正英音朗读、${GRAMMAR_STATS.topics} 个语法考点避坑、${Q_STATS.total} 道真题式精练与 8 周打卡计划。`,
     active: 'home',
     body,
     dataKeys: ['STATS'],
@@ -1698,7 +1600,7 @@ function buildPlan() {
     <a class="card" href="stats.html">
       <div class="card-ico gold">📊</div>
       <h3>第 5 周末诊断</h3>
-      <p class="desc">打开「学情报告」查看语法薄弱考点，用「专攻最弱考点」精准提分，不平均用力。</p>
+      <p class="desc">打开「学习数据」查看语法薄弱考点，用「专攻最弱考点」精准提分，不平均用力。</p>
     </a>
     <a class="card" href="grammar.html">
       <div class="card-ico ok">🚀</div>
@@ -1747,7 +1649,7 @@ refreshPlan();
 }
 
 /* ==========================================================
-   9. 学情报告 & 家长周报 + 数据备份 + 官方口径说明
+   9. 学习数据 & 档案备份 + 官方口径说明
    ========================================================== */
 function buildStats() {
   const tagRows = [
@@ -1763,26 +1665,25 @@ function buildStats() {
   }).join('');
 
   write('stats.html', page({
-    title: '学情报告与家长周报',
-    desc: '实时追踪孩子 PET 备考进度、近 7 天学习打卡、语法薄弱诊断，支持一键复制家长微信周报与学习档案备份恢复。',
+    title: '学习数据与统计',
+    desc: '实时追踪 PET 备考进度、近 7 天学习活跃度与词表题库分布，支持跨设备导出和导入学习档案。',
     active: 'stats',
-    dataKeys: ['STATS', 'GRAMMAR'],
+    dataKeys: ['STATS'],
     body: `
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 学情报告</div>
-  <h1>学情报告与家长周报</h1>
-  <p class="lede">孩子的每一次背词、刷题和错题攻克都会实时汇总在这里，家长可一键复制周报发微信留档，也支持跨设备备份学习进度。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 学习数据</div>
+  <h1>学习数据与进度统计</h1>
+  <p class="lede">每一次背词、刷题和错题攻克都会实时汇总在这里，支持跨设备导出和恢复学习进度。</p>
 </div>
 
 <section class="section" style="margin-top:24px">
   <div class="report-banner">
     <div>
-      <h2 id="rpHeading">剑桥 PET 备考学情总览</h2>
-      <p id="rpSub">设定考试日期与孩子昵称，一键生成清晰直观的家长微信周报</p>
+      <h2 id="rpHeading">剑桥 PET 备考进度总览</h2>
+      <p id="rpSub">设定考试日期与目标档位，首页驾驶舱与 8 周计划将自动同步冲刺节奏</p>
     </div>
     <div class="report-actions">
-      <button class="btn solid sm" id="copyReportBtn">📋 一键复制家长微信周报</button>
-      <button class="btn sm" data-open-exam="1">📅 设置考试档案</button>
+      <button class="btn solid sm" data-open-exam="1">📅 设置考试档案</button>
       <button class="btn sm" id="exportBtn">⬇ 导出档案备份</button>
       <label class="btn sm" style="cursor:pointer">⬆ 导入恢复<input type="file" id="importFile" accept=".json" style="display:none"></label>
     </div>
@@ -1800,18 +1701,11 @@ function buildStats() {
 </section>
 
 <section class="section" style="margin-top:28px">
-  <div class="grid c2">
-    <div class="card">
-      <span class="kicker">近 7 天学习活跃度</span>
-      <h3 style="margin-bottom:4px">每日学习量（词数 + 题数）</h3>
-      <p class="meta" id="chartSummary">每天保持节奏，记忆效果远胜考前突击</p>
-      <div class="chart-bars" id="chartBars"></div>
-    </div>
-    <div class="card">
-      <span class="kicker">家长周报预览</span>
-      <h3 style="margin-bottom:10px">可直接发家庭群 / 老师群</h3>
-      <pre id="reportPreview" style="margin:0;padding:14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);font-family:var(--sans);font-size:.82rem;line-height:1.65;color:var(--text-2);white-space:pre-wrap;max-height:210px;overflow:auto"></pre>
-    </div>
+  <div class="card">
+    <span class="kicker">近 7 天学习活跃度</span>
+    <h3 style="margin-bottom:4px">每日学习量（词数 + 题数）</h3>
+    <p class="meta" id="chartSummary">每天保持节奏，记忆效果远胜考前突击</p>
+    <div class="chart-bars" id="chartBars"></div>
   </div>
 </section>
 
@@ -1862,10 +1756,7 @@ function buildStats() {
 </section>
 `,
     script: `
-const { GRAMMAR } = window.PET_DATA;
 const P = window.PET;
-const TNAME = new Map();
-GRAMMAR.forEach(g => g.topics.forEach(t => TNAME.set(t.id, t.name)));
 
 function renderReport() {
   const prof = P.profile();
@@ -1877,7 +1768,7 @@ function renderReport() {
   const days = P.daysLeft();
   const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
 
-  set('#rpHeading', (prof.childName ? prof.childName + '的 ' : '') + 'PET 备考学情总览');
+  set('#rpHeading', (prof.childName ? prof.childName + '的 ' : '') + 'PET 备考进度总览');
   set('#rpSub', '目标：' + P.targetLabel() + (days !== null && days >= 0 ? ' · 距考试还有 ' + days + ' 天' : ' · 点击右侧可设置考试倒计时'));
   set('#rLevel', 'Lv.' + lv.lv);
   set('#rXp', lv.name + ' · ' + lv.xp + ' XP');
@@ -1904,27 +1795,10 @@ function renderReport() {
       '</div>';
     }).join('');
   }
-
-  const text = P.buildParentReport(TNAME);
-  const pre = document.querySelector('#reportPreview');
-  if (pre) pre.textContent = text;
 }
 
 renderReport();
 document.addEventListener('pet:profile', renderReport);
-
-document.querySelector('#copyReportBtn').addEventListener('click', () => {
-  const text = P.buildParentReport(TNAME);
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => P.toast('✓ 家长微信周报已复制，去微信粘贴发送吧！')).catch(() => fallbackCopy(text));
-  } else fallbackCopy(text);
-});
-function fallbackCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text; document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); P.toast('✓ 家长微信周报已复制'); } catch (e) { P.toast('请手动从右侧预览框复制'); }
-  document.body.removeChild(ta);
-}
 
 document.querySelector('#exportBtn').addEventListener('click', () => {
   const blob = new Blob([P.exportBackup()], { type: 'application/json' });

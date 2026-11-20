@@ -1,7 +1,7 @@
 /* ==========================================================
    PET 领航 · 剑桥 B1 官方备考系统 · 运行时 v2
    主题 / 进度 / 间隔重复（SRS）/ 词表朗读 / 测验 / 闪卡
-   备考倒计时 / XP等级 / 轻音效 / 家长周报 / 会员演示弹窗
+   备考倒计时 / XP等级 / 轻音效 / 学习档案备份
    纯前端，localStorage 持久化，向后兼容全部 v1 数据键
    ========================================================== */
 (function () {
@@ -93,14 +93,12 @@
   var savedTheme = load('pet-theme', null);
   document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
 
-  /* ---------------- 考生档案 / 备考倒计时 / Pro 状态 ---------------- */
+  /* ---------------- 考生档案 / 备考倒计时 ---------------- */
   var PROFILE_KEY = 'pet-profile-v1';
   var profile = load(PROFILE_KEY, null) || {
     childName: '',
     examDate: '',
-    targetGrade: 'merit',
-    pro: false,
-    plan: ''
+    targetGrade: 'merit'
   };
   P.profile = function () { return Object.assign({}, profile); };
   P.saveProfile = function (patch) {
@@ -109,7 +107,6 @@
     document.dispatchEvent(new CustomEvent('pet:profile', { detail: profile }));
     return profile;
   };
-  P.isPro = function () { return !!profile.pro; };
   P.daysLeft = function () {
     if (!profile.examDate) return null;
     var t = new Date(profile.examDate + 'T00:00:00');
@@ -381,38 +378,7 @@
     return { lv: cur.lv, name: cur.name, xp: xp };
   };
 
-  /* ---------------- 家长微信周报 & 学习档案备份 ---------------- */
-  P.buildParentReport = function (topicNameMap) {
-    var prof = P.profile();
-    var srsSt = P.srsStats();
-    var qSt = P.qTopicStats();
-    var qN = qSt.reduce(function (a, x) { return a + x.n; }, 0);
-    var qOk = qSt.reduce(function (a, x) { return a + x.ok; }, 0);
-    var rate = qN ? Math.round(qOk / qN * 100) + '%' : '暂无记录';
-    var days = P.daysLeft();
-    var last7 = P.last7Days();
-    var w7 = last7.reduce(function (a, x) { return a + x.words; }, 0);
-    var q7 = last7.reduce(function (a, x) { return a + x.questions; }, 0);
-    var weak = qSt.filter(function (x) { return x.n >= 3; }).sort(function (a, b) { return a.rate - b.rate; })[0];
-    var weakText = weak ? ((topicNameMap && topicNameMap.get(weak.topic)) || weak.topic) + '（正确率 ' + Math.round(weak.rate * 100) + '%）' : '继续保持练习即可自动诊断';
-    var name = prof.childName ? prof.childName + '的 ' : '';
-    var lines = [
-      '【PET 领航 · 剑桥 B1 学情周报】',
-      name + '目标档位：' + P.targetLabel(prof.targetGrade),
-      days !== null ? (days >= 0 ? '距离 PET 考试还有：' + days + ' 天' : '目标考试日期已过') : '考试日期：未设置',
-      '————————————',
-      '🔥 连续坚持：' + P.streak() + ' 天',
-      '📚 近 7 天学习：背单词 ' + w7 + ' 词 · 语法精练 ' + q7 + ' 题',
-      '✅ 累计词汇掌握：已学 ' + srsSt.total + ' 词（牢固 ' + srsSt.mature + ' 词），手动标记掌握 ' + P.knownCount() + ' 词',
-      '🎯 语法精练表现：累计 ' + qN + ' 题，总正确率 ' + rate,
-      '📌 待攻克薄弱项：' + weakText,
-      '📝 错题本待清理：单词 ' + P.wordBookCount() + ' 词 · 语法 ' + P.wrongIds().length + ' 题',
-      '————————————',
-      '下一步建议：每天坚持 15-20 分钟，先清今日到期词，再专攻最弱语法考点。'
-    ];
-    return lines.join('\n');
-  };
-
+  /* ---------------- 学习档案备份 ---------------- */
   P.exportBackup = function () {
     var data = {
       version: 2,
@@ -444,38 +410,18 @@
     setTimeout(function () { location.reload(); }, 600);
   };
 
-  /* ---------------- 全局弹窗（会员开通 & 考试倒计时设置） ---------------- */
+  /* ---------------- 全局弹窗（考试倒计时设置） ---------------- */
   function ensureModals() {
-    if (document.getElementById('petProModal')) return;
+    if (document.getElementById('petExamModal')) return;
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="modal-backdrop" id="petProModal" role="dialog" aria-modal="true" aria-labelledby="proModalTitle">' +
-        '<div class="modal-box">' +
-          '<button class="modal-close" data-close="petProModal" aria-label="关闭">✕</button>' +
-          '<span class="kicker">PET 领航 · 剑桥 B1 通关会员</span>' +
-          '<h3 id="proModalTitle">解锁 8 周通关营完整权益</h3>' +
-          '<p class="modal-sub">面向 3-9 年级 PET 备考家庭：全量 3,109 官方词条英音朗读 + 43 考点避坑精练 + 家长学情周报 + 错题纸打印。</p>' +
-          '<div id="proStatusBox" class="note" style="margin:0 0 16px"></div>' +
-          '<div class="form-row">' +
-            '<label for="proCodeInput">已有学习兑换码？（演示可用 <code>PET2025</code>）</label>' +
-            '<div style="display:flex;gap:8px">' +
-              '<input class="field" id="proCodeInput" type="text" placeholder="输入兑换码，如 PET2025" autocomplete="off">' +
-              '<button class="btn primary sm" id="proRedeemBtn" style="flex:none">激活</button>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
-            '<button class="btn gold block" id="proTrialBtn">一键开启 7 天 Pro 全功能体验</button>' +
-          '</div>' +
-          '<p style="font-size:.76rem;color:var(--text-3);margin:12px 0 0;text-align:center">静态演示模式 · 所有学习数据安全保存在当前设备浏览器中</p>' +
-        '</div>' +
-      '</div>' +
       '<div class="modal-backdrop" id="petExamModal" role="dialog" aria-modal="true" aria-labelledby="examModalTitle">' +
         '<div class="modal-box">' +
           '<button class="modal-close" data-close="petExamModal" aria-label="关闭">✕</button>' +
           '<span class="kicker">个性化备考档案</span>' +
           '<h3 id="examModalTitle">设置考试倒计时与目标档位</h3>' +
-          '<p class="modal-sub">设定目标后，首页驾驶舱与 8 周计划将自动匹配冲刺节奏，并同步到家长学情周报。</p>' +
-          '<div class="form-row"><label for="exChildName">孩子昵称（选填，用于周报展示）</label><input class="field" id="exChildName" type="text" placeholder="例如：乐乐 / Alex" maxlength="20"></div>' +
+          '<p class="modal-sub">设定目标后，首页驾驶舱与 8 周计划将自动匹配冲刺节奏。</p>' +
+          '<div class="form-row"><label for="exChildName">昵称（选填）</label><input class="field" id="exChildName" type="text" placeholder="例如：乐乐 / Alex" maxlength="20"></div>' +
           '<div class="form-row"><label for="exDate">预计 PET 考试日期</label><input class="field" id="exDate" type="date"></div>' +
           '<div class="form-row"><label for="exGrade">目标成绩档位</label>' +
             '<select class="field" id="exGrade">' +
@@ -504,33 +450,6 @@
       });
     });
 
-    document.getElementById('proRedeemBtn').addEventListener('click', function () {
-      var code = (document.getElementById('proCodeInput').value || '').trim().toUpperCase();
-      if (!code) { P.toast('请输入兑换码（演示可用 PET2025）'); return; }
-      if (code === 'PET2025' || code === 'VIP888' || code === 'PETPRO') {
-        P.saveProfile({ pro: true, plan: 'PET 8周通关营（兑换码激活）' });
-        P.sfx('win');
-        P.toast('🎉 激活成功！已解锁全部 Pro 权益');
-        document.getElementById('petProModal').classList.remove('open');
-        refreshProButtons();
-      } else {
-        P.toast('未识别的兑换码，可输入 PET2025 或点击下方一键体验');
-      }
-    });
-
-    document.getElementById('proTrialBtn').addEventListener('click', function () {
-      if (P.isPro()) {
-        P.saveProfile({ pro: false, plan: '' });
-        P.toast('已切换回免费体验版视图');
-      } else {
-        P.saveProfile({ pro: true, plan: '7天 Pro 全功能体验' });
-        P.sfx('win');
-        P.toast('🎉 已开启 7 天 Pro 全功能体验！');
-      }
-      document.getElementById('petProModal').classList.remove('open');
-      refreshProButtons();
-    });
-
     document.getElementById('exSaveBtn').addEventListener('click', function () {
       var name = (document.getElementById('exChildName').value || '').trim();
       var date = document.getElementById('exDate').value || '';
@@ -540,31 +459,6 @@
       document.getElementById('petExamModal').classList.remove('open');
     });
   }
-
-  function refreshProButtons() {
-    var isPro = P.isPro();
-    document.querySelectorAll('.pro-pill').forEach(function (b) {
-      b.classList.toggle('is-pro', isPro);
-      b.innerHTML = isPro ? '★ <span>Pro 已开通</span>' : '✦ <span>开通通关营</span>';
-    });
-  }
-
-  P.openProModal = function (planLabel) {
-    ensureModals();
-    var m = document.getElementById('petProModal');
-    var st = document.getElementById('proStatusBox');
-    var btn = document.getElementById('proTrialBtn');
-    if (P.isPro()) {
-      st.innerHTML = '<b>当前状态：</b>已开通「' + esc(profile.plan || 'Pro 通关营') + '」，全站 3,109 词英音、语法避坑精练、家长周报与打印功能均已就绪。';
-      btn.textContent = '切换回免费版视图（演示）';
-    } else {
-      st.innerHTML = planLabel
-        ? '<b>已选方案：</b>' + esc(planLabel) + '。输入兑换码或点击下方按钮即可立即体验全部 Pro 功能。'
-        : '<b>当前状态：</b>免费体验版（全部基础背词与语法已开放，开通 Pro 解锁完整商业体验）。';
-      btn.textContent = '一键开启 7 天 Pro 全功能体验';
-    }
-    m.classList.add('open');
-  };
 
   P.openExamModal = function () {
     ensureModals();
@@ -588,13 +482,6 @@
     if (tb) tb.addEventListener('click', P.toggleTheme);
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
 
-    refreshProButtons();
-    document.querySelectorAll('[data-open-pro]').forEach(function (el) {
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        P.openProModal(el.getAttribute('data-open-pro') || '');
-      });
-    });
     document.querySelectorAll('[data-open-exam]').forEach(function (el) {
       el.addEventListener('click', function (e) {
         e.preventDefault();
