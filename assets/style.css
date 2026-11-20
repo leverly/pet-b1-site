@@ -676,7 +676,8 @@ table.gtable td:first-child { font-weight: 600; }
 /* ---------------- 页面头部 ---------------- */
 .page-head { padding: 40px 0 6px; }
 .page-head h1 { font-size: clamp(1.65rem, 3.6vw, 2.35rem); letter-spacing: -.025em; }
-.page-head .lede { color: var(--text-2); max-width: 700px; margin-top: 10px; font-size: .97rem; line-height: 1.72; }
+/* 说明文字限制在易读行长内，但不再卡在 700px 造成右侧大片留白 */
+.page-head .lede { color: var(--text-2); max-width: 860px; margin-top: 10px; font-size: .97rem; line-height: 1.75; }
 .crumb { font-size: .8rem; color: var(--text-3); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .crumb a { color: var(--text-3); }
 .crumb a:hover { color: var(--accent); }
