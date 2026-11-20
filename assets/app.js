@@ -799,6 +799,8 @@
     if (opts.limit) pool = pool.slice(0, opts.limit);
     var i = 0, correct = 0, streak = 0, best = 0, answered = false;
     var total = pool.length;
+    var autoNextTimer = null;              // 答对后自动翻页
+    var AUTO_NEXT_MS = 780;
 
     host.innerHTML =
       '<div class="quiz-shell">' +
@@ -813,6 +815,8 @@
     var body = host.querySelector('#qbody');
 
     function draw() {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
       answered = false;
       var q = pool[i];
       if (!q) return done();
@@ -869,6 +873,8 @@
           var btn = host.querySelector('.qopt[data-k="' + (parseInt(e.key, 10) - 1) + '"]');
           if (btn) { e.preventDefault(); btn.click(); }
         } else if (e.key === 'Enter' && answered) {
+          // 答对后已经安排了自动翻页，此时 Enter 不应再触发一次，避免连跳两题
+          if (autoNextTimer) { e.preventDefault(); return; }
           var nx = host.querySelector('#qnext');
           if (nx && !nx.disabled) { e.preventDefault(); nx.click(); }
         }
@@ -913,17 +919,34 @@
       var ref = refAnswer
         ? '<div style="margin-bottom:6px"><b style="display:inline">参考答案：</b><span style="color:var(--ok);font-family:var(--en);font-weight:700;font-size:1rem">' + esc(refAnswer) + '</span></div>'
         : '';
-      fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
-        (ok ? '✓ 回答正确！' + (streak >= 3 ? ' 太棒了，已连击 ' + streak + ' 题！' : '') : '✕ 这题进了错题本，看看解析：') +
-        '</b>' + ref + esc(q.why) + '</div>';
-      var nx = host.querySelector('#qnext');
-      nx.disabled = false;
-      nx.focus();
+      if (ok) {
+        // 答对：给一句确认，然后自动进下一题，不打断节奏
+        fb.innerHTML = '<div class="feedback auto-next"><b>✓ 回答正确！' +
+          (streak >= 3 ? ' 已连击 ' + streak + ' 题！' : '') +
+          '</b><span class="auto-next-hint">即将进入下一题…</span></div>';
+      } else {
+        // 答错：停住，让用户看完正确答案与解析
+        fb.innerHTML = '<div class="feedback bad"><b>✕ 这题进了错题本，看看解析：</b>' +
+          ref + esc(q.why) + '</div>';
+        var nx = host.querySelector('#qnext');
+        nx.disabled = false;
+        nx.focus();
+      }
       if (P.qRecord) P.qRecord(q.topic, ok, q.id);
       if (opts.onAnswer) opts.onAnswer(q, ok);
+      if (ok) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = setTimeout(function () {
+          if (!document.body.contains(host)) return;
+          i++;
+          draw();
+        }, AUTO_NEXT_MS);
+      }
     }
 
     function done() {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
       P.sfx('win');
       var rate = total ? Math.round(correct / total * 100) : 0;
       var badge = rate >= 90 ? '🏆 卓越表现！' : rate >= 75 ? '🌟 稳步提升！' : '💪 发现薄弱点就是进步！';

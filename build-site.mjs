@@ -1417,7 +1417,11 @@ document.querySelector('#redoBtn').addEventListener('click', () => {
 function redoWords(slice) {
   const host = document.querySelector('#redoHost');
   let i = 0, done = 0, released = 0;
+  let autoNextTimer = null;
+  const AUTO_NEXT_MS = 780;
   function step() {
+    clearTimeout(autoNextTimer);
+    autoNextTimer = null;
     if (i >= slice.length) {
       P.sfx('win');
       host.innerHTML = '<div class="qcard" style="text-align:center">' +
@@ -1458,11 +1462,23 @@ function redoWords(slice) {
         const mastered = P.wordAttempt(w.w, ok);
         if (ok) { done++; if (mastered) released++; }
         const fb = host.querySelector('#rfb');
-        fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
-          (ok ? '✓ 对了！' + (mastered ? '已移出错题本' : '再对 ' + (P.MASTER_STREAK - (P.wordBook()[w.w.toLowerCase()] || {}).right) + ' 次即移出') : '✕ 正确答案：' + P.esc(w.zh)) +
-          '</b>' + P.esc(w.w) + ' · ' + P.esc(w.posZh || '') + '</div>' +
-          '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="rn">下一题 →</button></div>';
-        fb.querySelector('#rn').addEventListener('click', () => { i++; step(); });
+        if (ok) {
+          // 与背单词页一致：答对后短暂确认，自动进入下一题
+          fb.innerHTML = '<div class="feedback auto-next"><b>✓ 对了！' +
+            (mastered ? '已移出错题本' : '再对 ' + (P.MASTER_STREAK - (P.wordBook()[w.w.toLowerCase()] || {}).right) + ' 次即移出') +
+            '</b>' + P.esc(w.w) + ' · ' + P.esc(w.posZh || '') +
+            '<span class="auto-next-hint">即将进入下一题…</span></div>';
+          clearTimeout(autoNextTimer);
+          autoNextTimer = setTimeout(() => {
+            if (!document.body.contains(host)) return;
+            i++; step();
+          }, AUTO_NEXT_MS);
+        } else {
+          fb.innerHTML = '<div class="feedback bad"><b>✕ 正确答案：' + P.esc(w.zh) + '</b>' +
+            P.esc(w.w) + ' · ' + P.esc(w.posZh || '') + '</div>' +
+            '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="rn">下一题 →</button></div>';
+          fb.querySelector('#rn').addEventListener('click', () => { i++; step(); });
+        }
       });
     });
   }
