@@ -758,3 +758,9 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
 @media (max-width: 720px) {
   .scope-bar { padding: 14px; }
 }
+
+/* 值为文本而非数字的统计卡（如「最弱考点」）：降字号、允许换行，避免撑成标题 */
+.kv .k.k-wide b {
+  font-size: 1.02rem; font-weight: 550; line-height: 1.45;
+  letter-spacing: -.01em; word-break: break-word;
+}

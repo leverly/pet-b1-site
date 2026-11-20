@@ -905,7 +905,7 @@ function buildDrill() {
     <div class="k"><b id="kQn">0</b><span>累计已答</span></div>
     <div class="k"><b id="kRate">—</b><span>总正确率</span></div>
     <div class="k"><b id="kWrong">0</b><span>错题本</span></div>
-    <div class="k"><b id="kWeak">—</b><span>最弱考点</span></div>
+    <div class="k k-wide"><b id="kWeak">—</b><span>最弱考点</span></div>
   </div>
 </section>
 
