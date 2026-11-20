@@ -3,26 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<title>PET 8 周备考计划 · PET 备考站</title>
-<meta name="description" content="把 3109 条词表、43 个语法考点和 261 道题分配到 8 周，每周有明确的词汇范围、语法族和练习目标。">
-<meta property="og:title" content="PET 8 周备考计划 · PET 备考站">
-<meta property="og:description" content="把 3109 条词表、43 个语法考点和 261 道题分配到 8 周，每周有明确的词汇范围、语法族和练习目标。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231b6b52'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='17' font-weight='600' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
+<meta name="color-scheme" content="light dark">
+<title>8 周 PET 通关打卡计划 · PET 领航</title>
+<meta name="description" content="把 3,109 官方词条、43 个语法考点和 261 道真题科学分配到 8 周，支持逐周勾选打卡与倒计时节奏规划。">
+<meta property="og:title" content="8 周 PET 通关打卡计划 · PET 领航">
+<meta property="og:description" content="把 3,109 官方词条、43 个语法考点和 261 道真题科学分配到 8 周，支持逐周勾选打卡与倒计时节奏规划。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='800' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
-<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 </head>
 <body data-base="">
 <div class="scroll-progress"></div>
 <header class="hdr">
   <div class="hdr-in">
-    <a class="logo" href="index.html">PET <em>备考站</em></a>
-    <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
+    <a class="logo" href="index.html">
+  <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+  <span>PET 领航</span>
+  <span class="logo-badge">B1</span>
+</a>
     <nav class="hdr-nav">
-      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html">背单词</a><a href="review.html">练语法</a><a href="wrong.html">错题本</a><a href="plan.html" class="on">计划</a><a href="stats.html">数据</a>
+      <a href="index.html">首页</a><a href="quiz.html">背单词</a><a href="review.html">练语法</a><a href="words.html">词库</a><a href="grammar.html">语法</a><a href="wrong.html">错题本</a><a href="plan.html" class="on">8周计划</a><a href="stats.html">学情报告</a>
     </nav>
     <div class="hdr-tools">
-      <button class="theme-btn" aria-label="切换主题">☀</button>
+      <button class="pro-pill" data-open-pro="PET 8周通关营" aria-label="开通 PET 通关营">✦ <span>开通通关营</span></button>
+      <button class="theme-btn" aria-label="切换主题">☾</button>
+      <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     </div>
   </div>
 </header>
@@ -30,129 +35,157 @@
 <div class="wrap">
 
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 计划</div>
-  <h1>8 周备考计划</h1>
-  <p class="lede">按「词汇 + 语法 + 练习」三条线并行推进。每周的词汇量按高频词 907 条 ÷ 4 周铺开，
-  语法按依赖关系排序（先时态再非谓语，先条件句再从句）。不用严格照搬，但顺序建议保持。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 8 周通关计划</div>
+  <h1>8 周 PET 系统通关计划</h1>
+  <p class="lede">按「高频词汇 + 语法避坑 + 真题精练」三线并行推进。前 4 周打牢核心地基，第 5–7 周补齐阅读写作主力，第 8 周集中冲刺。</p>
 </div>
 
-<section class="section" style="margin-top:24px">
-  <div class="kv">
-    <div class="k"><b>8</b><span>周</span></div>
-    <div class="k"><b>907</b><span>高频词（前 4 周）</span></div>
-    <div class="k"><b>2202</b><span>中低频（第 5–6 周）</span></div>
-    <div class="k"><b>261</b><span>练习题</span></div>
+<section class="section" style="margin-top:22px">
+  <div class="card" style="padding:22px 24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+      <div>
+        <div style="font-weight:700;font-size:1.05rem" id="planTitle">8 周打卡总进度：<span id="planCount">0</span> / 8 周</div>
+        <div style="font-size:.84rem;color:var(--text-2);margin-top:2px" id="planPace">设置 PET 考试日期后，自动帮你计算每日建议背词量</div>
+      </div>
+      <button class="btn sm soft" data-open-exam="1">📅 设置考试日期与目标</button>
+    </div>
+    <div class="bar ok"><i id="planBar" style="width:0%"></i></div>
   </div>
-  <div class="note" style="margin-top:20px">每天建议 30–40 分钟：背单词 10 分钟（做完今天到期的词）+ 读一个语法考点 10 分钟 + 练语法 15 分钟。
-  如果只有 15 分钟，优先做「复习」和「测验」，读语法可以放到周末集中看。</div>
 </section>
 
-<section class="section">
+<section class="section" style="margin-top:28px">
   
-<div class="gtopic">
-  <h3>第 1 周 · 时态地基 <span class="lv B1">打基础</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="1">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 1 周 · 时态地基 <span class="lv A2">夯实基础</span></h3>
+    <button class="plan-check" data-check-week="1">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>高频词 1–250（词频最靠前的那批）</td></tr>
-      <tr><td>语法</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/passive.html">被动语态</a></td></tr>
-      <tr><td>重点</td><td>把「一般现在 / 进行 / 过去」三种时的信号词认熟，先把被动的基本公式记牢（be + 过去分词）。</td></tr>
-      <tr><td>练习</td><td>做「动词时态」全部 45 题，记录错题考点。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>核心高频词 1–250（卷面最常出现的第一批词）</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/passive.html">被动语态</a></td></tr>
+      <tr><td>核心要点</td><td>认熟「一般现在 / 现在进行 / 一般过去」信号词，背牢被动语态基础公式（be + 过去分词）。</td></tr>
+      <tr><td>刷题验收</td><td>刷完「动词时态」专项题，建立第一批个人错题本。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 2 周 · 时态进阶 + 非谓语 <span class="lv B1">打基础</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="2">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 2 周 · 时态进阶 + 非谓语 <span class="lv A2">夯实基础</span></h3>
+    <button class="plan-check" data-check-week="2">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>高频词 251–500</td></tr>
-      <tr><td>语法</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/nonfinite.html">非谓语动词</a></td></tr>
-      <tr><td>重点</td><td>现在完成 vs 一般过去是这一周的核心。非谓语只记「哪些动词后接 to do、哪些接 doing」两列清单。</td></tr>
-      <tr><td>练习</td><td>做「非谓语动词」全部题 + 时态错题重做一遍。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>核心高频词 251–500</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/nonfinite.html">非谓语动词</a></td></tr>
+      <tr><td>核心要点</td><td>重点拿下「现在完成 vs 一般过去」（PET 头号丢分点）；非谓语记住常用接 to do 与 doing 的动词清单。</td></tr>
+      <tr><td>刷题验收</td><td>刷完「非谓语动词」专项题 + 重做第 1 周时态错题。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 3 周 · 情态动词 + 条件句 <span class="lv B1">打基础</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="3">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 3 周 · 情态动词 + 条件句 <span class="lv A2">夯实基础</span></h3>
+    <button class="plan-check" data-check-week="3">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>高频词 501–750</td></tr>
-      <tr><td>语法</td><td><a href="grammar/modal.html">情态动词</a> · <a href="grammar/conditional.html">条件句与虚拟</a></td></tr>
-      <tr><td>重点</td><td>mustn&#39;t / don&#39;t have to 与 can&#39;t be 的区分。条件句只抓两点：主将从现、If I were you。</td></tr>
-      <tr><td>练习</td><td>情态与条件两个族全部题。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>核心高频词 501–750</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/modal.html">情态动词</a> · <a href="grammar/conditional.html">条件句与虚拟</a></td></tr>
+      <tr><td>核心要点</td><td>分清 mustn&#39;t（禁止）与 don&#39;t have to（不必）；条件句抓牢「主将从现」与 If I were you。</td></tr>
+      <tr><td>刷题验收</td><td>完成情态与条件两个语法族的全部题目。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 4 周 · 名词冠词 + 代词 <span class="lv B1">打基础</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="4">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 4 周 · 名词冠词 + 代词 <span class="lv A2">夯实基础</span></h3>
+    <button class="plan-check" data-check-week="4">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>高频词 751–907 + 中频词入场</td></tr>
-      <tr><td>语法</td><td><a href="grammar/noun.html">名词与冠词</a> · <a href="grammar/pronoun.html">代词与限定词</a></td></tr>
-      <tr><td>重点</td><td>不可数名词清单（information / advice / furniture / news / equipment / luggage）要能默写。a/an 按音素判断。</td></tr>
-      <tr><td>练习</td><td>名词冠词 18 题 + 代词 15 题，错题写进自己的清单。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>核心高频词 751–907 收官 + 中频词入场</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/noun.html">名词与冠词</a> · <a href="grammar/pronoun.html">代词与限定词</a></td></tr>
+      <tr><td>核心要点</td><td>熟记 PET 高频不可数名词（information / advice / furniture / news / equipment / luggage）；a/an 按发音判断。</td></tr>
+      <tr><td>刷题验收</td><td>完成名词冠词与代词专项题，核心高频词达成首轮闭环。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 5 周 · 形容词副词 + 介词 <span class="lv B1">补短板</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="5">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 5 周 · 形容词副词 + 介词搭配 <span class="lv B1">提分补弱</span></h3>
+    <button class="plan-check" data-check-week="5">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>中频词 b2（约 1800 词，按话题挑重点）</td></tr>
-      <tr><td>语法</td><td><a href="grammar/adjadv.html">形容词与副词</a> · <a href="grammar/prep.html">介词</a></td></tr>
-      <tr><td>重点</td><td>比较级不规则表；hard/hardly、late/lately 这类形副同形要背死。介词固定搭配整理成一张表。</td></tr>
-      <tr><td>练习</td><td>两个族全部题；把错的介词搭配单独抄一遍。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>中频主力词（结合 23 个官方话题成组背）</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/adjadv.html">形容词与副词</a> · <a href="grammar/prep.html">介词</a></td></tr>
+      <tr><td>核心要点</td><td>牢记不规则比较级与 hard/hardly、late/lately 等易混词；重点整理写作高频介词固定搭配。</td></tr>
+      <tr><td>刷题验收</td><td>刷完两族专项题，打印本周介词错题纸复习一遍。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 6 周 · 从句 <span class="lv B1">补短板</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="6">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 6 周 · 三大从句突破 <span class="lv B1">提分补弱</span></h3>
+    <button class="plan-check" data-check-week="6">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>低频词 b3（约 400 词）+ 短语 266</td></tr>
-      <tr><td>语法</td><td><a href="grammar/clause.html">从句</a></td></tr>
-      <tr><td>重点</td><td>宾语从句「陈述语序 + 时态呼应」；状语从句不要 although+but / because+so 连用；定语从句 which vs where。</td></tr>
-      <tr><td>练习</td><td>从句全部题；重点做改错题型（挑出正确句）。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>拓展词汇 + 266 条高频短语</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/clause.html">从句</a></td></tr>
+      <tr><td>核心要点</td><td>宾语从句坚持「陈述语序」；状语从句杜绝 although+but / because+so 连用；定语从句区分 which 与 where。</td></tr>
+      <tr><td>刷题验收</td><td>刷完从句全部题目，重点练习「写作改错」题型。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 7 周 · 句子结构与语篇 <span class="lv B1">补短板</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="7">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 7 周 · 句子结构与语篇衔接 <span class="lv B1">提分补弱</span></h3>
+    <button class="plan-check" data-check-week="7">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>全量词表过一遍，只看「未掌握」</td></tr>
-      <tr><td>语法</td><td><a href="grammar/syntax.html">句子结构</a> · <a href="grammar/conjunction.html">连词与语篇</a></td></tr>
-      <tr><td>重点</td><td>反义疑问句（前肯后否）、so/neither 倒装、There be 就近原则；however 是副词不是连词。</td></tr>
-      <tr><td>练习</td><td>两族全部题 + 写作时自查这四类错误。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>词库筛选「未掌握」查漏补缺</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/syntax.html">句子结构</a> · <a href="grammar/conjunction.html">连词与语篇</a></td></tr>
+      <tr><td>核心要点</td><td>掌握反义疑问句、so/neither 倒装与 There be 就近原则；区分 however（副词）与 but（连词）。</td></tr>
+      <tr><td>刷题验收</td><td>完成两族全部题，用语法避坑清单自查近期的作文。</td></tr>
     </tbody>
   </table>
 </div>
-<div class="gtopic">
-  <h3>第 8 周 · 综合冲刺 <span class="lv B1">冲刺</span></h3>
-  <table class="gtable" style="margin:14px 0">
+<div class="gtopic plan-week" data-week="8">
+  <div class="plan-week-head">
+    <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">第 8 周 · 考前全真冲刺 <span class="lv B1+">考前冲刺</span></h3>
+    <button class="plan-check" data-check-week="8">○ 标记本周完成</button>
+  </div>
+  <table class="gtable" style="margin:10px 0 0">
     <tbody>
-      <tr><td style="width:88px">词汇</td><td>只复习「复习」页里到期的卡；错词本过两遍</td></tr>
-      <tr><td>语法</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/passive.html">被动语态</a> · <a href="grammar/nonfinite.html">非谓语动词</a> · <a href="grammar/clause.html">从句</a></td></tr>
-      <tr><td>重点</td><td>回看「练语法」页各考点正确率，专攻低于 60% 的；把语法页里各考点的 ✕/✓ 易错对比扫一遍。</td></tr>
-      <tr><td>练习</td><td>每天用「练语法」做一组 40 题；错题只看解析不看题目，检验是否真的理解。</td></tr>
+      <tr><td style="width:88px">词汇任务</td><td>只刷今日到期复习词 + 清空错词本</td></tr>
+      <tr><td>语法模块</td><td><a href="grammar/tense.html">动词时态</a> · <a href="grammar/passive.html">被动语态</a> · <a href="grammar/nonfinite.html">非谓语动词</a> · <a href="grammar/clause.html">从句</a></td></tr>
+      <tr><td>核心要点</td><td>打开「真题练语法」专攻正确率低于 70% 的薄弱考点；通读全部 119 条红绿易错对比。</td></tr>
+      <tr><td>刷题验收</td><td>每天一组 40 题混合真题模拟手感，轻松上考场！</td></tr>
     </tbody>
   </table>
 </div>
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>三个自查节点</h2></div>
+  <div class="section-head"><h2>三个关键自查节点</h2></div>
   <div class="grid c3">
-    <a class="card" href="quiz.html">
-      <h3>第 2 周末</h3>
-      <p class="desc">用「练语法」做一组 40 题。如果正确率低于 60%，说明时态还没稳，把第 1–2 周重来一遍再往下走。</p>
+    <a class="card" href="review.html">
+      <div class="card-ico">🔍</div>
+      <h3>第 2 周末自查</h3>
+      <p class="desc">在「练语法」刷一组 40 题。若正确率低于 65%，说明时态基础还不稳，建议先消化错题再进入第 3 周。</p>
     </a>
     <a class="card" href="stats.html">
-      <h3>第 5 周末</h3>
-      <p class="desc">在「练语法」页看各考点正确率，用「专攻最弱考点」直接练那一个，不要平均用力。</p>
+      <div class="card-ico gold">📊</div>
+      <h3>第 5 周末诊断</h3>
+      <p class="desc">打开「学情报告」查看语法薄弱考点，用「专攻最弱考点」精准提分，不平均用力。</p>
     </a>
     <a class="card" href="grammar.html">
-      <h3>考前三天</h3>
-      <p class="desc">把语法页每个考点卡展开，只扫里面的 ✕ 错句 / ✓ 对句（共 119 条）。这比重新读语法规则有效，因为考试考的就是这些边界情况。</p>
+      <div class="card-ico ok">🚀</div>
+      <h3>考前三天冲刺</h3>
+      <p class="desc">清空错题本，并快速通读语法页里的 119 条 ✕ 错句 / ✓ 对句对比，考场轻松避开高频陷阱。</p>
     </a>
   </div>
 </section>
@@ -162,30 +195,76 @@
 <footer class="foot">
   <div class="foot-in">
     <div class="col">
-      <h4>PET 备考站</h4>
-      <span style="display:block;line-height:1.7">B1 Preliminary 官方词表 3109 条 + 43 个语法考点 + 261 道易错题</span>
+      <div class="logo" style="margin-bottom:10px">
+        <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        <span>PET 领航</span>
+        <span class="logo-badge">B1</span>
+      </div>
+      <p style="line-height:1.7;margin:0;color:var(--text-2)">面向中小学生的剑桥 B1 Preliminary (PET for Schools) 系统备考平台。官方 3109 词全配英音、43 个语法考点、261 道真题式精练与家长学情周报。</p>
     </div>
     <div class="col">
-      <h4>词汇</h4>
-      <a href="words.html">全部词表</a>
-      <a href="topics/index.html">按话题</a>
-      <a href="quiz.html">背单词</a>
+      <h4>每日备考</h4>
+      <a href="quiz.html">听音背单词</a>
+      <a href="review.html">真题练语法</a>
+      <a href="wrong.html">智能错题本</a>
+      <a href="plan.html">8 周通关计划</a>
     </div>
     <div class="col">
-      <h4>语法</h4>
-      <a href="grammar.html">语法体系</a>
-      <a href="review.html">练语法</a>
+      <h4>官方体系</h4>
+      <a href="words.html">3,109 官方词表</a>
+      <a href="topics/index.html">23 个剑桥话题</a>
+      <a href="grammar.html">12 大语法族</a>
     </div>
     <div class="col">
-      <h4>关于</h4>
-      <a href="plan.html">8 周计划</a>
-      <a href="stats.html">数据总览</a>
-      <a href="wrong.html">错题本</a>
+      <h4>家长与服务</h4>
+      <a href="stats.html">学情报告与周报</a>
+      <a href="index.html#pricing">会员与通关方案</a>
+      <a href="index.html#faq">家长常见问题</a>
+      <a href="#" data-open-pro="兑换码激活">兑换码激活</a>
     </div>
+  </div>
+  <div class="foot-bottom">
+    <span>PET 领航 · 剑桥 B1 Preliminary 官方大纲备考系统</span>
+    <span>词表源自 Cambridge B1 Preliminary Vocabulary List (2025) · 离线与在线均可顺畅使用</span>
   </div>
 </footer>
 <script src="assets/app.js"></script>
-
+<script>window.PET_DATA=window.PET_DATA||{};
+window.PET_DATA.STATS={"words":2843,"phrases":266,"total":3109,"b1":907,"b2":1782,"b3":420,"topics":23,"withExample":466};</script><script>
+const P = window.PET;
+function refreshPlan() {
+  let done = 0;
+  document.querySelectorAll('.plan-week').forEach(card => {
+    const w = card.getAttribute('data-week');
+    const isDone = P.planDone(w);
+    if (isDone) done++;
+    card.classList.toggle('done', isDone);
+    const btn = card.querySelector('[data-check-week]');
+    if (btn) btn.textContent = isDone ? '✓ 本周已完成' : '○ 标记本周完成';
+  });
+  const cnt = document.querySelector('#planCount'); if (cnt) cnt.textContent = done;
+  const bar = document.querySelector('#planBar'); if (bar) bar.style.width = (done / 8 * 100) + '%';
+  const days = P.daysLeft();
+  const pace = document.querySelector('#planPace');
+  if (pace) {
+    if (days !== null && days > 0) {
+      const rec = Math.max(15, Math.min(80, Math.ceil(907 / Math.max(14, days * 0.65))));
+      pace.innerHTML = '距 PET 考试还有 <b>' + days + ' 天</b> · 目标 <b>' + P.esc(P.targetLabel()) + '</b> · 建议每天背 <b>' + rec + ' 词</b> + 练 15 题';
+    } else {
+      pace.textContent = '建议每天 20 分钟：背单词 10 分钟 + 语法避坑与刷题 10 分钟（点击右侧设置考试倒计时）';
+    }
+  }
+}
+document.querySelectorAll('[data-check-week]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const on = P.togglePlanWeek(btn.getAttribute('data-check-week'));
+    if (on) { P.sfx('ok'); P.toast('🎉 打卡成功，又推进了一周！'); }
+    refreshPlan();
+  });
+});
+document.addEventListener('pet:profile', refreshPlan);
+refreshPlan();
+</script>
 
 </body>
 </html>

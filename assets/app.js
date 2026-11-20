@@ -1,7 +1,8 @@
 /* ==========================================================
-   PET 备考站 · 运行时
-   主题 / 进度 / 间隔重复（SRS）/ 单词列表 / 测验 / 闪卡
-   纯前端，localStorage 持久化
+   PET 领航 · 剑桥 B1 官方备考系统 · 运行时 v2
+   主题 / 进度 / 间隔重复（SRS）/ 词表朗读 / 测验 / 闪卡
+   备考倒计时 / XP等级 / 轻音效 / 家长周报 / 会员演示弹窗
+   纯前端，localStorage 持久化，向后兼容全部 v1 数据键
    ========================================================== */
 (function () {
   'use strict';
@@ -23,20 +24,106 @@
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 
-  /* ---------------- 主题 ---------------- */
+  /* ---------------- Toast 提示 ---------------- */
+  var toastEl = null, toastTimer = null;
+  P.toast = function (msg) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast';
+      toastEl.setAttribute('role', 'status');
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
+  };
+
+  /* ---------------- Web Audio 轻提示音效 ---------------- */
+  var sfxOn = load('pet-sfx-v1', true);
+  var audioCtx = null;
+  P.sfxEnabled = function () { return !!sfxOn; };
+  P.setSfx = function (on) { sfxOn = !!on; store('pet-sfx-v1', sfxOn); };
+  P.sfx = function (kind) {
+    if (!sfxOn) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var now = audioCtx.currentTime;
+      function tone(freq, start, dur, gainVal, type) {
+        var o = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        o.type = type || 'sine';
+        o.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(gainVal, start + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(start); o.stop(start + dur + 0.02);
+      }
+      if (kind === 'ok') {
+        tone(587.33, now, 0.11, 0.06, 'sine');
+        tone(880, now + 0.07, 0.16, 0.06, 'sine');
+      } else if (kind === 'bad') {
+        tone(240, now, 0.18, 0.05, 'triangle');
+      } else if (kind === 'win') {
+        tone(523.25, now, 0.13, 0.06, 'sine');
+        tone(659.25, now + 0.09, 0.13, 0.06, 'sine');
+        tone(783.99, now + 0.18, 0.24, 0.07, 'sine');
+      }
+    } catch (e) {}
+  };
+
+  /* ---------------- 主题（默认浅色护眼，支持夜间深色） ---------------- */
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     store('pet-theme', t);
     var b = document.querySelector('.theme-btn');
-    if (b) { b.textContent = t === 'light' ? '☾' : '☀'; b.setAttribute('aria-label', t === 'light' ? '切换到暗色' : '切换到亮色'); }
+    if (b) {
+      b.textContent = t === 'light' ? '☾' : '☀';
+      b.setAttribute('aria-label', t === 'light' ? '切换到深色护眼模式' : '切换到明亮模式');
+      b.title = t === 'light' ? '夜间深色模式' : '明亮护眼模式';
+    }
   }
   P.theme = function () { return document.documentElement.getAttribute('data-theme') || 'light'; };
   P.toggleTheme = function () { applyTheme(P.theme() === 'light' ? 'dark' : 'light'); };
 
-  // 默认深色：不再跟随系统偏好（白天系统多为浅色，会把站点变成亮色）
-  // 只有用户主动切换过才用他们选的那套
   var savedTheme = load('pet-theme', null);
-  document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
+
+  /* ---------------- 考生档案 / 备考倒计时 / Pro 状态 ---------------- */
+  var PROFILE_KEY = 'pet-profile-v1';
+  var profile = load(PROFILE_KEY, null) || {
+    childName: '',
+    examDate: '',
+    targetGrade: 'merit',
+    pro: false,
+    plan: ''
+  };
+  P.profile = function () { return Object.assign({}, profile); };
+  P.saveProfile = function (patch) {
+    profile = Object.assign({}, profile, patch || {});
+    store(PROFILE_KEY, profile);
+    document.dispatchEvent(new CustomEvent('pet:profile', { detail: profile }));
+    return profile;
+  };
+  P.isPro = function () { return !!profile.pro; };
+  P.daysLeft = function () {
+    if (!profile.examDate) return null;
+    var t = new Date(profile.examDate + 'T00:00:00');
+    if (isNaN(t.getTime())) return null;
+    var now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Math.ceil((t.getTime() - now.getTime()) / 86400000);
+  };
+  P.targetLabel = function (g) {
+    var v = g || profile.targetGrade || 'merit';
+    if (v === 'distinction') return 'Distinction 卓越 (160+)';
+    if (v === 'pass') return 'Pass 稳过 (140+)';
+    return 'Merit 优秀 (153+)';
+  };
 
   /* ---------------- 已掌握进度 ---------------- */
   var KNOWN_KEY = 'pet-known-v1';
@@ -52,10 +139,7 @@
   P.knownCount = function () { return Object.keys(known).length; };
   P.clearKnown = function () { known = {}; store(KNOWN_KEY, known); document.dispatchEvent(new CustomEvent('pet:known', { detail: { reset: true } })); };
 
-  /* ---------------- 间隔重复（SM-2 简化版） ----------------
-     每张卡记录：ease（难度因子）、ivl（间隔天数）、due（下次到期时间戳）、reps
-     评级：again(0) hard(1) good(2) easy(3)
-     -------------------------------------------------------- */
+  /* ---------------- 间隔重复（SM-2 简化版） ---------------- */
   var SRS_KEY = 'pet-srs-v1';
   var srs = load(SRS_KEY, {}) || {};
   var DAY = 86400000;
@@ -82,14 +166,12 @@
     });
     return { total: keys.length, due: due, learning: learning, mature: mature, reviews: sum };
   };
-  /* ---------------- 每日学习量 + 连续天数 ----------------
-     备考产品必须有「今天做了多少 / 连续坚持几天」，
-     否则用户不知道今天算不算完成、也看不到势头。
-     -------------------------------------------------------- */
+
+  /* ---------------- 每日学习量 + 连续天数 + 7日趋势 ---------------- */
   var DAYLOG_KEY = 'pet-daylog-v1';
   var daylog = load(DAYLOG_KEY, {}) || {};
   var GOAL_KEY = 'pet-goal-v1';
-  var goal = load(GOAL_KEY, 20) || 20;   // 每日单词目标
+  var goal = load(GOAL_KEY, 20) || 20;
 
   function dayKey(d) {
     var x = d || new Date();
@@ -115,13 +197,11 @@
     store(DAYLOG_KEY, daylog);
     document.dispatchEvent(new CustomEvent('pet:daily', { detail: { kind: kind } }));
   };
-  /** 连续学习天数：从今天往前数，只要某天有记录就继续 */
   P.streak = function () {
     var n = 0, d = new Date();
     for (var i = 0; i < 3660; i++) {
       var rec = daylog[dayKey(d)];
       var active = rec && ((rec.words || 0) + (rec.questions || 0) > 0);
-      // 今天还没学习不算断签（避免早上打开就看到清零）
       if (!active && i === 0) { d.setDate(d.getDate() - 1); continue; }
       if (!active) break;
       n++;
@@ -129,13 +209,41 @@
     }
     return n;
   };
+  P.last7Days = function () {
+    var out = [];
+    var d = new Date();
+    for (var i = 6; i >= 0; i--) {
+      var x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i);
+      var k = dayKey(x);
+      var rec = daylog[k] || {};
+      var words = rec.words || 0;
+      var questions = rec.questions || 0;
+      out.push({
+        key: k,
+        label: (x.getMonth() + 1) + '/' + x.getDate(),
+        words: words,
+        questions: questions,
+        total: words + questions
+      });
+    }
+    return out;
+  };
   P.resetDaily = function () { daylog = {}; store(DAYLOG_KEY, daylog); };
 
-  /* ---------------- 单词错题本 ----------------
-     语法题用 qlog.wrongIds；单词没有题号，单独存一份。
-     记录：错几次 / 错的时间 / 之后答对几次。
-     连续答对 MASTER_STREAK 次才判定「已掌握」，从错题本移除。
-     ---------------------------------------- */
+  /* ---------------- 8周计划打卡 ---------------- */
+  var PLAN_KEY = 'pet-plan-v1';
+  var planDoneMap = load(PLAN_KEY, {}) || {};
+  P.planDone = function (w) { return !!planDoneMap[String(w)]; };
+  P.togglePlanWeek = function (w) {
+    var k = String(w);
+    if (planDoneMap[k]) delete planDoneMap[k]; else planDoneMap[k] = Date.now();
+    store(PLAN_KEY, planDoneMap);
+    document.dispatchEvent(new CustomEvent('pet:plan', { detail: { week: w, done: !!planDoneMap[k] } }));
+    return !!planDoneMap[k];
+  };
+  P.planCompletedCount = function () { return Object.keys(planDoneMap).length; };
+
+  /* ---------------- 单词错题本 ---------------- */
   var WBOOK_KEY = 'pet-wordbook-v1';
   var wbook = load(WBOOK_KEY, {}) || {};
   var MASTER_STREAK = 2;
@@ -148,13 +256,12 @@
     }).sort(function (a, b) { return b.at - a.at; });
   };
   P.wordBookCount = function () { return Object.keys(wbook).length; };
-  /** 记录一次单词结果：ok=false 进错题本；ok=true 累计对题，达标则移除 */
   P.wordAttempt = function (w, ok) {
     var k = String(w).toLowerCase();
     if (!ok) {
       var r = wbook[k] || { wrong: 0, right: 0, at: 0 };
       r.wrong = (r.wrong || 0) + 1;
-      r.right = 0;             // 答错即清零连对
+      r.right = 0;
       r.at = Date.now();
       r.last = r.at;
       wbook[k] = r;
@@ -163,7 +270,7 @@
       return false;
     }
     var e = wbook[k];
-    if (!e) return false;      // 不在错题本里，答对无需处理
+    if (!e) return false;
     e.right = (e.right || 0) + 1;
     e.last = Date.now();
     var mastered = e.right >= MASTER_STREAK;
@@ -172,7 +279,6 @@
     document.dispatchEvent(new CustomEvent('pet:wordbook', { detail: { word: w, ok: true, mastered: mastered } }));
     return mastered;
   };
-  /** 手动确认掌握，直接移出错题本 */
   P.wordMaster = function (w) {
     var k = String(w).toLowerCase();
     if (!wbook[k]) return false;
@@ -189,7 +295,6 @@
   P.MASTER_STREAK = MASTER_STREAK;
 
   P.srsRate = function (w, grade) {
-    // 同步更新错题本：忘了/困难记为错，会了/很熟记为对
     P.wordAttempt(w, grade >= 2);
     var k = String(w).toLowerCase();
     var r = srs[k] || { ease: 2.5, ivl: 0, due: 0, reps: 0, lapses: 0 };
@@ -197,7 +302,7 @@
       r.ease = Math.max(1.3, r.ease - 0.2);
       r.ivl = 0;
       r.lapses = (r.lapses || 0) + 1;
-      r.due = Date.now() + 10 * 60000;      // 10 分钟后再来
+      r.due = Date.now() + 10 * 60000;
     } else {
       if (grade === 1) r.ease = Math.max(1.3, r.ease - 0.15);
       if (grade === 3) r.ease = Math.min(3.2, r.ease + 0.15);
@@ -216,14 +321,10 @@
   };
   P.srsReset = function () { srs = {}; store(SRS_KEY, srs); document.dispatchEvent(new CustomEvent('pet:srs', { detail: { reset: true } })); };
 
-  /* ---------------- 答题记录 ----------------
-     topicStats: 按考点累计正确率（驱动「最弱考点」推荐）
-     wrongIds:   错题本，记录具体题号，答对一次即移出
-     ---------------------------------------- */
+  /* ---------------- 答题记录 ---------------- */
   var QLOG_KEY = 'pet-qlog-v2';
   var qlog = load(QLOG_KEY, null);
   if (!qlog || typeof qlog !== 'object' || !qlog.topicStats) {
-    // 兼容旧结构 {topic:{n,ok}} -> 新结构
     var legacy = qlog && qlog.topicStats === undefined ? qlog : {};
     qlog = { topicStats: {}, wrongIds: {} };
     Object.keys(legacy).forEach(function (t) {
@@ -259,6 +360,220 @@
   };
   P.qReset = function () { qlog = { topicStats: {}, wrongIds: {} }; store(QLOG_KEY, qlog); };
 
+  /* ---------------- 学习等级与 XP 激励 ---------------- */
+  P.levelInfo = function () {
+    var srsSt = P.srsStats();
+    var qSt = P.qTopicStats();
+    var qTotal = qSt.reduce(function (a, x) { return a + x.n; }, 0);
+    var xp = srsSt.total * 5 + P.knownCount() * 2 + qTotal * 8 + P.streak() * 20;
+    var tiers = [
+      { lv: 1, name: '剑桥萌新', min: 0 },
+      { lv: 2, name: '词海探索者', min: 150 },
+      { lv: 3, name: '语法小达人', min: 500 },
+      { lv: 4, name: 'PET 冲刺手', min: 1200 },
+      { lv: 5, name: '卓越挑战者', min: 2800 },
+      { lv: 6, name: '剑桥 B1 大师', min: 5500 }
+    ];
+    var cur = tiers[0];
+    for (var i = 0; i < tiers.length; i++) {
+      if (xp >= tiers[i].min) cur = tiers[i];
+    }
+    return { lv: cur.lv, name: cur.name, xp: xp };
+  };
+
+  /* ---------------- 家长微信周报 & 学习档案备份 ---------------- */
+  P.buildParentReport = function (topicNameMap) {
+    var prof = P.profile();
+    var srsSt = P.srsStats();
+    var qSt = P.qTopicStats();
+    var qN = qSt.reduce(function (a, x) { return a + x.n; }, 0);
+    var qOk = qSt.reduce(function (a, x) { return a + x.ok; }, 0);
+    var rate = qN ? Math.round(qOk / qN * 100) + '%' : '暂无记录';
+    var days = P.daysLeft();
+    var last7 = P.last7Days();
+    var w7 = last7.reduce(function (a, x) { return a + x.words; }, 0);
+    var q7 = last7.reduce(function (a, x) { return a + x.questions; }, 0);
+    var weak = qSt.filter(function (x) { return x.n >= 3; }).sort(function (a, b) { return a.rate - b.rate; })[0];
+    var weakText = weak ? ((topicNameMap && topicNameMap.get(weak.topic)) || weak.topic) + '（正确率 ' + Math.round(weak.rate * 100) + '%）' : '继续保持练习即可自动诊断';
+    var name = prof.childName ? prof.childName + '的 ' : '';
+    var lines = [
+      '【PET 领航 · 剑桥 B1 学情周报】',
+      name + '目标档位：' + P.targetLabel(prof.targetGrade),
+      days !== null ? (days >= 0 ? '距离 PET 考试还有：' + days + ' 天' : '目标考试日期已过') : '考试日期：未设置',
+      '————————————',
+      '🔥 连续坚持：' + P.streak() + ' 天',
+      '📚 近 7 天学习：背单词 ' + w7 + ' 词 · 语法精练 ' + q7 + ' 题',
+      '✅ 累计词汇掌握：已学 ' + srsSt.total + ' 词（牢固 ' + srsSt.mature + ' 词），手动标记掌握 ' + P.knownCount() + ' 词',
+      '🎯 语法精练表现：累计 ' + qN + ' 题，总正确率 ' + rate,
+      '📌 待攻克薄弱项：' + weakText,
+      '📝 错题本待清理：单词 ' + P.wordBookCount() + ' 词 · 语法 ' + P.wrongIds().length + ' 题',
+      '————————————',
+      '下一步建议：每天坚持 15-20 分钟，先清今日到期词，再专攻最弱语法考点。'
+    ];
+    return lines.join('\n');
+  };
+
+  P.exportBackup = function () {
+    var data = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      known: known,
+      srs: srs,
+      daylog: daylog,
+      goal: goal,
+      wbook: wbook,
+      qlog: qlog,
+      profile: profile,
+      plan: planDoneMap
+    };
+    return JSON.stringify(data, null, 2);
+  };
+
+  P.importBackup = function (raw) {
+    var d = JSON.parse(raw);
+    if (!d || typeof d !== 'object') throw new Error('无效的备份文件');
+    if (d.known) { known = d.known; store(KNOWN_KEY, known); }
+    if (d.srs) { srs = d.srs; store(SRS_KEY, srs); }
+    if (d.daylog) { daylog = d.daylog; store(DAYLOG_KEY, daylog); }
+    if (d.goal) { goal = d.goal; store(GOAL_KEY, goal); }
+    if (d.wbook) { wbook = d.wbook; store(WBOOK_KEY, wbook); }
+    if (d.qlog) { qlog = d.qlog; store(QLOG_KEY, qlog); }
+    if (d.profile) { profile = Object.assign(profile, d.profile); store(PROFILE_KEY, profile); }
+    if (d.plan) { planDoneMap = d.plan; store(PLAN_KEY, planDoneMap); }
+    P.toast('学习档案已恢复，正在刷新页面…');
+    setTimeout(function () { location.reload(); }, 600);
+  };
+
+  /* ---------------- 全局弹窗（会员开通 & 考试倒计时设置） ---------------- */
+  function ensureModals() {
+    if (document.getElementById('petProModal')) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div class="modal-backdrop" id="petProModal" role="dialog" aria-modal="true" aria-labelledby="proModalTitle">' +
+        '<div class="modal-box">' +
+          '<button class="modal-close" data-close="petProModal" aria-label="关闭">✕</button>' +
+          '<span class="kicker">PET 领航 · 剑桥 B1 通关会员</span>' +
+          '<h3 id="proModalTitle">解锁 8 周通关营完整权益</h3>' +
+          '<p class="modal-sub">面向 3-9 年级 PET 备考家庭：全量 3,109 官方词条英音朗读 + 43 考点避坑精练 + 家长学情周报 + 错题纸打印。</p>' +
+          '<div id="proStatusBox" class="note" style="margin:0 0 16px"></div>' +
+          '<div class="form-row">' +
+            '<label for="proCodeInput">已有学习兑换码？（演示可用 <code>PET2025</code>）</label>' +
+            '<div style="display:flex;gap:8px">' +
+              '<input class="field" id="proCodeInput" type="text" placeholder="输入兑换码，如 PET2025" autocomplete="off">' +
+              '<button class="btn primary sm" id="proRedeemBtn" style="flex:none">激活</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+            '<button class="btn gold block" id="proTrialBtn">一键开启 7 天 Pro 全功能体验</button>' +
+          '</div>' +
+          '<p style="font-size:.76rem;color:var(--text-3);margin:12px 0 0;text-align:center">静态演示模式 · 所有学习数据安全保存在当前设备浏览器中</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-backdrop" id="petExamModal" role="dialog" aria-modal="true" aria-labelledby="examModalTitle">' +
+        '<div class="modal-box">' +
+          '<button class="modal-close" data-close="petExamModal" aria-label="关闭">✕</button>' +
+          '<span class="kicker">个性化备考档案</span>' +
+          '<h3 id="examModalTitle">设置考试倒计时与目标档位</h3>' +
+          '<p class="modal-sub">设定目标后，首页驾驶舱与 8 周计划将自动匹配冲刺节奏，并同步到家长学情周报。</p>' +
+          '<div class="form-row"><label for="exChildName">孩子昵称（选填，用于周报展示）</label><input class="field" id="exChildName" type="text" placeholder="例如：乐乐 / Alex" maxlength="20"></div>' +
+          '<div class="form-row"><label for="exDate">预计 PET 考试日期</label><input class="field" id="exDate" type="date"></div>' +
+          '<div class="form-row"><label for="exGrade">目标成绩档位</label>' +
+            '<select class="field" id="exGrade">' +
+              '<option value="pass">Pass 稳过线（140–152 分 · 拿下核心高频）</option>' +
+              '<option value="merit">Merit 优秀（153–159 分 · 推荐多数中小学生）</option>' +
+              '<option value="distinction">Distinction 卓越（160–170 分 · 冲刺 B2 水平）</option>' +
+            '</select>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">' +
+            '<button class="btn ghost sm" data-close="petExamModal">取消</button>' +
+            '<button class="btn primary sm" id="exSaveBtn">保存设置</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+
+    wrap.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var m = document.getElementById(b.getAttribute('data-close'));
+        if (m) m.classList.remove('open');
+      });
+    });
+    wrap.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+      bd.addEventListener('click', function (e) {
+        if (e.target === bd) bd.classList.remove('open');
+      });
+    });
+
+    document.getElementById('proRedeemBtn').addEventListener('click', function () {
+      var code = (document.getElementById('proCodeInput').value || '').trim().toUpperCase();
+      if (!code) { P.toast('请输入兑换码（演示可用 PET2025）'); return; }
+      if (code === 'PET2025' || code === 'VIP888' || code === 'PETPRO') {
+        P.saveProfile({ pro: true, plan: 'PET 8周通关营（兑换码激活）' });
+        P.sfx('win');
+        P.toast('🎉 激活成功！已解锁全部 Pro 权益');
+        document.getElementById('petProModal').classList.remove('open');
+        refreshProButtons();
+      } else {
+        P.toast('未识别的兑换码，可输入 PET2025 或点击下方一键体验');
+      }
+    });
+
+    document.getElementById('proTrialBtn').addEventListener('click', function () {
+      if (P.isPro()) {
+        P.saveProfile({ pro: false, plan: '' });
+        P.toast('已切换回免费体验版视图');
+      } else {
+        P.saveProfile({ pro: true, plan: '7天 Pro 全功能体验' });
+        P.sfx('win');
+        P.toast('🎉 已开启 7 天 Pro 全功能体验！');
+      }
+      document.getElementById('petProModal').classList.remove('open');
+      refreshProButtons();
+    });
+
+    document.getElementById('exSaveBtn').addEventListener('click', function () {
+      var name = (document.getElementById('exChildName').value || '').trim();
+      var date = document.getElementById('exDate').value || '';
+      var grade = document.getElementById('exGrade').value || 'merit';
+      P.saveProfile({ childName: name, examDate: date, targetGrade: grade });
+      P.toast('✓ 备考档案已更新');
+      document.getElementById('petExamModal').classList.remove('open');
+    });
+  }
+
+  function refreshProButtons() {
+    var isPro = P.isPro();
+    document.querySelectorAll('.pro-pill').forEach(function (b) {
+      b.classList.toggle('is-pro', isPro);
+      b.innerHTML = isPro ? '★ <span>Pro 已开通</span>' : '✦ <span>开通通关营</span>';
+    });
+  }
+
+  P.openProModal = function (planLabel) {
+    ensureModals();
+    var m = document.getElementById('petProModal');
+    var st = document.getElementById('proStatusBox');
+    var btn = document.getElementById('proTrialBtn');
+    if (P.isPro()) {
+      st.innerHTML = '<b>当前状态：</b>已开通「' + esc(profile.plan || 'Pro 通关营') + '」，全站 3,109 词英音、语法避坑精练、家长周报与打印功能均已就绪。';
+      btn.textContent = '切换回免费版视图（演示）';
+    } else {
+      st.innerHTML = planLabel
+        ? '<b>已选方案：</b>' + esc(planLabel) + '。输入兑换码或点击下方按钮即可立即体验全部 Pro 功能。'
+        : '<b>当前状态：</b>免费体验版（全部基础背词与语法已开放，开通 Pro 解锁完整商业体验）。';
+      btn.textContent = '一键开启 7 天 Pro 全功能体验';
+    }
+    m.classList.add('open');
+  };
+
+  P.openExamModal = function () {
+    ensureModals();
+    document.getElementById('exChildName').value = profile.childName || '';
+    document.getElementById('exDate').value = profile.examDate || '';
+    document.getElementById('exGrade').value = profile.targetGrade || 'merit';
+    document.getElementById('petExamModal').classList.add('open');
+  };
+
   /* ---------------- DOM 就绪 ---------------- */
   function ready(fn) {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
@@ -272,6 +587,20 @@
     var tb = document.querySelector('.theme-btn');
     if (tb) tb.addEventListener('click', P.toggleTheme);
     applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+
+    refreshProButtons();
+    document.querySelectorAll('[data-open-pro]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        P.openProModal(el.getAttribute('data-open-pro') || '');
+      });
+    });
+    document.querySelectorAll('[data-open-exam]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        P.openExamModal();
+      });
+    });
 
     /* 移动菜单 */
     var mb = document.querySelector('.menu-btn');
@@ -324,8 +653,8 @@
         el.__done = 1;
         var target = parseFloat(el.getAttribute('data-count')) || 0;
         var dec = (el.getAttribute('data-count') || '').indexOf('.') >= 0 ? 1 : 0;
-        if (reduceMotion) { el.textContent = target.toFixed(dec); return; }
-        var t0 = performance.now(), dur = 900;
+        if (reduceMotion) { el.textContent = target.toLocaleString('en-US'); return; }
+        var t0 = performance.now(), dur = 850;
         (function tick(now) {
           var p = Math.min(1, (now - t0) / dur);
           var v = target * (1 - Math.pow(1 - p, 3));
@@ -336,20 +665,20 @@
       if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function (es) {
           es.forEach(function (e) { if (e.isIntersecting) { runCount(e.target); io.unobserve(e.target); } });
-        }, { threshold: .35 });
+        }, { threshold: .3 });
         counters.forEach(function (c) { io.observe(c); });
-        setTimeout(function () { counters.forEach(runCount); }, 1600);
+        setTimeout(function () { counters.forEach(runCount); }, 1500);
       } else counters.forEach(runCount);
     }
 
-    /* 滚动揭示：默认可见，只有视口外的才先隐藏 */
+    /* 滚动揭示 */
     if (!reduceMotion && 'IntersectionObserver' in window) {
       var revealNodes = document.querySelectorAll('.reveal');
       var io2 = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.remove('out'); io2.unobserve(e.target); }
         });
-      }, { threshold: .06, rootMargin: '0px 0px -40px 0px' });
+      }, { threshold: .06, rootMargin: '0px 0px -30px 0px' });
       revealNodes.forEach(function (n) {
         var r = n.getBoundingClientRect();
         if (r.top > window.innerHeight) { n.classList.add('out'); io2.observe(n); }
@@ -358,12 +687,70 @@
   });
 
   /* ==========================================================
-     单词列表渲染（词表页 / 话题页共用）
+     发音播放（预合成英音 MP3，自动适配子目录 data-base）
+     ========================================================== */
+  function audioMapGet() {
+    return (window.PET_DATA && window.PET_DATA.PET_AUDIO) || window.PET_AUDIO || {};
+  }
+  var currentAudio = null;
+  var playTimer = null;
+  var playToken = 0;
+
+  P.hasAudio = function (w) { return !!audioMapGet()[w]; };
+  P.audioSrc = function (w) {
+    var rel = audioMapGet()[w];
+    if (!rel) return '';
+    var base = (document.body && document.body.getAttribute('data-base')) || '';
+    return base + rel;
+  };
+  P.playWord = function (w, opts) {
+    var src = P.audioSrc(w);
+    if (!src) return false;
+    var o = opts || {};
+    var times = o.times || 3;
+    var gap = o.gap == null ? 260 : o.gap;
+    try {
+      var token = ++playToken;
+      if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+      var a = currentAudio || (currentAudio = new Audio());
+      a.onended = null;
+      try { a.pause(); } catch (e) {}
+      a.src = src;
+      a.volume = o.volume == null ? 1 : o.volume;
+      var played = 0;
+      a.onended = function () {
+        if (token !== playToken) return;
+        played++;
+        if (played < times) {
+          playTimer = setTimeout(function () {
+            if (token !== playToken) return;
+            try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {}
+          }, gap);
+        } else if (o.onend) {
+          o.onend();
+        }
+      };
+      var p = a.play();
+      if (p && p.catch) p.catch(function () {});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  P.stopAudio = function () {
+    playToken++;
+    if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+    if (currentAudio) {
+      try { currentAudio.onended = null; currentAudio.pause(); } catch (e) {}
+    }
+  };
+
+  /* ==========================================================
+     单词列表渲染（词表页 / 话题页共用，支持一键英音朗读与掌握标记）
      ========================================================== */
   P.renderWordList = function (opts) {
     var host = document.querySelector(opts.mount);
     if (!host) return;
-    // 默认按词频升序 = 最常出现的词排前面，这才是备考该有的顺序
     var all = (opts.words || []).slice().sort(function (a, b) {
       var fa = a.frq || 999999, fb = b.frq || 999999;
       if (fa !== fb) return fa - fb;
@@ -390,14 +777,21 @@
 
     function rowHtml(w) {
       var tagCls = w.tag === 'b1' ? 'tag-b1' : w.tag === 'b2' ? 'tag-b2' : 'tag-b3';
-      var tagTxt = w.tag === 'b1' ? '高频' : w.tag === 'b2' ? '中频' : '低频';
-      var known = P.isKnown(w.w) ? ' known' : '';
-      var h = '<div class="wrow' + known + '" data-w="' + esc(w.w) + '">';
-      var al = (w.al && w.al.length) ? '<span class="ph" style="margin-left:2px">= ' + esc(w.al[0]) + '</span>' : '';
-      h += '<span class="w">' + P.hl(w.w, query) + al + (w.ph ? '<span class="ph">/' + esc(w.ph) + '/</span>' : '') + '</span>';
-      h += '<span class="pos">' + esc(w.posZh) + '</span>';
+      var tagTxt = w.tag === 'b1' ? '核心高频' : w.tag === 'b2' ? '中频主力' : '拓展词';
+      var isK = P.isKnown(w.w);
+      var canPlay = P.hasAudio(w.w);
+      var h = '<div class="wrow' + (isK ? ' known' : '') + '" data-w="' + esc(w.w) + '">';
+      var al = (w.al && w.al.length) ? '<span class="ph">= ' + esc(w.al[0]) + '</span>' : '';
+      h += '<span class="w-cell">' +
+        (canPlay ? '<button class="w-say" data-say="' + esc(w.w) + '" title="听英音朗读" aria-label="朗读 ' + esc(w.w) + '">🔊</button>' : '') +
+        '<span class="w">' + P.hl(w.w, query) + al + (w.ph ? '<span class="ph">/' + esc(w.ph) + '/</span>' : '') + '</span>' +
+        '</span>';
+      h += '<span class="pos">' + esc(w.posZh || '') + '</span>';
       h += '<span class="zh">' + P.hl(w.zh, query) + '</span>';
-      h += '<span class="flag ' + tagCls + '">' + tagTxt + '</span>';
+      h += '<span class="w-right">' +
+        '<span class="flag ' + tagCls + '">' + tagTxt + '</span>' +
+        '<button class="known-pill" data-kbtn="' + esc(w.w) + '">' + (isK ? '✓ 已掌握' : '标掌握') + '</button>' +
+        '</span>';
       if (w.ex && w.ex.length) h += '<span class="ex">' + esc(w.ex[0]) + '</span>';
       h += '</div>';
       return h;
@@ -411,7 +805,7 @@
       var slice = list.slice(page * pageSize, (page + 1) * pageSize);
       var html = '<div class="wordlist">' + slice.map(rowHtml).join('') + '</div>';
       if (!list.length) {
-        html = '<div class="empty"><b>没有匹配的词</b>换个关键词或筛选项试试</div>';
+        html = '<div class="empty"><b>没有找到匹配的词条</b>换个中英文关键词或筛选条件试试</div>';
       }
       var pager = '';
       if (list.length > pageSize) {
@@ -435,21 +829,29 @@
       }
       var count = '<div class="note" style="margin-top:14px">共 <b>' + list.length + '</b> 条' +
         (list.length !== all.length ? '（已筛选，总计 ' + all.length + '）' : '') +
-        ' · 第 ' + (page + 1) + ' / ' + total + ' 页 · 点单词标记已掌握</div>';
+        ' · 第 ' + (page + 1) + ' / ' + total + ' 页 · 点击 🔊 听纯正剑桥英音，点右侧按钮标记掌握</div>';
       host.innerHTML = html + pager + count;
 
-      host.querySelectorAll('.wrow .w').forEach(function (el) {
+      host.querySelectorAll('[data-say]').forEach(function (b) {
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          P.playWord(b.getAttribute('data-say'), { times: 1 });
+        });
+      });
+      host.querySelectorAll('[data-kbtn], .wrow .w').forEach(function (el) {
         el.addEventListener('click', function () {
           var row = el.closest('.wrow');
           var w = row.getAttribute('data-w');
           var on = P.toggleKnown(w);
           row.classList.toggle('known', on);
+          var btn = row.querySelector('.known-pill');
+          if (btn) btn.textContent = on ? '✓ 已掌握' : '标掌握';
         });
       });
       host.querySelectorAll('[data-pg]').forEach(function (b) {
         b.addEventListener('click', function () {
           var p = parseInt(b.getAttribute('data-pg'), 10);
-          if (!isNaN(p)) { page = p; draw(); }
+          if (!isNaN(p)) { page = p; draw(); window.scrollTo({ top: 180, behavior: 'smooth' }); }
         });
       });
     }
@@ -476,7 +878,7 @@
   };
 
   /* ==========================================================
-     测验引擎
+     测验引擎（练语法）
      ========================================================== */
   P.quiz = function (opts) {
     var host = document.querySelector(opts.mount);
@@ -488,12 +890,14 @@
     var total = pool.length;
 
     host.innerHTML =
-      '<div class="quiz-top">' +
-        '<div class="quiz-progress"><i id="qp"></i></div>' +
-        '<span class="quiz-count" id="qc">1 / ' + total + '</span>' +
-        '<span class="quiz-count" id="qs">连击 0</span>' +
-      '</div>' +
-      '<div id="qbody"></div>';
+      '<div class="quiz-shell">' +
+        '<div class="quiz-top">' +
+          '<div class="quiz-progress"><i id="qp"></i></div>' +
+          '<span class="quiz-count" id="qc">1 / ' + total + '</span>' +
+          '<span class="combo-pill" id="qs">🔥 连击 0</span>' +
+        '</div>' +
+        '<div id="qbody"></div>' +
+      '</div>';
 
     var body = host.querySelector('#qbody');
 
@@ -501,7 +905,7 @@
       answered = false;
       var q = pool[i];
       if (!q) return done();
-      var typeName = q.type === 'correct' ? '改错' : q.type === 'fill' ? '填空' : '选择';
+      var typeName = q.type === 'correct' ? '写作改错 · 挑出正确句' : q.type === 'fill' ? 'PET Part 6 · 开放填空' : 'PET Part 5 · 单项选择';
       var stem = esc(q.stem).replace(/___/g, '<span class="blank">　</span>');
       var h = '<div class="qcard">';
       h += '<div class="qmeta"><span class="qtype">' + typeName + '</span>' +
@@ -509,8 +913,8 @@
       h += '<div class="qstem">' + stem + '</div>';
 
       if (q.type === 'fill') {
-        h += '<div class="qfill"><input id="qin" type="text" autocomplete="off" spellcheck="false" placeholder="输入答案…">' +
-             '<button class="btn primary" id="qsub">检查</button></div>';
+        h += '<div class="qfill"><input id="qin" type="text" autocomplete="off" spellcheck="false" placeholder="输入英文答案后按 Enter 提交…">' +
+             '<button class="btn primary" id="qsub">提交检查</button></div>';
       } else {
         h += '<div class="qopts">';
         q.options.forEach(function (o, k) {
@@ -519,13 +923,13 @@
         h += '</div>';
       }
       h += '<div id="qfb"></div>';
-      h += '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="qnext" disabled style="opacity:.4">下一题 →</button></div>';
+      h += '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="qnext" disabled>下一题 →</button></div>';
       h += '</div>';
       body.innerHTML = h;
 
       host.querySelector('#qp').style.width = ((i) / total * 100) + '%';
       host.querySelector('#qc').textContent = (i + 1) + ' / ' + total;
-      host.querySelector('#qs').textContent = '连击 ' + streak;
+      host.querySelector('#qs').textContent = '🔥 连击 ' + streak;
 
       if (q.type === 'fill') {
         var inp = host.querySelector('#qin');
@@ -539,11 +943,9 @@
         });
       }
       host.querySelector('#qnext').addEventListener('click', function () { i++; draw(); });
-
       if (opts.onQuestion) opts.onQuestion(q);
     }
 
-    // 键盘：1–4 选择、Enter 下一题
     if (!host.__keys) {
       host.__keys = 1;
       document.addEventListener('keydown', function (e) {
@@ -593,33 +995,36 @@
     }
 
     function finish(ok, q, refAnswer) {
-      if (ok) { correct++; streak++; if (streak > best) best = streak; }
-      else streak = 0;
-      host.querySelector('#qs').textContent = '连击 ' + streak;
+      if (ok) { correct++; streak++; if (streak > best) best = streak; P.sfx('ok'); }
+      else { streak = 0; P.sfx('bad'); }
+      host.querySelector('#qs').textContent = '🔥 连击 ' + streak;
       var fb = host.querySelector('#qfb');
       var ref = refAnswer
-        ? '<div style="margin-bottom:6px"><b style="display:inline">参考答案：</b><span style="color:var(--ok);font-family:var(--serif);font-size:1rem">' + esc(refAnswer) + '</span></div>'
+        ? '<div style="margin-bottom:6px"><b style="display:inline">参考答案：</b><span style="color:var(--ok);font-family:var(--en);font-weight:700;font-size:1rem">' + esc(refAnswer) + '</span></div>'
         : '';
       fb.innerHTML = '<div class="feedback' + (ok ? '' : ' bad') + '"><b>' +
-        (ok ? '✓ 正确' + (streak >= 3 ? ' · 连击 ' + streak + '！' : '') : '✗ 再想想') +
+        (ok ? '✓ 回答正确！' + (streak >= 3 ? ' 太棒了，已连击 ' + streak + ' 题！' : '') : '✕ 这题进了错题本，看看解析：') +
         '</b>' + ref + esc(q.why) + '</div>';
       var nx = host.querySelector('#qnext');
       nx.disabled = false;
-      nx.style.opacity = '';
       nx.focus();
       if (P.qRecord) P.qRecord(q.topic, ok, q.id);
       if (opts.onAnswer) opts.onAnswer(q, ok);
     }
 
     function done() {
+      P.sfx('win');
       var rate = total ? Math.round(correct / total * 100) : 0;
+      var badge = rate >= 90 ? '🏆 卓越表现！' : rate >= 75 ? '🌟 稳步提升！' : '💪 发现薄弱点就是进步！';
       host.querySelector('#qp').style.width = '100%';
       body.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
-        '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮结果</div>' +
-        '<div style="font-family:var(--serif);font-size:3rem;font-weight:600;margin:10px 0">' + rate + '<span style="font-size:1.3rem">%</span></div>' +
-        '<div style="color:var(--text-2)">答对 ' + correct + ' / ' + total + ' 题 · 最高连击 ' + best + '</div>' +
+        '<div class="kicker">本轮精练完成</div>' +
+        '<div style="font-size:1.15rem;font-weight:700;margin-bottom:6px">' + badge + '</div>' +
+        '<div style="font-family:var(--display);font-size:3.2rem;font-weight:800;color:var(--accent);margin:6px 0">' + rate + '<span style="font-size:1.3rem">%</span></div>' +
+        '<div style="color:var(--text-2)">答对 <b>' + correct + ' / ' + total + '</b> 题 · 最高连击 <b>' + best + '</b> · 获得 <b>+' + (total * 8) + ' XP</b></div>' +
         '<div style="margin-top:26px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
           '<button class="btn primary" id="qagain">再来一轮</button>' +
+          '<a class="btn soft" href="wrong.html">去清错题本</a>' +
           (opts.reviewHref ? '<a class="btn ghost" href="' + opts.reviewHref + '">' + (opts.reviewLabel || '返回') + '</a>' : '') +
         '</div></div>';
       var b = host.querySelector('#qagain');
@@ -634,71 +1039,6 @@
     }
 
     draw();
-  };
-
-
-  /* ----------------------------------------------------------
-     发音播放：音频是构建期预合成的（单词连读 3 遍），
-     所以这里只负责播放，不在运行时请求 TTS。
-     ---------------------------------------------------------- */
-  // 数据是页面内联注入的，且可能晚于本脚本执行 —— 每次访问时再取
-  function audioMapGet() {
-    return (window.PET_DATA && window.PET_DATA.PET_AUDIO) || window.PET_AUDIO || {};
-  }
-  var audioMap = audioMapGet();
-  var currentAudio = null;
-  var playTimer = null;
-  var playToken = 0;   // 每次播放自增；旧回调发现 token 变了就自行退出
-
-  P.hasAudio = function (w) { return !!audioMapGet()[w]; };
-  P.audioSrc = function (w) {
-    var rel = audioMapGet()[w];
-    if (!rel) return '';
-    // 站点可能部署在子路径下：以当前页面所在目录为基准解析
-    return rel;
-  };
-  P.playWord = function (w, opts) {
-    var src = P.audioSrc(w);
-    if (!src) return false;
-    var o = opts || {};
-    var times = o.times || 3;     // 音频只存 1 遍，连着播 3 遍 = 朗读三次
-    var gap = o.gap == null ? 260 : o.gap;
-    try {
-      // 复用同一个 Audio 元素：换 src 即天然打断上一段。
-      // 若每题新建 Audio，快速答题时两段声音会叠在一起。
-      var token = ++playToken;
-      if (playTimer) { clearTimeout(playTimer); playTimer = null; }
-      var a = currentAudio || (currentAudio = new Audio());
-      a.onended = null;
-      try { a.pause(); } catch (e) {}
-      a.src = src;
-      a.volume = o.volume == null ? 1 : o.volume;
-      var played = 0;
-      a.onended = function () {
-        if (token !== playToken) return;   // 已经换词，放弃本轮连播
-        played++;
-        if (played < times) {
-          playTimer = setTimeout(function () {
-            if (token !== playToken) return;
-            try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {}
-          }, gap);
-        } else if (o.onend) {
-          o.onend();
-        }
-      };
-      var p = a.play();
-      if (p && p.catch) p.catch(function () { /* 浏览器可能拦截自动播放 */ });
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-  P.stopAudio = function () {
-    playToken++;                      // 让所有待执行的重播回调失效
-    if (playTimer) { clearTimeout(playTimer); playTimer = null; }
-    if (currentAudio) {
-      try { currentAudio.onended = null; currentAudio.pause(); } catch (e) {}
-    }
   };
 
   /* ----------------------------------------------------------
@@ -751,27 +1091,23 @@
   P.shuffle = shuffle;
 
   /* ==========================================================
-     背单词（SRS 驱动）
-     两种模式：
-       choice — 给英文选中文的四选一，系统自动判分（默认）
-       recall — 看词回想，翻卡后自评「忘了/困难/会了/很熟」（仅 API 保留）
-     评级统一写入记忆库，决定下次出现的间隔
+     背单词（SRS 驱动：四选一 + 闪卡回忆双模式）
      ========================================================== */
   P.wordStudy = function (opts) {
     var host = document.querySelector(opts.mount);
     if (!host) return;
     var pool = (opts.words || []).filter(function (w) { return w.w; });
     if (!pool.length) { host.innerHTML = '<div class="empty"><b>没有可学的词</b></div>'; return; }
-    var mode = opts.mode || 'due';          // due | new | mix
-    var card = opts.card || 'recall';       // recall | choice
+    var mode = opts.mode || 'due';
+    var card = opts.card || 'choice';
+    var autoSayOn = opts.autoSay !== false;
     var queue = [], idx = 0, revealed = false;
     var sessionN = 0, sessionOk = 0, streak = 0, best = 0;
     var answered = false, finished = false;
     var autoNextTimer = null;
-    var pendingAdvance = false;   // 本题已判对、等待前进；保证只前进一次
-    var AUTO_NEXT_MS = 750;   // 答对后自动翻页的停顿，够看清反馈又不拖沓
+    var pendingAdvance = false;
+    var AUTO_NEXT_MS = 780;
 
-    /* 前进到下一题：定时器与键盘/按钮都走这里，重复调用只生效一次 */
     function advance() {
       if (!pendingAdvance) return;
       pendingAdvance = false;
@@ -792,11 +1128,8 @@
       else if (mode === 'new') scored = scored.filter(function (s) { return !s.has; });
 
       var limit = opts.limit || 20;
-      // 到期的词优先，且同为到期时按到期时间先后
       var dueList = scored.filter(function (s) { return s.has && (s.due || 0) <= now; })
         .sort(function (a, b) { return (a.due || 0) - (b.due || 0); });
-      // 新词：先按词频排（常用词优先），再在优先窗口内随机取样。
-      // 只按顺序取会让每轮都是同一批词，只随机取又会抽到冷僻词，两者结合才对。
       var newList = scored.filter(function (s) { return !s.has; });
       var picked = [];
 
@@ -805,7 +1138,6 @@
       } else if (mode === 'new') {
         picked = sampleByFrequency(newList, limit);
       } else {
-        // mix：先排到期的，剩余名额给新词
         picked = dueList.slice(0, limit);
         if (picked.length < limit) {
           var room = limit - picked.length;
@@ -822,26 +1154,24 @@
       draw();
     }
 
-    /* 从新词里挑 n 个：按词频从常用到冷僻，但只在前 window 个里随机取，
-       这样每轮词表不同，又不会一开始就撞上生僻词 */
     function sampleByFrequency(list, n) {
       if (n <= 0 || !list.length) return [];
       var sorted = list.slice().sort(function (a, b) {
-        var fa = a.w.frq == null ? 1e9 : a.w.frq;   // 无词频的排最后
+        var fa = a.w.frq == null ? 1e9 : a.w.frq;
         var fb = b.w.frq == null ? 1e9 : b.w.frq;
         return fa - fb;
       });
-      var window = Math.max(n * 4, 80);
-      var pool = sorted.slice(0, window);
-      shuffle(pool);
-      return pool.slice(0, n);
+      var win = Math.max(n * 4, 80);
+      var sub = sorted.slice(0, win);
+      shuffle(sub);
+      return sub.slice(0, n);
     }
 
     function header() {
       return '<div class="quiz-top">' +
         '<div class="quiz-progress"><i style="width:' + (queue.length ? idx / queue.length * 100 : 0) + '%"></i></div>' +
         '<span class="quiz-count">' + Math.min(idx + 1, queue.length) + ' / ' + queue.length + '</span>' +
-        '<span class="quiz-count" id="qs">连击 ' + streak + '</span></div>';
+        '<span class="combo-pill" id="qs">🔥 连击 ' + streak + '</span></div>';
     }
 
     function draw() {
@@ -855,26 +1185,31 @@
 
     function emptyState() {
       host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
-        '<div style="font-family:var(--serif);font-size:1.35rem;font-weight:600;margin-bottom:10px">今天没有到期的词</div>' +
-        '<div style="color:var(--text-2);font-size:.92rem;line-height:1.7">按遗忘曲线的排期，暂时没有需要复习的词。<br>想多学的话，切到「只学新词」或「混合」模式。</div>' +
-        '<div style="margin-top:24px"><button class="btn primary" id="wsMix">切到混合模式</button></div></div>';
+        '<div style="font-size:1.35rem;font-weight:700;margin-bottom:10px">🎉 今天到期的词全部复习完啦！</div>' +
+        '<div style="color:var(--text-2);font-size:.93rem;line-height:1.7">按艾宾浩斯遗忘曲线，今天已经达标。<br>如果想继续抢跑，可以切到「混合模式」学习一批新词。</div>' +
+        '<div style="margin-top:24px"><button class="btn primary" id="wsMix">切到混合模式学新词</button></div></div>';
       var b = host.querySelector('#wsMix');
       if (b) b.addEventListener('click', function () { mode = 'mix'; build(); });
     }
 
-    /* ---- 回想模式 ---- */
     function recallView(w) {
+      var canPlay = P.hasAudio(w.w);
       var h = '<div class="flash-shell">' + header();
       h += '<div class="fcard">';
-      h += '<div class="fword">' + esc(w.w) + '</div>';
+      h += '<div class="fword">' + esc(w.w) +
+           (canPlay ? '<button class="say-btn" id="sayBtn" title="朗读 3 遍" aria-label="朗读单词三遍">🔊</button>' : '') +
+           '</div>';
       if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
-      h += '<div class="fpos">' + esc(w.posZh) + (w.t === 'phrase' ? ' · 短语' : '') + '</div>';
+      if (w.posZh) h += '<div class="fpos">' + esc(w.posZh) + (w.t === 'phrase' ? ' · 短语' : '') + '</div>';
       h += '<div id="frev"></div>';
-      h += '<div class="fhint">先想意思，再点「看答案」或按空格</div>';
+      h += '<div class="fhint">先在脑海里回想中文含义，再点击「查看释义」或按空格</div>';
       h += '</div>';
-      h += '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="fshow">看答案 (空格)</button></div>';
+      h += '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="fshow">查看释义 (空格)</button></div>';
       h += '</div>';
       setTimeout(function () {
+        var say = host.querySelector('#sayBtn');
+        if (say) say.addEventListener('click', function (e) { e.stopPropagation(); P.playWord(w.w); });
+        if (canPlay && autoSayOn) P.playWord(w.w);
         var b = host.querySelector('#fshow');
         if (b) b.addEventListener('click', revealRecall);
       }, 0);
@@ -892,34 +1227,33 @@
       if (hint) hint.style.display = 'none';
       var act = host.querySelector('.quiz-actions');
       act.innerHTML = '<div class="rate-row" style="width:100%">' +
-        '<button class="rate again" data-g="0"><b>忘了</b><small>10 分钟</small></button>' +
-        '<button class="rate hard" data-g="1"><b>困难</b><small>约 1 天</small></button>' +
-        '<button class="rate good" data-g="2"><b>会了</b><small>按计划</small></button>' +
-        '<button class="rate easy" data-g="3"><b>很熟</b><small>更久</small></button></div>';
+        '<button class="rate again" data-g="0"><b>忘了</b><small>10 分钟后再来</small></button>' +
+        '<button class="rate hard" data-g="1"><b>有点模糊</b><small>约 1 天后</small></button>' +
+        '<button class="rate good" data-g="2"><b>记住了</b><small>按遗忘曲线</small></button>' +
+        '<button class="rate easy" data-g="3"><b>秒杀很熟</b><small>拉长间隔</small></button></div>';
       act.querySelectorAll('[data-g]').forEach(function (b) {
         b.addEventListener('click', function () { rate(parseInt(b.getAttribute('data-g'), 10)); });
       });
     }
 
-    /* ---- 四选一模式 ---- */
     function choiceView(w) {
       var ds = pickDistractors(pool, w, 3);
-      if (ds.length < 3) return recallView(w);   // 词池太小退回回想
-      var opts = [w].concat(ds);
-      shuffle(opts);
-      var ans = opts.indexOf(w);
+      if (ds.length < 3) return recallView(w);
+      var choices = [w].concat(ds);
+      shuffle(choices);
+      var ans = choices.indexOf(w);
       var h = '<div class="flash-shell">' + header();
       var canPlay = P.hasAudio(w.w);
-      h += '<div class="fcard" style="justify-content:flex-start;padding-top:30px;text-align:center;min-height:0">';
-      h += '<div class="fword" style="font-size:clamp(1.5rem,5vw,2.1rem)">' + esc(w.w) +
+      h += '<div class="fcard" style="justify-content:flex-start;padding-top:32px;min-height:0">';
+      h += '<div class="fword" style="font-size:clamp(1.6rem,5vw,2.2rem)">' + esc(w.w) +
            (canPlay ? '<button class="say-btn" id="sayBtn" title="朗读 3 遍" aria-label="朗读单词三遍">🔊</button>' : '') +
            '</div>';
       if (w.ph) h += '<div class="fph">/' + esc(w.ph) + '/</div>';
-      h += '<div class="fpos">' + esc(w.posZh) + '</div>';
-      h += '<div style="font-size:.84rem;color:var(--text-3);margin-top:12px">' +
-           (canPlay ? '听发音，选出正确的释义' : '选出正确的释义') + '</div></div>';
+      if (w.posZh) h += '<div class="fpos">' + esc(w.posZh) + '</div>';
+      h += '<div style="font-size:.84rem;color:var(--text-3);margin-top:14px">' +
+           (canPlay ? '听纯正英音，选出最准确的中文释义' : '选出最准确的中文释义') + '</div></div>';
       h += '<div class="qopts" style="margin-top:16px">';
-      opts.forEach(function (o, k) {
+      choices.forEach(function (o, k) {
         h += '<button class="qopt" data-k="' + k + '"' + (k === ans ? ' data-ans="1"' : '') + '>' +
              '<span class="key">' + 'ABCD'[k] + '</span><span>' + esc(o.zh || '') + '</span></button>';
       });
@@ -927,18 +1261,17 @@
       setTimeout(function () {
         var say = host.querySelector('#sayBtn');
         if (say) say.addEventListener('click', function (e) { e.stopPropagation(); P.playWord(w.w); });
-        // 自动朗读：默认开启，用户可在页面上关掉
-        if (canPlay && opts.autoSay !== false) P.playWord(w.w);
+        if (canPlay && autoSayOn) P.playWord(w.w);
         host.querySelectorAll('.qopt').forEach(function (b) {
           b.addEventListener('click', function () {
-            judgeChoice(w, parseInt(b.getAttribute('data-k'), 10), Array.prototype.indexOf.call(host.querySelectorAll('.qopt'), b), ans);
+            judgeChoice(w, parseInt(b.getAttribute('data-k'), 10), ans);
           });
         });
       }, 0);
       return h;
     }
 
-    function judgeChoice(w, k, clickedIdx, ans) {
+    function judgeChoice(w, k, ans) {
       if (answered) return;
       answered = true;
       var ok = k === ans;
@@ -948,29 +1281,26 @@
         if (bi === ans) b.classList.add('right');
         else if (bi === k) b.classList.add('wrong');
       });
-      if (ok) { streak++; if (streak > best) best = streak; } else streak = 0;
+      if (ok) { streak++; if (streak > best) best = streak; P.sfx('ok'); }
+      else { streak = 0; P.sfx('bad'); }
       var fb = host.querySelector('#wfb');
       if (ok) {
-        // 答对：短暂给出确认反馈后自动进入下一词，不打断节奏
-        fb.innerHTML = '<div class="feedback auto-next"><b>✓ 对了' +
-          (streak >= 3 ? ' · 连击 ' + streak : '') + '</b>' +
+        fb.innerHTML = '<div class="feedback auto-next"><b>✓ 答对了！' +
+          (streak >= 3 ? ' 🔥 连击 ' + streak : '') + '</b>' +
           esc(w.zh) + (w.posZh ? ' · ' + esc(w.posZh) : '') +
-          '<span class="auto-next-hint">即将进入下一词…</span></div>';
+          '<span class="auto-next-hint">自动进入下一词…</span></div>';
       } else {
-        // 答错：停下来让用户看清正确答案，手动进入下一题
-        fb.innerHTML = '<div class="feedback bad"><b>✗ 正确答案：' + esc(w.zh) + '</b>' +
-          esc(w.w) + (w.ph ? ' /' + esc(w.ph) + '/' : '') + ' · ' + esc(w.posZh) +
-          (w.ex && w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.84rem">' + esc(w.ex[0]) + '</div>' : '') +
+        fb.innerHTML = '<div class="feedback bad"><b>✕ 正确释义：' + esc(w.zh) + '</b>' +
+          esc(w.w) + (w.ph ? ' /' + esc(w.ph) + '/' : '') + (w.posZh ? ' · ' + esc(w.posZh) : '') +
+          (w.ex && w.ex[0] ? '<div style="margin-top:6px;font-style:italic;font-size:.85rem">' + esc(w.ex[0]) + '</div>' : '') +
           '</div>' +
-          '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="wnext">下一词 →</button></div>';
+          '<div class="quiz-actions"><span class="spacer"></span><button class="btn primary" id="wnext">记住了，下一词 →</button></div>';
         var nx = fb.querySelector('#wnext');
         nx.addEventListener('click', function () { idx++; draw(); });
         nx.focus();
       }
-      // 四选一自动评级：对了算「会了」，错了算「忘了」
       recordAndRate(w, ok ? 2 : 0, ok);
       if (ok) {
-        // 标记得以前进，让 Enter 抢答也能立即跳，且与定时器互斥
         pendingAdvance = true;
         clearTimeout(autoNextTimer);
         autoNextTimer = setTimeout(advance, AUTO_NEXT_MS);
@@ -983,14 +1313,15 @@
       if (countedOk) sessionOk++;
       if (opts.onRate) opts.onRate(w, g);
       var st = host.querySelector('#qs');
-      if (st) st.textContent = '连击 ' + streak;
+      if (st) st.textContent = '🔥 连击 ' + streak;
     }
 
-    /* ---- 回想模式自评 ---- */
     function rate(g) {
       var w = queue[idx];
+      if (g >= 2) { streak++; if (streak > best) best = streak; P.sfx('ok'); }
+      else { streak = 0; P.sfx('bad'); }
       recordAndRate(w, g, g >= 2);
-      if (g === 0) queue.push(w);   // 忘了的稍后再来一次
+      if (g === 0) queue.push(w);
       idx++;
       draw();
     }
@@ -1007,7 +1338,6 @@
             var b = host.querySelector('.qopt[data-k="' + (parseInt(e.key, 10) - 1) + '"]');
             if (b) { e.preventDefault(); b.click(); }
           } else if (e.key === 'Enter' && answered) {
-            // 答对后 Enter 立即前进；答错时 Enter 走「下一词」按钮
             if (pendingAdvance) { e.preventDefault(); advance(); }
             else {
               var nx = host.querySelector('#wnext');
@@ -1030,15 +1360,19 @@
       pendingAdvance = false;
       clearTimeout(autoNextTimer);
       autoNextTimer = null;
+      P.sfx('win');
       var st = P.srsStats();
+      var pct = sessionN ? Math.round(sessionOk / sessionN * 100) : 100;
       host.innerHTML = '<div class="qcard" style="text-align:center;justify-content:center">' +
-        '<div style="font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)">本轮完成</div>' +
-        '<div style="font-family:var(--serif);font-size:2.6rem;font-weight:600;margin:10px 0">' + sessionOk +
-          '<span style="font-size:1.2rem;color:var(--text-3)"> / ' + sessionN + '</span></div>' +
-        '<div style="color:var(--text-2)">个词记住了 · 最高连击 ' + best + '<br>' +
-          '记忆库共 ' + st.total + ' 个词，今天还有 ' + st.due + ' 个到期</div>' +
+        '<div class="kicker">本轮闯关完成</div>' +
+        '<div style="font-size:1.2rem;font-weight:700;margin-bottom:4px">' + (pct >= 85 ? '🎉 太棒了，词感超稳！' : '💪 坚持复习，越背越牢！') + '</div>' +
+        '<div style="font-family:var(--display);font-size:2.9rem;font-weight:800;color:var(--accent);margin:8px 0">' + sessionOk +
+          '<span style="font-size:1.3rem;color:var(--text-3)"> / ' + sessionN + '</span></div>' +
+        '<div style="color:var(--text-2)">个词已记住 · 最高连击 <b>' + best + '</b> · 获得 <b>+' + (sessionN * 5) + ' XP</b><br>' +
+          '词库累计已学 ' + st.total + ' 词，今日还剩 ' + st.due + ' 个待复习</div>' +
         '<div style="margin-top:26px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
           '<button class="btn primary" id="wagain">再来一轮</button>' +
+          '<a class="btn soft" href="review.html">顺手练一组语法</a>' +
           '<a class="btn ghost" href="' + (opts.backHref || 'index.html') + '">返回</a>' +
         '</div></div>';
       host.querySelector('#wagain').addEventListener('click', build);
@@ -1049,7 +1383,6 @@
     return { rebuild: build };
   };
 
-  /* 兼容旧调用名 */
   P.flashcards = function (opts) {
     return P.wordStudy(Object.assign({}, opts, { card: opts.card || 'recall' }));
   };

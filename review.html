@@ -3,26 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<title>练语法 · 按考点刷题 · PET 备考站</title>
-<meta name="description" content="261 道 PET 语法易错题，按考点或语法族练习，自动记录各考点正确率并收集错题。">
-<meta property="og:title" content="练语法 · 按考点刷题 · PET 备考站">
-<meta property="og:description" content="261 道 PET 语法易错题，按考点或语法族练习，自动记录各考点正确率并收集错题。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231b6b52'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='17' font-weight='600' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
+<meta name="color-scheme" content="light dark">
+<title>真题练语法 · 考点专项精练 · PET 领航</title>
+<meta name="description" content="261 道 PET 语法精练题，覆盖全部 43 个考点，自动定位最弱考点并收集错题。">
+<meta property="og:title" content="真题练语法 · 考点专项精练 · PET 领航">
+<meta property="og:description" content="261 道 PET 语法精练题，覆盖全部 43 个考点，自动定位最弱考点并收集错题。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='800' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
-<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<script>try{var t=JSON.parse(localStorage.getItem('pet-theme')||'null');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 </head>
 <body data-base="">
 <div class="scroll-progress"></div>
 <header class="hdr">
   <div class="hdr-in">
-    <a class="logo" href="index.html">PET <em>备考站</em></a>
-    <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
+    <a class="logo" href="index.html">
+  <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+  <span>PET 领航</span>
+  <span class="logo-badge">B1</span>
+</a>
     <nav class="hdr-nav">
-      <a href="index.html">首页</a><a href="words.html">词汇</a><a href="grammar.html">语法</a><a href="quiz.html">背单词</a><a href="review.html" class="on">练语法</a><a href="wrong.html">错题本</a><a href="plan.html">计划</a><a href="stats.html">数据</a>
+      <a href="index.html">首页</a><a href="quiz.html">背单词</a><a href="review.html" class="on">练语法</a><a href="words.html">词库</a><a href="grammar.html">语法</a><a href="wrong.html">错题本</a><a href="plan.html">8周计划</a><a href="stats.html">学情报告</a>
     </nav>
     <div class="hdr-tools">
-      <button class="theme-btn" aria-label="切换主题">☀</button>
+      <button class="pro-pill" data-open-pro="PET 8周通关营" aria-label="开通 PET 通关营">✦ <span>开通通关营</span></button>
+      <button class="theme-btn" aria-label="切换主题">☾</button>
+      <button class="menu-btn" aria-label="菜单" aria-expanded="false">☰</button>
     </div>
   </div>
 </header>
@@ -30,111 +35,125 @@
 <div class="wrap">
 
 <div class="page-head">
-  <div class="crumb"><a href="index.html">首页</a> / 练语法</div>
-  <h1>练语法</h1>
-  <p class="lede">261 道题按 <b>43 个考点</b>分组。每次答完会记下考点与题号：
-  正确率低的考点会浮到前面，答错过的题会进错题本 —— 下一次就专练这些。</p>
+  <div class="crumb"><a href="index.html">首页</a> / 真题练语法</div>
+  <h1>真题题型练语法</h1>
+  <p class="lede">261 道精练题完整覆盖 <b>43 个 PET 核心考点</b>。系统实时追踪各考点正确率，自动把薄弱项浮到最前，答错的题一键收进错题本。</p>
 </div>
 
-<section class="section" style="margin-top:26px">
+<section class="section" style="margin-top:24px">
   <div class="kv">
-    <div class="k"><b id="kQn">0</b><span>累计已答</span></div>
-    <div class="k"><b id="kRate">—</b><span>总正确率</span></div>
-    <div class="k"><b id="kWrong">0</b><span>错题本</span></div>
-    <div class="k k-wide"><b id="kWeak">—</b><span>最弱考点</span></div>
+    <div class="k"><b id="kQn">0</b><span>累计精练题数</span></div>
+    <div class="k"><b id="kRate" style="color:var(--accent)">—</b><span>综合正确率</span></div>
+    <div class="k"><b id="kWrong" style="color:var(--rose)">0</b><span>语法错题本</span></div>
+    <div class="k k-wide"><b id="kWeak">—</b><span>当前最弱考点（优先攻克）</span></div>
   </div>
 </section>
 
-<section class="section" id="weakSection" style="display:none">
-  <div class="section-head"><h2>各考点正确率</h2><span class="sub">答过 3 题以上的才计入，按正确率升序</span></div>
+<section class="section" id="weakSection" style="display:none;margin-top:28px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <h2>各考点掌握诊断</h2>
+      <span class="sub">答满 3 题的考点按正确率从低到高排列，红色项建议重点重练</span>
+    </div>
+  </div>
   <div id="weakList"></div>
 </section>
 
-<section class="section" style="margin-top:30px" id="setup">
+<section class="section" style="margin-top:28px" id="setup">
   <div class="card setup-card">
     <div class="setup-head">
-      <h3>开始一组</h3>
+      <h3>配置本组练习</h3>
       <div class="setup-actions">
-        <button class="btn primary" id="startBtn">开始 →</button>
-        <button class="btn ghost" id="resetBtn">清空记录</button>
+        <button class="btn primary" id="startBtn">开始刷题 →</button>
+        <button class="btn ghost sm" id="resetBtn">清空记录</button>
       </div>
     </div>
 
     <div class="setup-grid">
       <div class="setup-group">
-        <div class="kicker">练哪里</div>
+        <div class="kicker">练习范围</div>
         <div class="chips" id="scopeChips">
           <button class="chip on" data-scope="all">全部考点</button>
           <button class="chip" data-scope="wrong">只练错题本 <span id="wrongN">0</span></button>
           <button class="chip" data-scope="weak">专攻最弱考点</button>
         </div>
-        <p class="setup-hint">选「最弱考点」会自动挑你正确率最低的那一个</p>
+        <p class="setup-hint">选「专攻最弱考点」会自动挑出正确率最低的薄弱项集中突破</p>
       </div>
 
       <div class="setup-group">
-        <div class="kicker">题型</div>
+        <div class="kicker">真考题型</div>
         <div class="chips" id="typeChips">
-          <button class="chip on" data-t="all">混合</button>
-          <button class="chip" data-t="choice">单项选择</button>
-          <button class="chip" data-t="correct">改错</button>
-          <button class="chip" data-t="fill">填空</button>
+          <button class="chip on" data-t="all">混合真题</button>
+          <button class="chip" data-t="choice">单项选择 (Part 5)</button>
+          <button class="chip" data-t="correct">写作改错</button>
+          <button class="chip" data-t="fill">开放填空 (Part 6)</button>
         </div>
-        <p class="setup-hint">混合更接近真考；改错题最适合自查写作</p>
+        <p class="setup-hint">混合模式最贴近真考；改错题专治写作常见语法失分</p>
       </div>
 
       <div class="setup-group">
-        <div class="kicker">题量</div>
+        <div class="kicker">本组题量</div>
         <div class="chips" id="lenChips">
           <button class="chip" data-l="10">10 题</button>
           <button class="chip on" data-l="20">20 题</button>
           <button class="chip" data-l="40">40 题</button>
         </div>
-        <p class="setup-hint">20 题约 8–10 分钟</p>
+        <p class="setup-hint">20 题约 8–10 分钟，适合日常打卡</p>
       </div>
 
       <div class="setup-group wide">
-        <div class="kicker">语法族范围 <span style="text-transform:none;letter-spacing:0">· 仅在选择「全部考点」时生效</span></div>
+        <div class="kicker">按语法族筛选 <span style="text-transform:none;letter-spacing:0;font-weight:500">· 仅在「全部考点」时生效</span></div>
         <div class="chips" id="groupChips">
-          <button class="chip on" data-g="all">不限</button>
+          <button class="chip on" data-g="all">不限语法族</button>
           <button class="chip" data-g="tense">动词时态 · 45</button><button class="chip" data-g="passive">被动语态 · 16</button><button class="chip" data-g="nonfinite">非谓语动词 · 32</button><button class="chip" data-g="modal">情态动词 · 16</button><button class="chip" data-g="conditional">条件句与虚拟 · 12</button><button class="chip" data-g="noun">名词与冠词 · 28</button><button class="chip" data-g="pronoun">代词与限定词 · 17</button><button class="chip" data-g="adjadv">形容词与副词 · 20</button><button class="chip" data-g="prep">介词 · 17</button><button class="chip" data-g="clause">从句 · 19</button><button class="chip" data-g="syntax">句子结构 · 24</button><button class="chip" data-g="conjunction">连词与语篇 · 15</button>
         </div>
       </div>
     </div>
 
     <div class="note setup-note">
-      键盘 <b>1–4</b> 选答案、<b>Enter</b> 下一题。填空题按 <b>Enter</b> 提交。答错的题会自动进入<a href="wrong.html">错题本</a>。
+      快捷键：<b>1–4</b> 选答案、<b>Enter</b> 下一题；填空题按 <b>Enter</b> 提交。答错自动进入<a href="wrong.html">错题本</a>。
     </div>
   </div>
 </section>
 
 <section class="section" id="zone" style="display:none"><div id="qz"></div></section>
 
-
 </div>
 </main>
 <footer class="foot">
   <div class="foot-in">
     <div class="col">
-      <h4>PET 备考站</h4>
-      <span style="display:block;line-height:1.7">B1 Preliminary 官方词表 3109 条 + 43 个语法考点 + 261 道易错题</span>
+      <div class="logo" style="margin-bottom:10px">
+        <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        <span>PET 领航</span>
+        <span class="logo-badge">B1</span>
+      </div>
+      <p style="line-height:1.7;margin:0;color:var(--text-2)">面向中小学生的剑桥 B1 Preliminary (PET for Schools) 系统备考平台。官方 3109 词全配英音、43 个语法考点、261 道真题式精练与家长学情周报。</p>
     </div>
     <div class="col">
-      <h4>词汇</h4>
-      <a href="words.html">全部词表</a>
-      <a href="topics/index.html">按话题</a>
-      <a href="quiz.html">背单词</a>
+      <h4>每日备考</h4>
+      <a href="quiz.html">听音背单词</a>
+      <a href="review.html">真题练语法</a>
+      <a href="wrong.html">智能错题本</a>
+      <a href="plan.html">8 周通关计划</a>
     </div>
     <div class="col">
-      <h4>语法</h4>
-      <a href="grammar.html">语法体系</a>
-      <a href="review.html">练语法</a>
+      <h4>官方体系</h4>
+      <a href="words.html">3,109 官方词表</a>
+      <a href="topics/index.html">23 个剑桥话题</a>
+      <a href="grammar.html">12 大语法族</a>
     </div>
     <div class="col">
-      <h4>关于</h4>
-      <a href="plan.html">8 周计划</a>
-      <a href="stats.html">数据总览</a>
-      <a href="wrong.html">错题本</a>
+      <h4>家长与服务</h4>
+      <a href="stats.html">学情报告与周报</a>
+      <a href="index.html#pricing">会员与通关方案</a>
+      <a href="index.html#faq">家长常见问题</a>
+      <a href="#" data-open-pro="兑换码激活">兑换码激活</a>
     </div>
+  </div>
+  <div class="foot-bottom">
+    <span>PET 领航 · 剑桥 B1 Preliminary 官方大纲备考系统</span>
+    <span>词表源自 Cambridge B1 Preliminary Vocabulary List (2025) · 离线与在线均可顺畅使用</span>
   </div>
 </footer>
 <script src="assets/app.js"></script>
@@ -180,9 +199,8 @@ function refreshStats() {
   set('#kWrong', wrong);
   const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
   const w = weakestTopic();
-  set('#kWeak', w ? TNAME.get(w) || w : '—');
+  set('#kWeak', w ? TNAME.get(w) || w : '暂未形成（练满 3 题自动诊断）');
 
-  // 正确率表
   const sec = document.querySelector('#weakSection');
   const list = document.querySelector('#weakList');
   const rows = st.filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
@@ -190,9 +208,9 @@ function refreshStats() {
     sec.style.display = '';
     list.innerHTML = '<div class="wordlist">' + rows.map(x => {
       const pct = Math.round(x.rate * 100);
-      const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar';
-      return '<div class="wrow" style="grid-template-columns:1.4fr 120px 1fr auto;cursor:default">' +
-        '<span class="w" style="cursor:default">' + (TNAME.get(x.topic) || x.topic) + '</span>' +
+      const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar ok';
+      return '<div class="wrow" style="grid-template-columns:1.4fr 110px 1fr auto;cursor:default">' +
+        '<span class="w" style="cursor:default">' + P.esc(TNAME.get(x.topic) || x.topic) + '</span>' +
         '<span class="pos">' + x.ok + ' / ' + x.n + ' 题</span>' +
         '<span class="' + cls + '"><i style="width:' + pct + '%"></i></span>' +
         '<span class="flag">' + pct + '%</span></div>';
@@ -204,7 +222,6 @@ function refreshStats() {
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
 
-// 从语法页「练这个考点」跳过来：?topic=xxx
 const tp = new URLSearchParams(location.search).get('topic');
 if (tp && TNAME.has(tp)) {
   topic = tp;
@@ -213,8 +230,8 @@ if (tp && TNAME.has(tp)) {
   const banner = document.createElement('div');
   banner.className = 'note';
   banner.style.cssText = 'margin-top:18px;border-left-color:var(--accent)';
-  banner.innerHTML = '正在练单个考点：<b>' + TNAME.get(tp) + '</b> · 共 ' +
-    (BY_TOPIC.get(tp) || []).length + ' 题 · <a href="review.html">改为自由练习 →</a>';
+  banner.innerHTML = '当前专项考点：<b>' + P.esc(TNAME.get(tp)) + '</b> · 共 ' +
+    (BY_TOPIC.get(tp) || []).length + ' 题 · <a href="review.html">切回全部自由练习 →</a>';
   const setup = document.querySelector('#setup');
   if (setup) setup.parentNode.insertBefore(banner, setup);
 }
@@ -226,21 +243,21 @@ document.querySelector('#startBtn').addEventListener('click', () => {
   } else if (scope === 'wrong') {
     const ids = new Set(P.wrongIds());
     pool = pool.filter(q => ids.has(q.id));
-    if (!pool.length) { alert('错题本是空的 —— 先随便练一组，答错的题会自动收进来。'); return; }
+    if (!pool.length) { P.toast('错题本目前是空的，先练一组吧！'); return; }
   } else if (scope === 'weak') {
     const w = weakestTopic();
-    if (!w) { alert('还没积累足够数据 —— 先练几组，系统才能判断你最弱的考点。'); return; }
+    if (!w) { P.toast('先练满几题，系统就能自动识别最弱考点'); return; }
     pool = pool.filter(q => q.topic === w);
   } else {
     if (grp !== 'all') pool = pool.filter(q => GT.get(q.topic) === grp);
   }
   if (type !== 'all') pool = pool.filter(q => (q.type || 'choice') === type);
-  if (!pool.length) { alert('这个组合下没有题，换一个筛选试试。'); return; }
+  if (!pool.length) { P.toast('当前筛选组合下没有题目，换个条件试试'); return; }
 
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
   P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
-    reviewHref: 'grammar.html', reviewLabel: '看全部语法族',
+    reviewHref: 'grammar.html', reviewLabel: '回顾语法避坑',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
   const zone = document.querySelector('#zone');
@@ -248,7 +265,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
 });
 
 document.querySelector('#resetBtn').addEventListener('click', () => {
-  if (confirm('清空练习记录与错题本？')) { P.qReset(); refreshStats(); }
+  if (confirm('确定清空全部语法练习记录与错题本？')) { P.qReset(); refreshStats(); P.toast('已清空语法记录'); }
 });
 </script>
 
