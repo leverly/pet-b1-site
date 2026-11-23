@@ -18,6 +18,7 @@ try {
 import { GRAMMAR, GRAMMAR_STATS } from './src/data-grammar.js';
 import { QUESTIONS } from './src/data-quiz.js';
 import { QUESTIONS_2 } from './src/data-quiz2.js';
+import { QUESTIONS_3_ALL } from './src/data-quiz3.js';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const OUT = __dir;
@@ -26,7 +27,7 @@ const assetHash = (rel) => createHash('sha256').update(readFileSync(join(__dir, 
 const CSS_VER = assetHash('assets/style.css');
 const JS_VER = assetHash('assets/app.js');
 
-const ALL_Q = [...QUESTIONS, ...QUESTIONS_2];
+const ALL_Q = [...QUESTIONS, ...QUESTIONS_2, ...QUESTIONS_3_ALL];
 
 /* ---------------- 派生数据 ---------------- */
 const WORD_BY_TOPIC = new Map();
@@ -61,6 +62,7 @@ const __inlineCache = new Map();
 function inlineData(keys, extra) {
   const ALL = {
     WORDS, TOPICS, STATS, GRAMMAR, GRAMMAR_STATS, QUESTIONS, QUESTIONS_2,
+    QUESTIONS_3: QUESTIONS_3_ALL, QUESTIONS_ALL: ALL_Q,
   };
   const extraKeys = Object.keys(extra || {});
   const extraSig = extraKeys.length
@@ -1008,7 +1010,7 @@ function buildDrill() {
   }).join('');
 
   write('review.html', page({
-    dataKeys: ['QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
+    dataKeys: ['QUESTIONS_ALL', 'GRAMMAR'],
     title: '真题练语法 · 考点专项精练',
     desc: `${Q_STATS.total} 道 PET 语法精练题，覆盖全部 ${GT_IDS.size} 个考点，自动定位最弱考点并收集错题。`,
     active: 'grammar-drill',
@@ -1087,9 +1089,9 @@ function buildDrill() {
 <section class="section" id="zone" style="display:none"><div id="qz"></div></section>
 `,
     script: `
-const { QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
+const { QUESTIONS_ALL, GRAMMAR } = window.PET_DATA;
 const P = window.PET;
-const ALL = [...QUESTIONS, ...QUESTIONS_2];
+const ALL = QUESTIONS_ALL;
 const BY_TOPIC = new Map();
 ALL.forEach(q => { if (!BY_TOPIC.has(q.topic)) BY_TOPIC.set(q.topic, []); BY_TOPIC.get(q.topic).push(q); });
 const GT = new Map();
@@ -1205,7 +1207,7 @@ document.querySelector('#resetBtn').addEventListener('click', () => {
    ========================================================== */
 function buildWrongBook() {
   write('wrong.html', page({
-    dataKeys: ['WORDS', 'QUESTIONS', 'QUESTIONS_2', 'GRAMMAR'],
+    dataKeys: ['WORDS', 'QUESTIONS_ALL', 'GRAMMAR'],
     dataExtra: { PET_AUDIO: AUDIO },
     title: '智能错题本 · 重做与打印复习纸',
     desc: '自动收纳错词和语法错题，支持一键重做、英音朗读和 A4 错题复习纸打印。',
@@ -1246,9 +1248,9 @@ function buildWrongBook() {
 </section>
 `,
     script: `
-const { WORDS, QUESTIONS, QUESTIONS_2, GRAMMAR } = window.PET_DATA;
+const { WORDS, QUESTIONS_ALL, GRAMMAR } = window.PET_DATA;
 const P = window.PET;
-const ALLQ = [...QUESTIONS, ...QUESTIONS_2];
+const ALLQ = QUESTIONS_ALL;
 const QBYID = new Map(ALLQ.map(q => [q.id, q]));
 const WBYW = new Map(WORDS.map(w => [w.w.toLowerCase(), w]));
 const TNAME = new Map();
