@@ -790,17 +790,8 @@ table.gtable td:first-child { font-weight: 600; }
 .setup-hint { margin: 8px 0 0; font-size: .8rem; color: var(--text-3); line-height: 1.5; }
 .setup-note { margin-bottom: 0; }
 
-.scope-bar {
-  margin-top: 22px; padding: 18px 20px;
-  border: 1px solid var(--border); border-radius: var(--r);
-  background: var(--surface); box-shadow: var(--shadow-1);
-}
-.scope-bar-label {
-  font-size: .76rem; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
-}
-.scope-bar .chip b { font-family: var(--mono); font-size: .75rem; opacity: .72; margin-left: 3px; }
-.scope-bar-hint { margin: 10px 0 0; font-size: .82rem; color: var(--text-2); line-height: 1.5; }
+/* 词库范围已并入「开始本轮闯关」配置网格，只需保留 chip 内的数字样式 */
+#scopeBar .chip b { font-family: var(--mono); font-size: .75rem; opacity: .72; margin-left: 3px; }
 
 /* ---------------- 错题本 ---------------- */
 .wb-row { grid-template-columns: minmax(150px, 1.25fr) minmax(72px, .55fr) 2fr auto auto; }
