@@ -857,6 +857,11 @@ function buildStudy() {
 const { WORDS } = window.PET_DATA;
 const P = window.PET;
 let mode = 'mix', src = 'b1', len = 20, card = 'choice';
+// 先恢复上次选定的词库范围，再让首次 refreshKv 用对范围（否则首屏统计与高亮错位）
+try {
+  const savedScope = localStorage.getItem('pet-scope');
+  if (savedScope && ['b1', 'b2', 'b3', 'all', 'phrase'].indexOf(savedScope) >= 0) src = savedScope;
+} catch (e) {}
 let autoSay = (function () {
   try { var v = localStorage.getItem('pet-autosay'); return v === null ? true : v === '1'; } catch (e) { return true; }
 })();
@@ -972,10 +977,6 @@ syncSfx();
 if (sfxBtn) sfxBtn.addEventListener('click', () => { P.setSfx(!P.sfxEnabled()); syncSfx(); });
 
 (function initScope() {
-  try {
-    const saved = localStorage.getItem('pet-scope');
-    if (saved && HINTS.src[saved]) src = saved;
-  } catch (e) {}
   document.querySelectorAll('#scopeBar .chip').forEach(c => {
     c.classList.toggle('on', c.getAttribute('data-s') === src);
     c.addEventListener('click', () => {
