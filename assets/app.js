@@ -369,7 +369,13 @@
       if (r && typeof r.n === 'number') qlog.topicStats[t] = { n: r.n, ok: r.ok || 0 };
     });
   }
+  if (!qlog.qdue) qlog.qdue = {};
   P.qLog = function () { return qlog; };
+  // 语法题按题排期（间隔重复）：qdue[qid] = { due, ivl, reps, lapses, last }
+  var qdue = qlog.qdue = qlog.qdue || {};
+  var Q_IVL = [0.5, 1, 3, 7, 21, 60];   // 天：连续答对的间隔阶梯
+  P.qDue = function (id) { return qdue[id] || null; };
+  P.qDueMap = function () { return qdue; };
   P.qRecord = function (topic, ok, id) {
     var r = qlog.topicStats[topic] = qlog.topicStats[topic] || { n: 0, ok: 0 };
     r.n++;
@@ -377,10 +383,25 @@
     if (id) {
       if (ok) delete qlog.wrongIds[id];
       else qlog.wrongIds[id] = { t: topic, at: Date.now() };
+      // 排期：答错立即回到第一级（半小时后即可再练）；答对逐级拉长间隔
+      var d = qdue[id] || { due: 0, ivl: 0, reps: 0, lapses: 0 };
+      if (ok) {
+        d.reps = (d.reps || 0) + 1;
+        var lv = Math.min(d.reps, Q_IVL.length) - 1;
+        d.ivl = Q_IVL[lv];
+        d.due = Date.now() + d.ivl * 86400000;
+      } else {
+        d.reps = 0;
+        d.lapses = (d.lapses || 0) + 1;
+        d.ivl = Q_IVL[0];
+        d.due = Date.now() + 30 * 60000;
+      }
+      d.last = Date.now();
+      qdue[id] = d;
     }
     store(QLOG_KEY, qlog);
     P.bumpDay('questions', 1);
-    document.dispatchEvent(new CustomEvent('pet:qlog', { detail: { topic: topic, ok: ok } }));
+    document.dispatchEvent(new CustomEvent('pet:qlog', { detail: { topic: topic, ok: ok, id: id } }));
   };
   P.qTopicStats = function () {
     var out = [];
@@ -395,7 +416,7 @@
     if (id) delete qlog.wrongIds[id]; else qlog.wrongIds = {};
     store(QLOG_KEY, qlog);
   };
-  P.qReset = function () { qlog = { topicStats: {}, wrongIds: {} }; store(QLOG_KEY, qlog); };
+  P.qReset = function () { qlog = { topicStats: {}, wrongIds: {}, qdue: {} }; qdue = qlog.qdue; store(QLOG_KEY, qlog); };
 
   /* ---------------- 学习等级与 XP 激励 ---------------- */
   P.levelInfo = function () {

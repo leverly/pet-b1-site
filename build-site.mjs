@@ -1040,7 +1040,7 @@ function buildDrill() {
           <button class="chip" data-scope="wrong">只练错题本 <span id="wrongN">0</span></button>
           <button class="chip" data-scope="weak">专攻最弱考点</button>
         </div>
-        <p class="setup-hint">选「专攻最弱考点」会自动挑出正确率最低的薄弱项集中突破</p>
+        <p class="setup-hint">选「专攻最弱考点」会自动挑出正确率最低的薄弱项集中突破 · <b id="dueN">—</b> 题待复习</p>
       </div>
 
       <div class="setup-group">
@@ -1119,6 +1119,12 @@ function refreshStats() {
   set('#kRate', n ? Math.round(ok / n * 100) + '%' : '—');
   set('#kWrong', wrong);
   const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
+  const dueEl = document.querySelector('#dueN');
+  if (dueEl) {
+    const dm = P.qDueMap ? P.qDueMap() : {};
+    const t = Date.now();
+    dueEl.textContent = ALL.filter(q => { const d = dm[q.id]; return !d || (d.due || 0) <= t; }).length;
+  }
 }
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
@@ -1155,9 +1161,26 @@ document.querySelector('#startBtn').addEventListener('click', () => {
   if (type !== 'all') pool = pool.filter(q => (q.type || 'choice') === type);
   if (!pool.length) { P.toast('当前筛选组合下没有题目，换个条件试试'); return; }
 
+  // 遗忘曲线排期：未练过或已到期的题优先；未到复习时间的答对题不再重复塞进本轮。
+  // 「只练错题本」「专攻最弱考点」是用户点名的范围，按原样出，不做排期过滤。
+  let finalPool = pool;
+  if (scope !== 'wrong' && scope !== 'weak' && !topic) {
+    const now = Date.now();
+    const dueMap = P.qDueMap ? P.qDueMap() : {};
+    const isDue = q => { const d = dueMap[q.id]; return !d || (d.due || 0) <= now; };
+    const duePool = pool.filter(isDue);
+    if (duePool.length) {
+      finalPool = duePool;
+    } else {
+      // 全部都在复习周期内：挑最早到期的凑一组，避免"没题可练"
+      finalPool = pool.slice().sort((a, b) => (dueMap[a.id] ? dueMap[a.id].due : 0) - (dueMap[b.id] ? dueMap[b.id].due : 0));
+      P.toast('当前范围的题都在复习周期内，本轮复习最早到期的题');
+    }
+  }
+
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.quiz({ mount: '#qz', questions: pool, limit: len, shuffle: true,
+  P.quiz({ mount: '#qz', questions: finalPool, limit: len, shuffle: true,
     reviewHref: 'grammar.html', reviewLabel: '回顾语法避坑',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
