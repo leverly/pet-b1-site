@@ -759,13 +759,13 @@ function buildStudy() {
   <div class="scope-bar">
     <div class="scope-bar-label">选择背词词库范围</div>
     <div class="chips" id="scopeBar">
-      <button class="chip on" data-s="b1">核心高频 <b>${STATS.b1}</b></button>
+      <button class="chip on" data-s="all">全部词条 <b>${STATS.total}</b></button>
+      <button class="chip" data-s="b1">核心高频 <b>${STATS.b1}</b></button>
       <button class="chip" data-s="b2">中频主力 <b>${STATS.b2}</b></button>
       <button class="chip" data-s="b3">拓展词汇 <b>${STATS.b3}</b></button>
-      <button class="chip" data-s="all">全部词条 <b>${STATS.total}</b></button>
       <button class="chip" data-s="phrase">只背短语 <b>${STATS.phrases}</b></button>
     </div>
-    <p class="scope-bar-hint" id="scopeHint">先拿下卷面最常见的高频词</p>
+    <p class="scope-bar-hint" id="scopeHint">全部 3,109 条官方词表与短语，覆盖最全</p>
   </div>
 </div>
 
@@ -850,12 +850,7 @@ function buildStudy() {
     script: `
 const { WORDS } = window.PET_DATA;
 const P = window.PET;
-let mode = 'mix', src = 'b1', card = 'choice';
-// 先恢复上次选定的词库范围，再让首次 refreshKv 用对范围（否则首屏统计与高亮错位）
-try {
-  const savedScope = localStorage.getItem('pet-scope');
-  if (savedScope && ['b1', 'b2', 'b3', 'all', 'phrase'].indexOf(savedScope) >= 0) src = savedScope;
-} catch (e) {}
+let mode = 'mix', src = 'all', card = 'choice';
 let autoSay = (function () {
   try { var v = localStorage.getItem('pet-autosay'); return v === null ? true : v === '1'; } catch (e) { return true; }
 })();
@@ -971,7 +966,6 @@ if (sfxBtn) sfxBtn.addEventListener('click', () => { P.setSfx(!P.sfxEnabled()); 
       document.querySelectorAll('#scopeBar .chip').forEach(x => x.classList.remove('on'));
       c.classList.add('on');
       src = c.getAttribute('data-s');
-      try { localStorage.setItem('pet-scope', src); } catch (e) {}
       setHint('scopeHint', HINTS.src[src]);
       refreshKv();
     });
