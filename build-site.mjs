@@ -402,7 +402,7 @@ function buildHome() {
     </details>
     <details class="faq-item">
       <summary>这个网站覆盖了 PET 考试的哪些部分？</summary>
-      <p>重点攻克 PET 备考最核心的底层能力：<b>完整 3,109 官方大纲词表（含听力辨音）</b>、<b>43 个核心语法考点</b>，以及直接对齐 <b>Reading Part 5（单选完形）、Part 6（开放填空）与 Writing 写作自查（改错）</b>的 261 道精练题，帮孩子先把词汇和语法地基打牢。</p>
+      <p>重点攻克 PET 备考最核心的底层能力：<b>完整 3,109 官方大纲词表（含听力辨音）</b>、<b>43 个核心语法考点</b>，以及直接对齐 <b>Reading Part 5（单选完形）、Part 6（开放填空）与 Writing 写作自查（改错）</b>的 ${Q_STATS.total} 道精练题，帮孩子先把词汇和语法地基打牢。</p>
     </details>
   </div>
 </section>
@@ -1576,7 +1576,7 @@ function buildPlan() {
 
   write('plan.html', page({
     title: '8 周 PET 通关打卡计划',
-    desc: '把 3,109 官方词条、43 个语法考点和 261 道真题科学分配到 8 周，支持逐周勾选打卡与倒计时节奏规划。',
+    desc: `把 3,109 官方词条、43 个语法考点和 ${Q_STATS.total} 道真题科学分配到 8 周，支持逐周勾选打卡与倒计时节奏规划。`,
     active: 'plan',
     dataKeys: ['STATS'],
     body: `
