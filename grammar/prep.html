@@ -213,11 +213,11 @@
   var all = function(){ return document.querySelectorAll('.tcard'); };
   if (expand) expand.addEventListener('click', function(){ all().forEach(function(d){ d.open = true; }); });
   if (collapse) collapse.addEventListener('click', function(){ all().forEach(function(d){ d.open = false; }); });
+  // 默认全部收起：即使带 #考点 锚点进入也不自动展开，只滚动定位
   var hash = location.hash.replace('#','');
   if (hash) {
     var target = document.getElementById(hash);
     if (target && target.tagName === 'DETAILS') {
-      target.open = true;
       setTimeout(function(){ target.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60);
     }
   }
