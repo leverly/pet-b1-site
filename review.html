@@ -47,16 +47,6 @@
   </div>
 </section>
 
-<section class="section" id="weakSection" style="display:none;margin-top:28px">
-  <div class="section-head">
-    <div class="section-head-left">
-      <h2>各考点掌握诊断</h2>
-      <span class="sub">答满 3 题的考点按正确率从低到高排列，红色项建议重点重练</span>
-    </div>
-  </div>
-  <div id="weakList"></div>
-</section>
-
 <section class="section" style="margin-top:28px" id="setup">
   <div class="card setup-card">
     <div class="setup-head">
@@ -194,24 +184,6 @@ function refreshStats() {
   set('#kRate', n ? Math.round(ok / n * 100) + '%' : '—');
   set('#kWrong', wrong);
   const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
-
-  const sec = document.querySelector('#weakSection');
-  const list = document.querySelector('#weakList');
-  const rows = st.filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
-  if (rows.length && list) {
-    sec.style.display = '';
-    list.innerHTML = '<div class="wordlist">' + rows.map(x => {
-      const pct = Math.round(x.rate * 100);
-      const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar ok';
-      return '<div class="wrow" style="grid-template-columns:1.4fr 110px 1fr auto;cursor:default">' +
-        '<span class="w" style="cursor:default">' + P.esc(TNAME.get(x.topic) || x.topic) + '</span>' +
-        '<span class="pos">' + x.ok + ' / ' + x.n + ' 题</span>' +
-        '<span class="' + cls + '"><i style="width:' + pct + '%"></i></span>' +
-        '<span class="flag">' + pct + '%</span></div>';
-    }).join('') + '</div>';
-  } else if (sec) {
-    sec.style.display = 'none';
-  }
 }
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);

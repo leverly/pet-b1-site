@@ -1020,16 +1020,6 @@ function buildDrill() {
   </div>
 </section>
 
-<section class="section" id="weakSection" style="display:none;margin-top:28px">
-  <div class="section-head">
-    <div class="section-head-left">
-      <h2>各考点掌握诊断</h2>
-      <span class="sub">答满 3 题的考点按正确率从低到高排列，红色项建议重点重练</span>
-    </div>
-  </div>
-  <div id="weakList"></div>
-</section>
-
 <section class="section" style="margin-top:28px" id="setup">
   <div class="card setup-card">
     <div class="setup-head">
@@ -1127,24 +1117,6 @@ function refreshStats() {
   set('#kRate', n ? Math.round(ok / n * 100) + '%' : '—');
   set('#kWrong', wrong);
   const wn = document.querySelector('#wrongN'); if (wn) wn.textContent = wrong;
-
-  const sec = document.querySelector('#weakSection');
-  const list = document.querySelector('#weakList');
-  const rows = st.filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
-  if (rows.length && list) {
-    sec.style.display = '';
-    list.innerHTML = '<div class="wordlist">' + rows.map(x => {
-      const pct = Math.round(x.rate * 100);
-      const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar ok';
-      return '<div class="wrow" style="grid-template-columns:1.4fr 110px 1fr auto;cursor:default">' +
-        '<span class="w" style="cursor:default">' + P.esc(TNAME.get(x.topic) || x.topic) + '</span>' +
-        '<span class="pos">' + x.ok + ' / ' + x.n + ' 题</span>' +
-        '<span class="' + cls + '"><i style="width:' + pct + '%"></i></span>' +
-        '<span class="flag">' + pct + '%</span></div>';
-    }).join('') + '</div>';
-  } else if (sec) {
-    sec.style.display = 'none';
-  }
 }
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
@@ -1678,7 +1650,7 @@ function buildStats() {
     title: '学习数据与统计',
     desc: '实时追踪 PET 备考进度、近 7 天学习活跃度与词表题库分布，支持跨设备导出和导入学习档案。',
     active: 'stats',
-    dataKeys: ['STATS'],
+    dataKeys: ['STATS', 'GRAMMAR'],
     body: `
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 学习数据</div>
@@ -1748,6 +1720,16 @@ function buildStats() {
   </table>
 </section>
 
+<section class="section" id="topicDiagSection">
+  <div class="section-head">
+    <div class="section-head-left">
+      <h2>各考点掌握诊断</h2>
+      <span class="sub">答满 3 题的考点按正确率从低到高排列，红色项建议重点重练</span>
+    </div>
+  </div>
+  <div id="topicDiagList"></div>
+</section>
+
 <section class="section">
   <div class="section-head"><h2>23 个官方话题词量</h2><span class="sub">部分多义词归属多个话题</span></div>
   <table class="gtable">
@@ -1788,6 +1770,29 @@ function renderReport() {
   set('#rQRate', qN ? Math.round(qOk / qN * 100) + '%' : '—');
   set('#rQSub', qN ? '累计精练 ' + qN + ' 题' : '暂未开始语法练习');
   set('#rWrong', P.wordBookCount() + P.wrongIds().length);
+
+  // 各考点掌握诊断
+  const TNAME = new Map();
+  (window.PET_DATA.GRAMMAR || []).forEach(g => g.topics.forEach(t => TNAME.set(t.id, t.name)));
+  const diagRows = qst.filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
+  const diagSec = document.querySelector('#topicDiagSection');
+  const diagList = document.querySelector('#topicDiagList');
+  if (diagList) {
+    if (diagRows.length) {
+      if (diagSec) diagSec.style.display = '';
+      diagList.innerHTML = '<div class="wordlist">' + diagRows.map(x => {
+        const pct = Math.round(x.rate * 100);
+        const cls = pct < 60 ? 'bar rose' : pct < 80 ? 'bar warn' : 'bar ok';
+        return '<div class="wrow" style="grid-template-columns:1.4fr 110px 1fr auto;cursor:default">' +
+          '<span class="w" style="cursor:default">' + P.esc(TNAME.get(x.topic) || x.topic) + '</span>' +
+          '<span class="pos">' + x.ok + ' / ' + x.n + ' 题</span>' +
+          '<span class="' + cls + '"><i style="width:' + pct + '%"></i></span>' +
+          '<span class="flag">' + pct + '%</span></div>';
+      }).join('') + '</div>';
+    } else {
+      if (diagSec) diagSec.style.display = 'none';
+    }
+  }
 
   // 7日柱状图
   const days7 = P.last7Days();
