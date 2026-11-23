@@ -106,6 +106,7 @@ const NAV = [
   { href: 'wrong.html', label: '错题本', key: 'wrong' },
   { href: 'plan.html', label: '8周计划', key: 'plan' },
   { href: 'stats.html', label: '学习数据', key: 'stats' },
+  { href: 'content.html', label: '内容说明', key: 'content' },
 ];
 
 const LOGO_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
@@ -156,6 +157,7 @@ const FOOTER = (base) => `<footer class="foot">
     <div class="col">
       <h4>数据与帮助</h4>
       <a href="${base}stats.html">学习数据与备份</a>
+      <a href="${base}content.html">内容与数据说明</a>
       <a href="${base}index.html#faq">常见问题</a>
     </div>
   </div>
@@ -1631,9 +1633,9 @@ refreshPlan();
 }
 
 /* ==========================================================
-   9. 学习数据 & 档案备份 + 官方口径说明
+   9. 内容与数据说明（纯静态：词表规模、语法分布、口径）
    ========================================================== */
-function buildStats() {
+function buildContent() {
   const tagRows = [
     ['核心高频 b1（卷面最常见）', STATS.b1],
     ['中频主力 b2（阅读写作主力）', STATS.b2],
@@ -1646,6 +1648,76 @@ function buildStats() {
     return `<tr><td>${g.icon} ${esc(g.name)}</td><td style="text-align:right">${g.topics.length}</td><td style="text-align:right">${n}</td><td style="text-align:right">${q}</td></tr>`;
   }).join('');
 
+  write('content.html', page({
+    title: '内容与数据说明',
+    desc: `PET 领航收录的 ${STATS.total} 条官方词表、${GRAMMAR_STATS.topics} 个语法考点与 ${Q_STATS.total} 道精练题的规模明细与权威口径说明。`,
+    active: 'content',
+    body: `
+<div class="page-head">
+  <div class="crumb"><a href="index.html">首页</a> / 内容与数据说明</div>
+  <h1>内容与数据说明</h1>
+  <p class="lede">本站全部内容均来自剑桥官方大纲与公开考试说明。这里列出词表、语法与题库的完整规模，以及每个数字的口径来源。</p>
+</div>
+
+<section class="section" style="margin-top:24px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <span class="kicker">官方内容规模与权威口径</span>
+      <h2>本站全量词表与题库数据明细</h2>
+      <span class="sub">所有数字均由构建脚本实时统计，对应 Cambridge B1 Preliminary (2025) 官方词表</span>
+    </div>
+  </div>
+  <div class="kv">
+    <div class="k"><b>${STATS.words}</b><span>官方单词</span></div>
+    <div class="k"><b>${STATS.phrases}</b><span>官方短语</span></div>
+    <div class="k"><b>${STATS.total}</b><span>词条总计</span></div>
+    <div class="k"><b>${STATS.withExample}</b><span>带官方例句</span></div>
+    <div class="k"><b>${STATS.topics}</b><span>官方话题</span></div>
+  </div>
+  <table class="gtable" style="margin-top:20px">
+    <thead><tr><th>频档分级</th><th style="text-align:right">词条数</th><th style="text-align:right">占比</th></tr></thead>
+    <tbody>${tagRows.map(([n, v]) => `<tr><td>${n}</td><td style="text-align:right">${v}</td><td style="text-align:right">${(v / STATS.total * 100).toFixed(1)}%</td></tr>`).join('')}</tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>语法体系与题量分布</h2></div>
+  <table class="gtable">
+    <thead><tr><th>语法族</th><th style="text-align:right">考点数</th><th style="text-align:right">易错避坑</th><th style="text-align:right">配套题量</th></tr></thead>
+    <tbody>${gramRows}</tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>23 个官方话题词量</h2><span class="sub">部分多义词归属多个话题</span></div>
+  <table class="gtable">
+    <thead><tr><th>中文话题</th><th>剑桥官方英文名</th><th style="text-align:right">词数</th></tr></thead>
+    <tbody>${topicRows}</tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>数据来源与口径说明</h2></div>
+  <div class="note">
+    <b>官方词表</b>：源自 Cambridge University Press 发布的 <i>B1 Preliminary and B1 Preliminary for Schools Vocabulary List</i>（August 2025），正文词条 + 附录 2 的 23 个话题表；附录 1 的封闭清单（数字、星期、月份等）未逐条计入总数。<br><br>
+    <b>中文释义与英音</b>：释义结合官方词性筛选并对 300+ 高频多义词做了人工精校；全部 ${STATS.total.toLocaleString('en-US')} 条词条均预合成纯正剑桥英音音频，无外链依赖。<br><br>
+    <b>频档与语法题库</b>：频档按真实英语语料词频启发式分为高频/中频/低频三档；语法考点与 ${Q_STATS.total} 道精练题按 B1 Preliminary 公开考试说明（Reading Part 5/6 与 Writing 常见语法点）原创编写。
+  </div>
+</section>
+
+<section class="section">
+  <div class="note">
+    查看你的个人学习进度与备份？见<a href="stats.html">学习数据 →</a>
+  </div>
+</section>
+`,
+  }));
+}
+
+/* ==========================================================
+   10. 学习数据 & 档案备份
+   ========================================================== */
+function buildStats() {
   write('stats.html', page({
     title: '学习数据与统计',
     desc: '实时追踪 PET 备考进度、近 7 天学习活跃度与词表题库分布，支持跨设备导出和导入学习档案。',
@@ -1691,35 +1763,6 @@ function buildStats() {
   </div>
 </section>
 
-<section class="section">
-  <div class="section-head">
-    <div class="section-head-left">
-      <span class="kicker">官方内容规模与权威口径</span>
-      <h2>本站全量词表与题库数据明细</h2>
-      <span class="sub">所有数字均由构建脚本实时统计，对应 Cambridge B1 Preliminary (2025) 官方词表</span>
-    </div>
-  </div>
-  <div class="kv">
-    <div class="k"><b>${STATS.words}</b><span>官方单词</span></div>
-    <div class="k"><b>${STATS.phrases}</b><span>官方短语</span></div>
-    <div class="k"><b>${STATS.total}</b><span>词条总计</span></div>
-    <div class="k"><b>${STATS.withExample}</b><span>带官方例句</span></div>
-    <div class="k"><b>${STATS.topics}</b><span>官方话题</span></div>
-  </div>
-  <table class="gtable" style="margin-top:20px">
-    <thead><tr><th>频档分级</th><th style="text-align:right">词条数</th><th style="text-align:right">占比</th></tr></thead>
-    <tbody>${tagRows.map(([n, v]) => `<tr><td>${n}</td><td style="text-align:right">${v}</td><td style="text-align:right">${(v / STATS.total * 100).toFixed(1)}%</td></tr>`).join('')}</tbody>
-  </table>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>语法体系与题量分布</h2></div>
-  <table class="gtable">
-    <thead><tr><th>语法族</th><th style="text-align:right">考点数</th><th style="text-align:right">易错避坑</th><th style="text-align:right">配套题量</th></tr></thead>
-    <tbody>${gramRows}</tbody>
-  </table>
-</section>
-
 <section class="section" id="topicDiagSection">
   <div class="section-head">
     <div class="section-head-left">
@@ -1731,19 +1774,8 @@ function buildStats() {
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>23 个官方话题词量</h2><span class="sub">部分多义词归属多个话题</span></div>
-  <table class="gtable">
-    <thead><tr><th>中文话题</th><th>剑桥官方英文名</th><th style="text-align:right">词数</th></tr></thead>
-    <tbody>${topicRows}</tbody>
-  </table>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>数据来源与口径说明</h2></div>
   <div class="note">
-    <b>官方词表</b>：源自 Cambridge University Press 发布的 <i>B1 Preliminary and B1 Preliminary for Schools Vocabulary List</i>（August 2025），正文词条 + 附录 2 的 23 个话题表；附录 1 的封闭清单（数字、星期、月份等）未逐条计入总数。<br><br>
-    <b>中文释义与英音</b>：释义结合官方词性筛选并对 300+ 高频多义词做了人工精校；全部 3,109 条词条均预合成纯正剑桥英音音频，无外链依赖。<br><br>
-    <b>频档与语法题库</b>：频档按真实英语语料词频启发式分为高频/中频/低频三档；语法考点与 261 道精练题按 B1 Preliminary 公开考试说明（Reading Part 5/6 与 Writing 常见语法点）原创编写。
+    想看词表规模、语法族分布与数据来源口径？见<a href="content.html">内容与数据说明 →</a>
   </div>
 </section>
 `,
@@ -1851,6 +1883,7 @@ function main() {
   buildDrill();
   buildWrongBook();
   buildStats();
+  buildContent();
   buildPlan();
 
   const msg = [
