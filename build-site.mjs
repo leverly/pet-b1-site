@@ -788,6 +788,7 @@ function buildStudy() {
     <div class="k"><b id="kLeft">—</b><span>尚未学习</span></div>
     <div class="k"><b id="kTotal">—</b><span>已学词数（牢固 <b id="kMature" style="display:inline;font-size:1em;color:var(--ok)">0</b>）</span></div>
     <div class="k"><b id="kDue" style="color:var(--accent)">—</b><span>今日待复习</span></div>
+    <div class="k"><b id="kAcc">—</b><span id="kAccSub">背词准确率</span></div>
     <div class="k"><b id="kScope">—</b><span>本范围总词量</span></div>
   </div>
 </section>
@@ -880,6 +881,15 @@ function refreshKv() {
   set('#kTotal', learned);
   set('#kMature', mature);
   set('#kDue', due);
+
+  const acc = P.wordAccStats ? P.wordAccStats(pool) : { answered: 0, rate: null };
+  set('#kAcc', acc.rate === null ? '—' : Math.round(acc.rate * 100) + '%');
+  const accSub = document.querySelector('#kAccSub');
+  if (accSub) accSub.textContent = acc.answered ? '背词准确率（' + acc.answered + ' 次作答）' : '背词准确率';
+  const accEl = document.querySelector('#kAcc');
+  if (accEl) {
+    accEl.style.color = acc.rate === null ? '' : acc.rate >= 0.8 ? 'var(--ok)' : acc.rate >= 0.6 ? 'var(--gold)' : 'var(--rose)';
+  }
 }
 refreshKv();
 document.addEventListener('pet:srs', refreshKv);

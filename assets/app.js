@@ -333,11 +333,28 @@
     }
     r.reps = (r.reps || 0) + 1;
     r.last = Date.now();
+    // 准确率计数：ans 累计作答，okc 累计答对；「有点模糊」(g=1) 是模糊自评，不计入分子分母
+    if (grade !== 1) {
+      r.ans = (r.ans || 0) + 1;
+      if (grade >= 2) r.okc = (r.okc || 0) + 1;
+    }
     srs[k] = r;
     store(SRS_KEY, srs);
     P.bumpDay('words', 1);
     document.dispatchEvent(new CustomEvent('pet:srs', { detail: { word: w } }));
     return r;
+  };
+  // 按给定词表统计背词准确率；不传则统计全部学过的词
+  P.wordAccStats = function (list) {
+    var ans = 0, okc = 0;
+    var keys = list ? list.map(function (w) { return String(w.w || w).toLowerCase(); }) : Object.keys(srs);
+    keys.forEach(function (k) {
+      var r = srs[k];
+      if (!r) return;
+      ans += r.ans || 0;
+      okc += r.okc || 0;
+    });
+    return { answered: ans, correct: okc, rate: ans ? okc / ans : null };
   };
   P.srsReset = function () { srs = {}; store(SRS_KEY, srs); document.dispatchEvent(new CustomEvent('pet:srs', { detail: { reset: true } })); };
 
