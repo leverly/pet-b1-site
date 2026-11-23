@@ -192,6 +192,8 @@
   var daylog = load(DAYLOG_KEY, {}) || {};
   var GOAL_KEY = 'pet-goal-v1';
   var goal = load(GOAL_KEY, 20) || 20;
+  var QGOAL_KEY = 'pet-qgoal-v1';
+  var qgoal = load(QGOAL_KEY, 20) || 20;
 
   function dayKey(d) {
     var x = d || new Date();
@@ -209,6 +211,17 @@
   };
   P.todayPct = function () {
     return goal ? Math.min(100, Math.round(P.todayWords() / goal * 100)) : 0;
+  };
+  // 练语法的每日目标与进度（与背单词的 goal 相互独立）
+  P.qGoal = function () { return qgoal; };
+  P.setQGoal = function (n) {
+    qgoal = Math.max(5, Math.min(200, parseInt(n, 10) || 20));
+    store(QGOAL_KEY, qgoal);
+    document.dispatchEvent(new CustomEvent('pet:daily', { detail: { kind: 'questions' } }));
+    return qgoal;
+  };
+  P.todayQPct = function () {
+    return qgoal ? Math.min(100, Math.round(P.todayQuestions() / qgoal * 100)) : 0;
   };
   P.bumpDay = function (kind, n) {
     var k = dayKey();
@@ -448,6 +461,7 @@
       srs: srs,
       daylog: daylog,
       goal: goal,
+      qgoal: qgoal,
       wbook: wbook,
       qlog: qlog,
       profile: profile,
@@ -463,6 +477,7 @@
     if (d.srs) { srs = d.srs; store(SRS_KEY, srs); }
     if (d.daylog) { daylog = d.daylog; store(DAYLOG_KEY, daylog); }
     if (d.goal) { goal = d.goal; store(GOAL_KEY, goal); }
+    if (d.qgoal) { qgoal = d.qgoal; store(QGOAL_KEY, qgoal); }
     if (d.wbook) { wbook = d.wbook; store(WBOOK_KEY, wbook); }
     if (d.qlog) { qlog = d.qlog; store(QLOG_KEY, qlog); }
     if (d.profile) { profile = Object.assign(profile, d.profile); store(PROFILE_KEY, profile); }

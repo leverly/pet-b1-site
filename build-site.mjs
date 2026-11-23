@@ -1027,7 +1027,24 @@ function buildDrill() {
   </div>
 </section>
 
-<section class="section" style="margin-top:28px" id="setup">
+<section class="section" style="margin-top:16px">
+  <div class="card" style="padding:20px 24px">
+    <div class="today-goal-row">
+      <span>今日已练 <b id="kQToday">0</b> / <b id="kQGoal">20</b> 题 · 🔥 连续打卡 <b id="kQStreak">0</b> 天</span>
+      <span class="today-pct" id="kQPct">0%</span>
+    </div>
+    <div class="bar"><i id="kQBar" style="width:0%"></i></div>
+    <div class="chips" style="margin-top:14px" id="qgoalChips">
+      <span class="quiz-count" style="margin-right:6px">每日目标</span>
+      <button class="chip" data-qgoal="10">10 题</button>
+      <button class="chip on" data-qgoal="20">20 题</button>
+      <button class="chip" data-qgoal="30">30 题</button>
+      <button class="chip" data-qgoal="40">40 题</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="margin-top:26px" id="setup">
   <div class="card setup-card">
     <div class="setup-head">
       <h3>配置本组练习</h3>
@@ -1061,12 +1078,7 @@ function buildDrill() {
 
       <div class="setup-group">
         <div class="kicker">本组题量</div>
-        <div class="chips" id="lenChips">
-          <button class="chip" data-l="10">10 题</button>
-          <button class="chip on" data-l="20">20 题</button>
-          <button class="chip" data-l="40">40 题</button>
-        </div>
-        <p class="setup-hint">20 题约 8–10 分钟，适合日常打卡</p>
+        <p class="setup-hint" style="margin-top:0">每轮出 <b id="qlenEcho">20</b> 题，与上方「每日目标」保持一致</p>
       </div>
 
       <div class="setup-group wide">
@@ -1096,7 +1108,7 @@ const GT = new Map();
 const TNAME = new Map();
 GRAMMAR.forEach(g => g.topics.forEach(t => { GT.set(t.id, g.id); TNAME.set(t.id, t.name); }));
 
-let scope = 'all', grp = 'all', type = 'all', len = 20, topic = null;
+let scope = 'all', grp = 'all', type = 'all', topic = null;
 
 function pick(sel, attr, cb) {
   document.querySelectorAll(sel + ' .chip').forEach(c => c.addEventListener('click', () => {
@@ -1107,7 +1119,6 @@ function pick(sel, attr, cb) {
 pick('#scopeChips', 'data-scope', v => scope = v);
 pick('#groupChips', 'data-g', v => grp = v);
 pick('#typeChips', 'data-t', v => type = v);
-pick('#lenChips', 'data-l', v => len = parseInt(v, 10));
 
 function weakestTopic() {
   const st = P.qTopicStats().filter(x => x.n >= 3).sort((a, b) => a.rate - b.rate);
@@ -1133,6 +1144,27 @@ function refreshStats() {
 }
 refreshStats();
 document.addEventListener('pet:qlog', refreshStats);
+
+// 每日计划：今日已练 / 目标 / 进度条 / 目标选择（与背单词的每日目标相互独立）
+function refreshDaily() {
+  const set = (id, v) => { const e = document.querySelector(id); if (e) e.textContent = v; };
+  set('#kQToday', P.todayQuestions());
+  set('#kQGoal', P.qGoal());
+  set('#kQStreak', P.streak());
+  const pct = P.todayQPct();
+  set('#kQPct', pct + '%');
+  const bar = document.querySelector('#kQBar');
+  if (bar) bar.style.width = pct + '%';
+  document.querySelectorAll('#qgoalChips .chip').forEach(c => {
+    c.classList.toggle('on', parseInt(c.getAttribute('data-qgoal'), 10) === P.qGoal());
+  });
+  set('#qlenEcho', P.qGoal());
+}
+refreshDaily();
+document.addEventListener('pet:daily', refreshDaily);
+document.querySelectorAll('#qgoalChips .chip').forEach(c => {
+  c.addEventListener('click', () => { P.setQGoal(c.getAttribute('data-qgoal')); refreshDaily(); });
+});
 
 const tp = new URLSearchParams(location.search).get('topic');
 if (tp && TNAME.has(tp)) {
@@ -1185,7 +1217,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
 
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.quiz({ mount: '#qz', questions: finalPool, limit: len, shuffle: true,
+  P.quiz({ mount: '#qz', questions: finalPool, limit: P.qGoal(), shuffle: true,
     reviewHref: 'grammar.html', reviewLabel: '回顾语法避坑',
     onRestart: () => location.reload(),
     onFinish: refreshStats });
