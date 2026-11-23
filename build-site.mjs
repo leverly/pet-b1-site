@@ -834,14 +834,8 @@ function buildStudy() {
       </div>
 
       <div class="setup-group">
-        <div class="kicker">每轮词数</div>
-        <div class="chips" id="lenChips">
-          <button class="chip" data-l="10">10 个</button>
-          <button class="chip on" data-l="20">20 个</button>
-          <button class="chip" data-l="30">30 个</button>
-          <button class="chip" data-l="50">50 个</button>
-        </div>
-        <p class="setup-hint" id="lenHint">20 个约 5–8 分钟，最适合孩子每天坚持</p>
+        <div class="kicker">本轮词数</div>
+        <p class="setup-hint" style="margin-top:0">每轮出 <b id="lenEcho">20</b> 词，与上方「每日目标」保持一致</p>
       </div>
     </div>
 
@@ -856,7 +850,7 @@ function buildStudy() {
     script: `
 const { WORDS } = window.PET_DATA;
 const P = window.PET;
-let mode = 'mix', src = 'b1', len = 20, card = 'choice';
+let mode = 'mix', src = 'b1', card = 'choice';
 // 先恢复上次选定的词库范围，再让首次 refreshKv 用对范围（否则首屏统计与高亮错位）
 try {
   const savedScope = localStorage.getItem('pet-scope');
@@ -911,6 +905,7 @@ function refreshDaily() {
   document.querySelectorAll('#goalChips .chip').forEach(c => {
     c.classList.toggle('on', parseInt(c.getAttribute('data-goal'), 10) === P.goal());
   });
+  set('#lenEcho', P.goal());
 }
 refreshDaily();
 document.addEventListener('pet:daily', refreshDaily);
@@ -940,19 +935,12 @@ const HINTS = {
     b3: '低频拓展词，考前冲刺 Distinction 时再补齐',
     all: '全部 3,109 条官方词表与短语，覆盖最全',
     phrase: '266 条高频固定搭配与短语，专攻完形填空与写作'
-  },
-  len: {
-    '10': '10 个约 3–4 分钟，适合课间或睡前碎片时间',
-    '20': '20 个约 5–8 分钟，最适合孩子每天坚持',
-    '30': '30 个约 10–12 分钟，适合考前加速',
-    '50': '50 个约 15–20 分钟，适合周末集中突破'
   }
 };
 function setHint(id, text) { const el = document.querySelector('#' + id); if (el) el.textContent = text; }
 
 pick('#cardChips', 'data-c', v => { card = v; setHint('cardHint', HINTS.card[v]); });
 pick('#modeChips', 'data-m', v => { mode = v; setHint('modeHint', HINTS.mode[v]); refreshKv(); });
-pick('#lenChips', 'data-l', v => { len = parseInt(v, 10); setHint('lenHint', HINTS.len[v]); });
 
 document.querySelectorAll('#sayChips .chip[data-say]').forEach(c => {
   if ((c.getAttribute('data-say') === 'on') !== autoSay) c.classList.remove('on');
@@ -997,7 +985,7 @@ document.querySelector('#startBtn').addEventListener('click', () => {
              : WORDS.filter(w => w.tag === src);
   document.querySelector('#setup').style.display = 'none';
   document.querySelector('#zone').style.display = '';
-  P.wordStudy({ mount: '#fc', words: pool, mode, card, limit: len, backHref: 'quiz.html', autoSay });
+  P.wordStudy({ mount: '#fc', words: pool, mode, card, limit: P.goal(), backHref: 'quiz.html', autoSay });
   const zone = document.querySelector('#zone');
   window.scrollTo({ top: Math.max(0, zone.getBoundingClientRect().top + window.scrollY - 80), behavior: 'smooth' });
 });
