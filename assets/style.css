@@ -671,6 +671,13 @@ table.gtable td:first-child { font-weight: 600; }
 .kv .k b { display: block; font-family: var(--display); font-size: 1.65rem; font-weight: 750; line-height: 1.2; }
 .kv .k span { display: block; font-size: .8rem; color: var(--text-2); margin-top: 4px; }
 .kv .k .bar { margin-top: 10px; }
+
+/* 学情诊断概览：标签统一单行，避免带括号的数字说明把卡片撑成两行。
+   次要数据（牢固词数 / 累计题量 / 作答次数）改放 title，hover 可见。 */
+.kv-dx .k span {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: .76rem;
+}
 .kv .k.k-wide b { font-size: 1.05rem; font-weight: 650; line-height: 1.4; word-break: break-word; }
 
 /* ---------------- 页面头部 ---------------- */
