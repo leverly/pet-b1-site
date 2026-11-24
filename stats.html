@@ -62,10 +62,10 @@
     </div>
   </div>
   <div class="kv">
-    <div class="k"><b id="rWords" style="color:var(--accent)">0</b><span>已学词数</span><small id="rWordsNote"></small></div>
-    <div class="k"><b id="rWordRate" style="color:var(--accent-2)">—</b><span>背词正确率</span><small id="rWordRateNote"></small></div>
-    <div class="k"><b id="rQRate" style="color:var(--ok)">—</b><span>语法正确率</span><small id="rQNote"></small></div>
-    <div class="k"><b id="rWrong" style="color:var(--rose)">0</b><span>错题待清理</span><small id="rWrongNote"></small></div>
+    <div class="k"><b id="rWords" style="color:var(--accent)">0</b><span>已学词数</span></div>
+    <div class="k"><b id="rWordRate" style="color:var(--accent-2)">—</b><span>背词正确率</span></div>
+    <div class="k"><b id="rQRate" style="color:var(--ok)">—</b><span>语法正确率</span></div>
+    <div class="k"><b id="rWrong" style="color:var(--rose)">0</b><span>错题待清理</span></div>
     <div class="k"><b id="rStreak" style="color:var(--gold)">0 天</b><span>当前连续打卡</span></div>
     <div class="k"><b id="rLevel">Lv.1</b><span id="rXp">剑桥萌新 · 0 XP</span></div>
   </div>
@@ -408,15 +408,11 @@ function renderReport() {
   /* 数据总览：三段式（数值 / 标签 / 补充小字），补充信息独立成行，
      不塞进标签括号里，避免标签变长后折行撑高卡片。 */
   setText('#rWords', srs.total);
-  setText('#rWordsNote', srs.mature ? '已牢固 ' + srs.mature + ' 词' : '');
   var wa = P.wordAccStats ? P.wordAccStats() : { rate: null, answered: 0 };
   setText('#rWordRate', wa.rate === null ? '—' : Math.round(wa.rate * 100) + '%');
-  setText('#rWordRateNote', wa.answered ? '累计 ' + wa.answered + ' 次作答' : '');
   setText('#rQRate', qN ? Math.round(qOk / qN * 100) + '%' : '—');
-  setText('#rQNote', qN ? '累计 ' + qN + ' 题' : '');
   var wbN = P.wordBookCount(), qwN = P.wrongIds().length;
   setText('#rWrong', wbN + qwN);
-  setText('#rWrongNote', (wbN || qwN) ? '错词 ' + wbN + ' · 错题 ' + qwN : '');
 
   var gRows = grammarRows();
   var tRows = typeRows();
