@@ -672,12 +672,24 @@ table.gtable td:first-child { font-weight: 600; }
 .kv .k span { display: block; font-size: .8rem; color: var(--text-2); margin-top: 4px; }
 .kv .k .bar { margin-top: 10px; }
 
-/* 学情诊断概览：标签统一单行，避免带括号的数字说明把卡片撑成两行。
-   次要数据（牢固词数 / 累计题量 / 作答次数）改放 title，hover 可见。 */
-.kv-dx .k span {
+/* 学情诊断概览：标签固定短文案，补充信息由下方 small 小字行承载，
+   所以 span 不需要 nowrap/ellipsis 兜底。 */
+
+/* 学情诊断：数据总览的三段式补充小字（数值 / 标签 / 小字注） */
+.kv .k small {
+  display: block; font-size: .74rem; color: var(--text-3); margin-top: 3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: .76rem;
 }
+.kv .k small:empty { display: none; }
+
+/* 学情诊断：每条数据线下方的一句话小结 */
+.diag-sum {
+  margin: 12px 0 0; padding: 11px 15px; font-size: .87rem; line-height: 1.72;
+  color: var(--text-2); background: var(--surface-2);
+  border-left: 3px solid var(--border-2); border-radius: var(--r-sm);
+}
+.diag-sum b { color: var(--text); }
+.diag-sum.warn { border-left-color: var(--rose); background: var(--rose-soft); }
 .kv .k.k-wide b { font-size: 1.05rem; font-weight: 650; line-height: 1.4; word-break: break-word; }
 
 /* ---------------- 页面头部 ---------------- */

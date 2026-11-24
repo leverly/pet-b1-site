@@ -9,7 +9,7 @@
 <meta property="og:title" content="学情诊断与复习处方 · PET 领航">
 <meta property="og:description" content="用练习中积累的错题诊断当前遗留的薄弱项：语法考点、题型、词汇三条线给出错题量与正确率排行，并生成今天的复习顺序。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='800' fill='%23fff' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/style.css?v=ac0377d6">
+<link rel="stylesheet" href="assets/style.css?v=c7971a9c">
 <script>try{var m=JSON.parse(localStorage.getItem('pet-theme-manual')||'null');var h=new Date().getHours();var t=(m==='light'||m==='dark')?m:((h>=19||h<6)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){var h2=new Date().getHours();document.documentElement.setAttribute('data-theme',(h2>=19||h2<6)?'dark':'light');}</script>
 </head>
 <body data-base="">
@@ -36,7 +36,7 @@
 <div class="page-head">
   <div class="crumb"><a href="index.html">首页</a> / 学情诊断</div>
   <h1>学情诊断</h1>
-  <p class="lede">这里不做泛泛的数据统计，只回答一个问题：<b>你现在还漏着哪些薄弱项</b>。练习中做错的题会自动按 <b>语法考点 · 题型 · 词汇话题</b> 三条线归档，算出每处遗留漏洞的错题量与正确率，并直接给出今天的复习顺序——<b>先清错题，再攻最弱，最后补到期</b>。</p>
+  <p class="lede">先看数据，再看结论。做错的题自动按 <b>词汇 · 语法考点 · 题型</b> 三条线归档，每条线给出错题量与正确率，并附一句「这些数字说明什么」；看完三条线，最后一段结论告诉你今天先补哪一块。</p>
 </div>
 
 <section class="section" style="margin-top:24px">
@@ -53,11 +53,68 @@
   </div>
 </section>
 
-<section class="section" style="margin-top:26px">
+<section class="section" style="margin-top:30px">
   <div class="section-head">
     <div class="section-head-left">
-      <span class="kicker">诊断结论</span>
-      <h2>当前遗留的薄弱项</h2>
+      <span class="kicker">第一步 · 看数据</span>
+      <h2>学习数据总览</h2>
+      <span class="sub">下面三条线都从这里取数：练习量、正确率与错题沉淀</span>
+    </div>
+  </div>
+  <div class="kv">
+    <div class="k"><b id="rWords" style="color:var(--accent)">0</b><span>已学词数</span><small id="rWordsNote"></small></div>
+    <div class="k"><b id="rWordRate" style="color:var(--accent-2)">—</b><span>背词正确率</span><small id="rWordRateNote"></small></div>
+    <div class="k"><b id="rQRate" style="color:var(--ok)">—</b><span>语法正确率</span><small id="rQNote"></small></div>
+    <div class="k"><b id="rWrong" style="color:var(--rose)">0</b><span>错题待清理</span><small id="rWrongNote"></small></div>
+    <div class="k"><b id="rStreak" style="color:var(--gold)">0 天</b><span>当前连续打卡</span></div>
+    <div class="k"><b id="rLevel">Lv.1</b><span id="rXp">剑桥萌新 · 0 XP</span></div>
+  </div>
+</section>
+
+<section class="section" id="wDiagSection" style="margin-top:34px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <span class="kicker">数据一 · 词汇</span>
+      <h2>错词集中在哪些话题</h2>
+      <span class="sub">条形长度＝该组错词占全部错词的比重；越集中，越适合成组重记</span>
+    </div>
+    <a class="btn sm soft" href="wrong.html">去清错词 →</a>
+  </div>
+  <div id="wDiagList"></div>
+  <p class="diag-sum" id="wSum"></p>
+</section>
+
+<section class="section" id="gDiagSection" style="margin-top:34px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <span class="kicker">数据二 · 语法考点</span>
+      <h2>语法错题落在哪些考点</h2>
+      <span class="sub">按错题量从多到少排；红色＝错题未清且正确率偏低</span>
+    </div>
+    <a class="btn sm soft" href="review.html">去练语法 →</a>
+  </div>
+  <div id="gDiagList"></div>
+  <p class="diag-sum" id="gSum"></p>
+</section>
+
+<section class="section" id="tDiagSection" style="margin-top:34px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <span class="kicker">数据三 · 题型</span>
+      <h2>错题集中在哪种题型</h2>
+      <span class="sub">单选 / 写作改错 / 开放填空——真考里失分往往只集中在一种题型上</span>
+    </div>
+    <a class="btn sm soft" href="review.html">去练语法 →</a>
+  </div>
+  <div id="tDiagList"></div>
+  <p class="diag-sum" id="tSum"></p>
+</section>
+
+<section class="section" style="margin-top:40px">
+  <div class="section-head">
+    <div class="section-head-left">
+      <span class="kicker">第二步 · 看结论</span>
+      <h2>当前遗留的薄弱项与复习顺序</h2>
       <span class="sub" id="dxVerdict">—</span>
     </div>
   </div>
@@ -65,57 +122,10 @@
   <div class="note" id="dxDueNote" style="display:none;margin-top:16px"></div>
 </section>
 
-<section class="section" style="margin-top:26px">
-  <div class="kv kv-dx">
-    <div class="k"><b id="rLevel">Lv.1</b><span id="rXp">剑桥萌新 · 0 XP</span></div>
-    <div class="k"><b id="rStreak" style="color:var(--gold)">0 天</b><span>当前连续打卡</span></div>
-    <div class="k"><b id="rWords" style="color:var(--accent)">0</b><span id="rWordsSub">已学词数</span></div>
-    <div class="k"><b id="rQRate" style="color:var(--ok)">—</b><span id="rQSub">语法精练总正确率</span></div>
-    <div class="k"><b id="rWordRate" style="color:var(--accent-2)">—</b><span id="rWordRateSub">背词正确率</span></div>
-    <div class="k"><b id="rWrong" style="color:var(--rose)">0</b><span>错题待清理</span></div>
-  </div>
-</section>
-
-<section class="section" id="gDiagSection" style="margin-top:30px">
-  <div class="section-head">
-    <div class="section-head-left">
-      <span class="kicker">第一条线 · 语法考点</span>
-      <h2>语法错题落在哪些考点</h2>
-      <span class="sub">按错题量从多到少排；红色＝错题未清且正确率偏低，优先专攻</span>
-    </div>
-    <a class="btn sm soft" href="review.html">去练语法 →</a>
-  </div>
-  <div id="gDiagList"></div>
-</section>
-
-<section class="section" id="tDiagSection" style="margin-top:30px">
-  <div class="section-head">
-    <div class="section-head-left">
-      <span class="kicker">第二条线 · 题型</span>
-      <h2>错题集中在哪种题型</h2>
-      <span class="sub">单选 / 写作改错 / 开放填空——真考里失分往往只集中在一种题型上</span>
-    </div>
-    <a class="btn sm soft" href="review.html">去练语法 →</a>
-  </div>
-  <div id="tDiagList"></div>
-</section>
-
-<section class="section" id="wDiagSection" style="margin-top:30px">
-  <div class="section-head">
-    <div class="section-head-left">
-      <span class="kicker">第三条线 · 词汇</span>
-      <h2>错词集中在哪些话题</h2>
-      <span class="sub">条形长度＝该话题错词占全部错词的比重；严重度看累计答错次数，错词少的词表不会被占比误导</span>
-    </div>
-    <a class="btn sm soft" href="wrong.html">去清错词 →</a>
-  </div>
-  <div id="wDiagList"></div>
-</section>
-
-<section class="section" style="margin-top:30px">
+<section class="section" style="margin-top:34px">
   <div class="card">
-    <span class="kicker">近 7 天练习量</span>
-    <h3 style="margin-bottom:4px">每天做了多少词和题</h3>
+    <span class="kicker">练习量</span>
+    <h3 style="margin-bottom:4px">近 7 天每天做了多少词和题</h3>
     <p class="meta" id="chartSummary">每天保持节奏，记忆效果远胜考前突击</p>
     <div class="chart-bars" id="chartBars"></div>
   </div>
@@ -395,21 +405,18 @@ function renderReport() {
   setText('#rLevel', 'Lv.' + lv.lv);
   setText('#rXp', lv.name + ' · ' + lv.xp + ' XP');
   setText('#rStreak', P.streak() + ' 天');
+  /* 数据总览：三段式（数值 / 标签 / 补充小字），补充信息独立成行，
+     不塞进标签括号里，避免标签变长后折行撑高卡片。 */
   setText('#rWords', srs.total);
-  setText('#rWordsSub', '已学词数');
-  var wsEl = document.querySelector('#rWordsSub');
-  if (wsEl) wsEl.title = '其中已牢固 ' + srs.mature + ' 词';
-  setText('#rQRate', qN ? Math.round(qOk / qN * 100) + '%' : '—');
-  setText('#rQSub', qN ? '语法正确率' : '暂未开始练习');
-  var qsEl = document.querySelector('#rQSub');
-  if (qsEl && qN) qsEl.title = '语法精练累计 ' + qN + ' 题';
+  setText('#rWordsNote', srs.mature ? '已牢固 ' + srs.mature + ' 词' : '');
   var wa = P.wordAccStats ? P.wordAccStats() : { rate: null, answered: 0 };
   setText('#rWordRate', wa.rate === null ? '—' : Math.round(wa.rate * 100) + '%');
-  setText('#rWordRateSub', '背词正确率');
-  var wasEl = document.querySelector('#rWordRateSub');
-  if (wasEl && wa.answered) wasEl.title = '累计 ' + wa.answered + ' 次作答';
+  setText('#rWordRateNote', wa.answered ? '累计 ' + wa.answered + ' 次作答' : '');
+  setText('#rQRate', qN ? Math.round(qOk / qN * 100) + '%' : '—');
+  setText('#rQNote', qN ? '累计 ' + qN + ' 题' : '');
   var wbN = P.wordBookCount(), qwN = P.wrongIds().length;
   setText('#rWrong', wbN + qwN);
+  setText('#rWrongNote', (wbN || qwN) ? '错词 ' + wbN + ' · 错题 ' + qwN : '');
 
   var gRows = grammarRows();
   var tRows = typeRows();
@@ -421,25 +428,97 @@ function renderReport() {
   tRows.forEach(function (x) { if (!tBad && (x.sev === 'high' || x.sev === 'mid')) tBad = x; });
   var totalWrong = wbN + qwN;
   var verdict;
+  // 结论只回答「先补哪一块」，不再复述上方三条线的数字。
+  // 顺序由三条线各自「红色项数」真实排序，不是固定话术：
+  // 红色项越多，说明该线遗留的漏洞越多，越该先动。
   if (!totalWrong && !qN) {
     verdict = '还没有练习记录 —— 先做 10 道语法题，这里立刻给出诊断';
   } else {
-    var bits = [];
-    bits.push('共 <b>' + totalWrong + '</b> 条错题待清理');
-    // 排序是「错题未清优先」，所以结论说「最该先补」而不是「正确率最低」——后者会把
-    // 错题多但正确率尚可的考点误标成最弱。
-    if (gBad) bits.push('语法最该先补 <b>' + P.esc(gBad.name) + '</b>' + (gBad.wq ? '（错 ' + gBad.wq + ' 条未清）' : ''));
-    if (tBad) bits.push('题型最该先补 <b>' + P.esc(tBad.name) + '</b>' + (tBad.wq ? '（错 ' + tBad.wq + ' 条未清）' : ''));
-    if (wData.rows[0]) {
-      var wn0 = wData.rows[0];
-      bits.push('错词集中在 <b>' + P.esc(wordGroupName(wn0.id)) + '</b>（' + wn0.n + ' 个）');
+    var lanes = [
+      { key: 'word', label: '错词', n: wData.total, bad: wData.rows.filter(function (x) {
+          return (x.times >= 8 || x.n >= 5);
+        }).length, top: wData.rows[0] ? wordGroupName(wData.rows[0].id) : '' },
+      { key: 'gram', label: '语法', n: gRows.length, bad: gRows.filter(function (x) { return x.sev === 'high'; }).length, top: gBad ? gBad.name : '' },
+      { key: 'type', label: '题型', n: tRows.length, bad: tRows.filter(function (x) { return x.sev === 'high'; }).length, top: tBad ? tBad.name : '' }
+    ].filter(function (x) { return x.bad > 0; });
+    lanes.sort(function (a, b) { return b.bad - a.bad; });
+    if (!lanes.length) {
+      verdict = '三条线都没有红色项 —— 保持当前节奏，先把到期的词和题清掉即可。';
+    } else {
+      var names = { word: '清错词', gram: '攻语法考点', type: '补题型' };
+      var order = lanes.map(function (x, i) {
+        return (i === 0 ? '' : '再') + names[x.key];
+      });
+      var why = lanes.map(function (x) {
+        return '<b>' + x.label + '</b> 有 ' + x.bad + ' 处遗留' +
+          (x.top ? '，最重的是 <b>' + P.esc(x.top) + '</b>' : '');
+      });
+      verdict = '建议顺序：<b>' + order.join(' → ') + '</b>。' +
+        why.join('；') + '。具体条目见下方三张处方卡。';
     }
-    verdict = bits.join(' · ') + '。按下面三条线逐项清掉，下次诊断会直接看到正确率回升。';
   }
   var vEl = document.querySelector('#dxVerdict');
   if (vEl) vEl.innerHTML = verdict;
 
   renderRx(gRows, tRows, wData);
+
+  /* 三条数据线的小结：把「看了这些数字说明什么」直接写在数据下面 */
+  function sumLine(sel, text, warn) {
+    var el = document.querySelector(sel);
+    if (!el) return;
+    el.innerHTML = text;
+    el.style.display = text ? '' : 'none';
+    el.className = 'diag-sum' + (warn ? ' warn' : '');
+  }
+
+  /* 词汇小结 */
+  if (wData.rows.length) {
+    var wTotal = wData.total, wTop3 = wData.rows.slice(0, 3);
+    var wTop3n = wTop3.reduce(function (a, x) { return a + x.n; }, 0);
+    var wConc = wTotal ? Math.round(wTop3n / wTotal * 100) : 0;
+    sumLine('#wSum',
+      '共 <b>' + wTotal + '</b> 个错词，分布在 <b>' + wData.rows.length + '</b> 组里。' +
+      '最多的 3 组占 <b>' + wConc + '%</b>' +
+      (wConc >= 60 ? ' —— 很集中，先把这 3 组啃下来收益最大。' : ' —— 比较分散，建议按频档从高频词开始过。'),
+      wConc < 60);
+  } else {
+    sumLine('#wSum', '');
+  }
+
+  /* 语法小结 */
+  if (gRows.length) {
+    var gPracticed = gRows.filter(function (x) { return x.n > 0; });
+    var gWeak = gRows.filter(function (x) { return x.sev === 'high'; });
+    var gAvg = null;
+    if (gPracticed.length) {
+      var gn = 0, gok = 0;
+      gPracticed.forEach(function (x) { gn += x.n; gok += x.n * x.rate; });
+      gAvg = gn ? Math.round(gok / gn * 100) : null;
+    }
+    sumLine('#gSum',
+      '已练 <b>' + gPracticed.length + '</b> 个考点' +
+      (gAvg !== null ? '，平均正确率 <b>' + gAvg + '%</b>' : '') +
+      (gWeak.length
+        ? '。<b>' + gWeak.length + '</b> 个考点错题未清且正确率偏低（红色行），优先专攻。'
+        : '。暂无红色项，保持节奏即可。'),
+      gWeak.length > 0);
+  } else {
+    sumLine('#gSum', '');
+  }
+
+  /* 题型小结 */
+  if (tRows.length) {
+    var tPracticed = tRows.filter(function (x) { return x.n > 0; });
+    var tWeak = tRows.filter(function (x) { return x.sev === 'high'; });
+    sumLine('#tSum',
+      '已练 <b>' + tPracticed.length + '</b> 种题型' +
+      (tWeak.length
+        ? '，其中 <b>' + tWeak.length + '</b> 种薄弱：' + tWeak.map(function (x) { return P.esc(x.name); }).join('、') + '。'
+        : '，暂无红色项。'),
+      tWeak.length > 0);
+  } else {
+    sumLine('#tSum', '');
+  }
 
   /* 到期复习提醒 */
   var now = Date.now();
