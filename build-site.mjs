@@ -1936,6 +1936,25 @@ function diagRow(o) {
   '</div>';
 }
 
+/* 诊断列表：超过 10 项时默认只展示前 10 项，其余折进「展开全部」，
+   避免某条线子项很多（如 43 个语法考点）时把页面拉得过长。 */
+var DIAG_LIMIT = 10;
+// 记住每条线是否已展开：renderReport 会在做题/背词后整体重渲染，
+// 不记住的话用户刚点开的列表会立刻收起。
+var diagOpen = {};
+function diagList(rows, key) {
+  var head = rows.slice(0, DIAG_LIMIT);
+  var rest = rows.slice(DIAG_LIMIT);
+  var open = !!diagOpen[key];
+  return '<div class="diag-list">' + head.join('') +
+    (rest.length
+      ? '<div class="diag-more"' + (open ? '' : ' hidden') + '>' + rest.join('') + '</div>' +
+        '<button class="diag-toggle" type="button" data-key="' + key + '" data-more="' + rest.length + '">' +
+          (open ? '收起 ▴' : '展开剩余 ' + rest.length + ' 项 ▾') + '</button>'
+      : '') +
+  '</div>';
+}
+
 function emptyBox(text, href, label) {
   return '<div class="empty"><b>' + P.esc(text) + '</b>' +
     (href ? '去<a href="' + href + '">' + P.esc(label) + '</a>，做错的题会自动归到这里' : '') + '</div>';
@@ -2171,7 +2190,7 @@ function renderReport() {
   var gHost = document.querySelector('#gDiagList');
   if (gHost) {
     gHost.innerHTML = gRows.length
-      ? '<div class="diag-list">' + gRows.map(function (x) {
+      ? diagList(gRows.map(function (x) {
           return diagRow({
             name: x.name,
             sub: x.n ? ('已练 ' + x.n + ' 题') : '还没练过',
@@ -2180,7 +2199,7 @@ function renderReport() {
             sevCls: SEV_CLS[x.sev], sevLabel: SEV_LABEL[x.sev],
             href: 'review.html?topic=' + encodeURIComponent(x.id), act: '专攻 →'
           });
-        }).join('') + '</div>'
+        }), 'gram')
       : emptyBox('还没有语法练习记录', 'review.html', '练语法');
   }
 
@@ -2188,7 +2207,7 @@ function renderReport() {
   var tHost = document.querySelector('#tDiagList');
   if (tHost) {
     tHost.innerHTML = tRows.length
-      ? '<div class="diag-list">' + tRows.map(function (x) {
+      ? diagList(tRows.map(function (x) {
           return diagRow({
             name: x.name,
             sub: x.n ? ('已练 ' + x.n + ' 题') : '还没练过',
@@ -2197,7 +2216,7 @@ function renderReport() {
             sevCls: SEV_CLS[x.sev], sevLabel: SEV_LABEL[x.sev],
             href: 'review.html?type=' + encodeURIComponent(x.type), act: '专练 →'
           });
-        }).join('') + '</div>'
+        }), 'type')
       : emptyBox('还没有题型记录（本次升级后新做的题才会按题型统计）', 'review.html', '练语法');
   }
 
@@ -2206,7 +2225,7 @@ function renderReport() {
   if (wHost) {
     var wt = wData.total;
     wHost.innerHTML = wData.rows.length
-      ? '<div class="diag-list">' + wData.rows.map(function (x) {
+      ? diagList(wData.rows.map(function (x) {
           var share = wt ? x.n / wt : 0;
           // 严重度看「累计答错次数」而不是错词占比：错词本只有两三个词时占比恒为 30%+，
           // 全判成高严重度等于没诊断；占比只用来画条形长度。
@@ -2222,7 +2241,7 @@ function renderReport() {
             href: wordGroupHref(x.id),
             act: '看词表 →'
           });
-        }).join('') + '</div>'
+        }), 'word')
       : emptyBox('错词本是空的', 'quiz.html', '背单词');
   }
 
@@ -2251,6 +2270,22 @@ document.addEventListener('pet:profile', renderReport);
 document.addEventListener('pet:qlog', renderReport);
 document.addEventListener('pet:wordbook', renderReport);
 document.addEventListener('pet:srs', renderReport);
+
+/* 诊断列表折叠：事件委托到 document，避免每次 renderReport 重渲染后监听丢失 */
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('.diag-toggle');
+  if (!btn) return;
+  var list = btn.parentNode;
+  var more = list.querySelector('.diag-more');
+  if (!more) return;
+  var open = !more.hasAttribute('hidden');
+  if (open) more.setAttribute('hidden', '');
+  else more.removeAttribute('hidden');
+  btn.textContent = open
+    ? '展开剩余 ' + btn.getAttribute('data-more') + ' 项 ▾'
+    : '收起 ▴';
+  diagOpen[btn.getAttribute('data-key')] = !open;
+});
 
 document.querySelector('#exportBtn').addEventListener('click', function () {
   var blob = new Blob([P.exportBackup()], { type: 'application/json' });

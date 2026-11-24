@@ -963,6 +963,15 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   border-bottom: 1px solid var(--border); font-size: .9rem;
 }
 .diag-row:last-child { border-bottom: 0; }
+/* 折叠区最后一行要保留分隔线，否则和下方「收起」按钮贴在一起 */
+.diag-more .diag-row:last-child { border-bottom: 1px solid var(--border); }
+.diag-toggle {
+  display: block; width: 100%; padding: 11px 18px; border: 0;
+  background: var(--surface-2); color: var(--accent);
+  font: inherit; font-size: .82rem; font-weight: 650;
+  cursor: pointer; text-align: center;
+}
+.diag-toggle:hover { background: var(--bg-3); }
 .diag-row:hover { background: var(--surface-2); }
 .diag-name { display: flex; flex-direction: column; gap: 2px; font-weight: 650; min-width: 0; }
 .diag-sub { font-size: .74rem; font-weight: 400; color: var(--text-3); }
