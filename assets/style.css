@@ -936,6 +936,58 @@ body.js-ready .reveal.out { opacity: 0; transform: translateY(14px); }
   .foot-in { grid-template-columns: 1fr; gap: 22px; }
 }
 
+/* ---------------- 学情诊断：结论处方 + 诊断行 ---------------- */
+.rx-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.rx-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 20px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); box-shadow: var(--shadow-1);
+}
+.rx-tag {
+  font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+  padding: 3px 9px; border-radius: var(--r-pill);
+}
+.rx-tag.t-gram { background: var(--accent-soft); color: var(--accent); }
+.rx-tag.t-type { background: var(--accent-2-soft); color: var(--accent-2); }
+.rx-tag.t-word { background: var(--gold-soft); color: var(--gold); }
+.rx-title { font-size: 1.05rem; font-weight: 750; line-height: 1.35; }
+.rx-desc { margin: 0; font-size: .86rem; color: var(--text-2); line-height: 1.7; }
+.rx-desc b { color: var(--text); }
+.rx-card .btn { margin-top: auto; }
+.rx-idle { font-size: .8rem; color: var(--text-3); }
+
+.diag-list { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-1); }
+.diag-row {
+  display: grid; grid-template-columns: minmax(150px, 1.3fr) 90px minmax(80px, 1.1fr) 56px auto;
+  gap: 14px; align-items: center; padding: 12px 18px;
+  border-bottom: 1px solid var(--border); font-size: .9rem;
+}
+.diag-row:last-child { border-bottom: 0; }
+.diag-row:hover { background: var(--surface-2); }
+.diag-name { display: flex; flex-direction: column; gap: 2px; font-weight: 650; min-width: 0; }
+.diag-sub { font-size: .74rem; font-weight: 400; color: var(--text-3); }
+.diag-num { font-size: .78rem; color: var(--text-3); white-space: nowrap; }
+.diag-bar { height: 7px; background: var(--bg-3); border-radius: 99px; overflow: hidden; }
+.diag-bar i { display: block; height: 100%; background: var(--accent-grad); border-radius: 99px; transition: width .5s var(--ease-out); }
+.diag-bar.ok i { background: var(--ok); }
+.diag-bar.warn i { background: var(--gold-grad); }
+.diag-bar.rose i { background: var(--rose); }
+.diag-pct { font-family: var(--mono); font-size: .82rem; font-weight: 700; text-align: right; }
+.diag-act { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.sev { font-size: .7rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+.sev-high { background: var(--rose-soft); color: var(--rose); }
+.sev-mid { background: var(--gold-soft); color: var(--gold); }
+.sev-low { background: var(--ok-soft); color: var(--ok); }
+.sev-na { background: var(--bg-3); color: var(--text-3); }
+
+@media (max-width: 900px) {
+  .rx-grid { grid-template-columns: 1fr; }
+  .diag-row { grid-template-columns: 1fr auto; row-gap: 6px; }
+  .diag-bar { grid-column: 1 / -1; }
+  .diag-pct { text-align: left; }
+  .diag-act { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
 /* ---------------- 打印错题纸样式 ---------------- */
 @media print {
   .hdr, .foot, .scroll-progress, .quiz-actions, .rate-row, .hero-cta,
